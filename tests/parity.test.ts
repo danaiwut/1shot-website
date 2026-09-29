@@ -1,5 +1,5 @@
 // Parity with the original Python parsers (tvaccess/wf_contract.py, tv_shapes.py).
-// Regenerate fixtures: python3 tests/parity/gen_cases.py <path-to-tvaccess>
+// fixtures.json is a frozen snapshot of the Python output; do not regenerate from the TS code.
 import { describe, expect, it } from "vitest";
 import fixtures from "./parity/fixtures.json";
 import { parseWf1 } from "../src/lib/domain/wf1";

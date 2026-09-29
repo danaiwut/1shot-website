@@ -69,7 +69,7 @@ npm test          # parity tests กับโค้ด Python เดิม
 npm run build
 ```
 
-สร้าง fixture ใหม่จาก Python ต้นฉบับ: `python3 tests/parity/gen_cases.py /path/to/tvaccess` (รันใน `tests/parity/`)
+`tests/parity/fixtures.json` คือผลลัพธ์ที่บันทึกไว้จากโค้ด Python เดิม (ตัว generator ถูกลบออกแล้ว ทั้งโปรเจ็กต์เป็น TypeScript) ห้ามสร้างใหม่จากโค้ด TypeScript เพราะจะทำให้ parity test ไม่มีความหมาย
 
 ## ความปลอดภัย
 
