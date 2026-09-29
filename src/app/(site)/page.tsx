@@ -5,6 +5,7 @@ import {
 import Link from "next/link";
 import { Badge, ButtonLink } from "@/components/ui";
 import { PriceLadder } from "@/components/signals/price-ladder";
+import { AboutSection } from "@/components/site/about-section";
 import { CATALOG } from "@/lib/domain/catalog";
 
 // Every figure below is a property of the product, not a marketing metric.
@@ -201,8 +202,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      <AboutSection />
+
       {/* CTA */}
-      <section id="join" className="scroll-mt-18 px-4 pb-16 sm:px-6 sm:pb-24">
+      <section id="join" className="scroll-mt-18 px-4 py-16 sm:px-6 sm:py-24">
         <div className="surface-dark relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-ink">
           <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
           <div className="relative flex flex-col gap-8 p-6 sm:p-12 lg:flex-row lg:items-center lg:justify-between">

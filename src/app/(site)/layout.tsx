@@ -9,6 +9,7 @@ const NAV = [
   { href: "#indicators", label: "อินดิเคเตอร์" },
   { href: "#guard", label: "การคุมความเสี่ยง" },
   { href: "#how", label: "การทำงาน" },
+  { href: "#about", label: "เกี่ยวกับเรา" },
   { href: "#join", label: "สมัครสมาชิก" },
 ];
 
@@ -19,7 +20,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <header className="surface-dark sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
           <Link href="/" aria-label="หน้าแรก"><Logo /></Link>
-          <nav className="hidden items-center gap-8 text-sm text-muted md:flex">
+          <nav className="hidden items-center gap-7 text-sm text-muted lg:flex">
             <Link href="/" className="relative py-1 text-fg after:absolute after:inset-x-0 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-brand">
               หน้าแรก
             </Link>
