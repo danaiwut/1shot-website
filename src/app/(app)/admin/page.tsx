@@ -53,15 +53,15 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
                   <tr key={r.id} className="hover:bg-panel-2">
                     <td className="px-5 py-3">
                       <Link href={`/admin/members/${r.id}`} className="block">
-                        <span className="font-medium hover:text-gold-strong">{r.display_name || r.email.split("@")[0]}</span>
-                        {r.role !== "member" && <Badge tone="gold" className="ml-2">{r.role}</Badge>}
+                        <span className="font-medium hover:text-accent">{r.display_name || r.email.split("@")[0]}</span>
+                        {r.role !== "member" && <Badge tone="brand" className="ml-2">{r.role}</Badge>}
                         <span className="block text-xs text-muted">{r.email}</span>
                       </Link>
                     </td>
                     <td className="num px-3 py-3 text-xs">{r.tradingview_username ?? <span className="text-faint">—</span>}</td>
                     <td className="px-3 py-3">
                       <span className="num text-xs">{r.exness_account ?? "—"}</span>
-                      {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "gold"} className="ml-2">{r.ib_verified ? "IB ✓" : "รอตรวจ"}</Badge>}
+                      {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "brand"} className="ml-2">{r.ib_verified ? "IB ✓" : "รอตรวจ"}</Badge>}
                     </td>
                     <td className="px-3 py-3 text-xs">{r.telegram_links ? `@${r.telegram_links.tg_username || "linked"}` : <span className="text-faint">—</span>}</td>
                     <td className="num px-3 py-3 text-xs">{active.map((x) => x.code).join(" · ") || <span className="text-faint">—</span>}</td>

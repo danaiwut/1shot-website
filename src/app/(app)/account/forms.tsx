@@ -78,7 +78,7 @@ export function TelegramLinker({ pending }: { pending: { name: string | null; us
         <div className="space-y-3 rounded-xl border border-line bg-panel-2 p-4">
           <p className="text-sm">เปิดบอทแล้วกด <b>Start</b> ภายใน 10 นาที หน้านี้จะอัปเดตเองเมื่อบอทได้รับรหัส</p>
           {link.url ? (
-            <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-gold hover:underline">
+            <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-accent hover:underline">
               เปิดบอท Telegram <ExternalLink className="size-3.5" />
             </a>
           ) : (
@@ -87,7 +87,7 @@ export function TelegramLinker({ pending }: { pending: { name: string | null; us
               <Button variant="outline" className="h-8 px-2.5" onClick={() => navigator.clipboard.writeText(`/start ${link.token}`)} aria-label="คัดลอก"><Copy className="size-3.5" /></Button>
             </div>
           )}
-          <p className="flex items-center gap-2 text-xs text-muted"><span className="size-1.5 rounded-full bg-gold animate-pulse-dot" /> รอการยืนยันจาก Telegram…</p>
+          <p className="flex items-center gap-2 text-xs text-muted"><span className="size-1.5 rounded-full bg-brand animate-pulse-dot" /> รอการยืนยันจาก Telegram…</p>
         </div>
       )}
       {message && <Notice tone={message.tone}>{message.text}</Notice>}

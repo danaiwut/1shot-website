@@ -25,8 +25,8 @@ export function rMultiple(entry: number | null, sl: number | null, tp: number | 
   return Math.round((Math.abs(tp - entry) / Math.abs(entry - sl)) * 10) / 10;
 }
 
-export const STATUS_LABEL: Record<SetupStatus, { label: string; tone: "gold" | "buy" | "sell" | "info" | "neutral" }> = {
-  pending: { label: "รอเข้า", tone: "gold" },
+export const STATUS_LABEL: Record<SetupStatus, { label: string; tone: "brand" | "buy" | "sell" | "info" | "neutral" }> = {
+  pending: { label: "รอเข้า", tone: "brand" },
   entry: { label: "เข้าแล้ว", tone: "info" },
   retest: { label: "Retest", tone: "info" },
   tp: { label: "ถึง TP", tone: "buy" },

@@ -1,33 +1,89 @@
 @import "tailwindcss";
 
+/*
+ * Palette: red #b20016, white #ffffff, black #000000 (+ their tints).
+ * Default surface is light. Wrap a region in `.surface-dark` to flip every
+ * token to the black surface (hero, sidebar, CTA, footer); `.surface-light`
+ * flips back inside a dark region.
+ */
 @theme {
   --font-sans: var(--font-anuphan), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  --color-ink: #07080a;
-  --color-panel: #0e1013;
-  --color-panel-2: #15181d;
-  --color-panel-3: #1c2027;
-  --color-line: rgb(255 255 255 / 0.08);
-  --color-line-strong: rgb(255 255 255 / 0.16);
-  --color-fg: #ece8df;
-  --color-muted: #8d919a;
-  --color-faint: #5b5f67;
+  --color-ink: #ffffff;
+  --color-panel: #ffffff;
+  --color-panel-2: #f7f7f7;
+  --color-panel-3: #efefef;
+  --color-line: rgb(0 0 0 / 0.08);
+  --color-line-strong: rgb(0 0 0 / 0.16);
+  --color-fg: #000000;
+  --color-muted: #555555;
+  --color-faint: #8c8c8c;
 
-  --color-gold: #e2b65b;
-  --color-gold-strong: #f3cd79;
-  --color-gold-dim: rgb(226 182 91 / 0.14);
+  /* Fills (buttons, icon tiles) always use the exact brand red. */
+  --color-brand: #b20016;
+  --color-brand-strong: #d0001a;
+  --color-brand-dim: rgb(178 0 22 / 0.08);
+  /* Red for text/icons: exact brand on white, lifted on black for contrast. */
+  --color-accent: #b20016;
 
-  --color-buy: #34c79a;
-  --color-buy-dim: rgb(52 199 154 / 0.14);
-  --color-sell: #f2645f;
-  --color-sell-dim: rgb(242 100 95 / 0.14);
-  --color-info: #6aa8ff;
-  --color-info-dim: rgb(106 168 255 / 0.14);
+  /* Trading semantics: SELL/SL share the brand red; BUY/TP stay green so direction is never ambiguous. */
+  --color-buy: #0a8a5f;
+  --color-buy-dim: rgb(10 138 95 / 0.1);
+  --color-sell: #b20016;
+  --color-sell-dim: rgb(178 0 22 / 0.08);
+  --color-info: #1a1a1a;
+  --color-info-dim: rgb(0 0 0 / 0.06);
 
-  --radius-card: 14px;
+  --radius-card: 16px;
   --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+}
+
+@layer base {
+  .surface-dark {
+    --color-ink: #000000;
+    --color-panel: #0b0b0b;
+    --color-panel-2: #141414;
+    --color-panel-3: #1e1e1e;
+    --color-line: rgb(255 255 255 / 0.1);
+    --color-line-strong: rgb(255 255 255 / 0.2);
+    --color-fg: #ffffff;
+    --color-muted: #a6a6a6;
+    --color-faint: #6e6e6e;
+    --color-brand-dim: rgb(178 0 22 / 0.22);
+    --color-accent: #ff4d61;
+    --color-buy: #34c79a;
+    --color-buy-dim: rgb(52 199 154 / 0.14);
+    --color-sell: #ff4d61;
+    --color-sell-dim: rgb(255 77 97 / 0.14);
+    --color-info: #ffffff;
+    --color-info-dim: rgb(255 255 255 / 0.08);
+    color: var(--color-fg);
+    color-scheme: dark;
+  }
+  .surface-light {
+    --color-ink: #ffffff;
+    --color-panel: #ffffff;
+    --color-panel-2: #f7f7f7;
+    --color-panel-3: #efefef;
+    --color-line: rgb(0 0 0 / 0.08);
+    --color-line-strong: rgb(0 0 0 / 0.16);
+    --color-fg: #000000;
+    --color-muted: #555555;
+    --color-faint: #8c8c8c;
+    --color-brand-dim: rgb(178 0 22 / 0.08);
+    --color-accent: #b20016;
+    --color-buy: #0a8a5f;
+    --color-buy-dim: rgb(10 138 95 / 0.1);
+    --color-sell: #b20016;
+    --color-sell-dim: rgb(178 0 22 / 0.08);
+    --color-info: #1a1a1a;
+    --color-info-dim: rgb(0 0 0 / 0.06);
+    color: var(--color-fg);
+    color-scheme: light;
+  }
 }
 
 @keyframes rise {
@@ -35,20 +91,24 @@
   to { opacity: 1; transform: none; }
 }
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgb(52 199 154 / 0.6); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgb(52 199 154 / 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px transparent; }
+}
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
 }
 
 @layer base {
-  html { color-scheme: dark; }
+  html { color-scheme: light; }
   body {
     background: var(--color-ink);
     color: var(--color-fg);
     font-feature-settings: "ss01";
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: var(--color-gold); color: var(--color-ink); }
-  :focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; border-radius: 6px; }
+  ::selection { background: var(--color-brand); color: #ffffff; }
+  :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: 6px; }
 }
 
 @utility num {
@@ -59,16 +119,25 @@
 
 @utility grid-bg {
   background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in srgb, var(--color-fg) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-fg) 5%, transparent) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
-@utility gold-text {
-  background: linear-gradient(100deg, #f7dc9a 0%, #e2b65b 45%, #b8862f 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Red smoke behind dark heroes. */
+@utility brand-glow {
+  background:
+    radial-gradient(60% 55% at 78% 30%, rgb(178 0 22 / 0.55), transparent 70%),
+    radial-gradient(40% 40% at 95% 70%, rgb(178 0 22 / 0.35), transparent 70%),
+    radial-gradient(35% 30% at 55% 0%, rgb(178 0 22 / 0.25), transparent 70%);
+}
+
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

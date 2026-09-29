@@ -67,7 +67,7 @@ export default async function DashboardPage() {
                       <Circle className="size-5 text-faint" strokeWidth={1.5} />
                     )}
                     <span className={s.done ? "text-muted line-through decoration-faint" : ""}>{s.label}</span>
-                    {s.note && <Badge tone="gold" className="ml-auto">{s.note}</Badge>}
+                    {s.note && <Badge tone="brand" className="ml-auto">{s.note}</Badge>}
                   </Link>
                 </li>
               ))}
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
                   const active = !r.expires_at || new Date(r.expires_at) > new Date();
                   return (
                     <li key={r.code} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
-                      <span><span className="num mr-2 text-gold">{r.code}</span>{r.indicators?.name}</span>
+                      <span><span className="num mr-2 text-accent">{r.code}</span>{r.indicators?.name}</span>
                       <Badge tone={active ? "buy" : "neutral"}>{r.expires_at ? (active ? `ถึง ${fmtDate(r.expires_at)}` : "หมดอายุ") : "ตลอดชีพ"}</Badge>
                     </li>
                   );

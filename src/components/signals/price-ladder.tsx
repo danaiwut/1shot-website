@@ -14,7 +14,7 @@ export function PriceLadder({
   const r = rMultiple(entry, sl, tp);
   const rows = [
     { label: "TP", price: tp, color: "var(--color-buy)" },
-    { label: "Entry", price: entry, color: "var(--color-gold)" },
+    { label: "Entry", price: entry, color: "var(--color-fg)" },
     { label: "SL", price: sl, color: "var(--color-sell)" },
   ];
   const buy = side === "BUY";
@@ -24,8 +24,8 @@ export function PriceLadder({
       <svg viewBox={`0 0 60 ${H}`} width={60} height={H} className="shrink-0" aria-hidden>
         <rect x="22" y={Math.min(y(tp), y(entry))} width="16" height={Math.abs(y(tp) - y(entry))} rx="3" fill="var(--color-buy-dim)" stroke="var(--color-buy)" strokeOpacity=".5" />
         <rect x="22" y={Math.min(y(sl), y(entry))} width="16" height={Math.abs(y(sl) - y(entry))} rx="3" fill="var(--color-sell-dim)" stroke="var(--color-sell)" strokeOpacity=".5" />
-        <line x1="10" x2="50" y1={y(entry)} y2={y(entry)} stroke="var(--color-gold)" strokeWidth="2" />
-        <path d={buy ? `M30 ${y(entry) - 10} l-5 7h10z` : `M30 ${y(entry) + 10} l-5 -7h10z`} fill="var(--color-gold)" />
+        <line x1="10" x2="50" y1={y(entry)} y2={y(entry)} stroke="var(--color-fg)" strokeWidth="2" />
+        <path d={buy ? `M30 ${y(entry) - 10} l-5 7h10z` : `M30 ${y(entry) + 10} l-5 -7h10z`} fill="var(--color-fg)" />
         {exit != null && <circle cx="30" cy={y(exit)} r="4" fill="var(--color-fg)" stroke="var(--color-ink)" strokeWidth="2" />}
       </svg>
       <div className="relative flex-1" style={{ height: H }}>

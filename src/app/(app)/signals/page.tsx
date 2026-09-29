@@ -88,7 +88,7 @@ function Segmented({ items }: { items: { label: string; href: string; on: boolea
 
 function Chip({ href, on, children, title }: { href: string; on: boolean; children: React.ReactNode; title?: string }) {
   return (
-    <Link href={href} title={title} className={cx("num rounded-md border px-2.5 py-1 text-xs transition-colors", on ? "border-gold/50 bg-gold-dim text-gold" : "border-line text-muted hover:border-line-strong hover:text-fg")}>
+    <Link href={href} title={title} className={cx("num rounded-md border px-2.5 py-1 text-xs transition-colors", on ? "border-brand/50 bg-brand-dim text-accent" : "border-line text-muted hover:border-line-strong hover:text-fg")}>
       {children}
     </Link>
   );

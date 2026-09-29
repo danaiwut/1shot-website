@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       {error === "confirm" && <p className="mb-4 text-sm text-sell">ลิงก์ยืนยันหมดอายุหรือไม่ถูกต้อง</p>}
       <AuthForm action={login} mode="login" next={typeof next === "string" ? next : undefined} />
       <p className="mt-6 text-center text-sm text-muted">
-        ยังไม่มีบัญชี? <Link href="/signup" className="text-gold hover:underline">สมัครสมาชิก</Link>
+        ยังไม่มีบัญชี? <Link href="/signup" className="text-accent hover:underline">สมัครสมาชิก</Link>
       </p>
     </>
   );

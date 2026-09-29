@@ -18,7 +18,7 @@ export default async function IndicatorsAdminPage() {
           {((data ?? []) as Indicator[]).map((ind) => (
             <li key={ind.code} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
               <div className="min-w-56">
-                <p className="text-sm font-medium"><span className="num mr-2 text-gold">{ind.code}</span>{ind.name}</p>
+                <p className="text-sm font-medium"><span className="num mr-2 text-accent">{ind.code}</span>{ind.name}</p>
                 <p className="text-xs text-muted">{ind.family} · {ind.modes.join(" / ") || "ข้อมูลอ้างอิง"}</p>
               </div>
               {ind.is_reference ? <span className="text-xs text-faint">ข้อมูลอ้างอิง สมาชิกทุกคนเห็น</span> : <RoomForm code={ind.code} room={ind.telegram_room_id} />}

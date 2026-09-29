@@ -10,13 +10,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const staff = isStaff(profile.role);
   const name = profile.display_name || profile.email.split("@")[0];
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-panel/60 px-3 py-5 lg:flex">
-        <Link href="/" className="px-3 pb-7"><Logo /></Link>
+    <div className="min-h-dvh bg-panel-2 lg:grid lg:grid-cols-[256px_1fr]">
+      <aside className="surface-dark sticky top-0 hidden h-dvh flex-col bg-ink px-3 py-5 lg:flex">
+        <div className="brand-glow pointer-events-none absolute inset-x-0 bottom-0 h-72 opacity-40" />
+        <Link href="/" className="relative px-3 pb-8"><Logo /></Link>
         <AppNav staff={staff} />
-        <div className="mt-auto rounded-xl border border-line bg-panel-2 p-3">
+        <div className="relative mt-auto rounded-2xl border border-line bg-panel-2/80 p-3 backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-full bg-gold-dim text-sm font-semibold text-gold uppercase">{name.slice(0, 1)}</span>
+            <span className="grid size-9 place-items-center rounded-full bg-brand text-sm font-semibold text-white uppercase">{name.slice(0, 1)}</span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{name}</p>
               <p className="truncate text-[11px] text-muted">{profile.email}</p>
@@ -30,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="flex h-14 items-center justify-between border-b border-line px-4 lg:hidden">
+        <header className="surface-dark flex h-16 items-center justify-between bg-ink px-4 lg:hidden">
           <Link href="/"><Logo /></Link>
           <form action="/auth/signout" method="post">
             <button className="rounded-md p-2 text-muted" aria-label="ออกจากระบบ"><LogOut className="size-4" /></button>

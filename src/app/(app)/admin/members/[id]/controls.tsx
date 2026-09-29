@@ -63,7 +63,7 @@ export function GrantForm({ userId, code, current, has }: { userId: string; code
       {duration === "date" && (
         <input name="expires_on" type="date" defaultValue={defaultDate} className="h-8 rounded-lg border border-line-strong bg-ink/60 px-2 text-xs text-fg [color-scheme:dark]" />
       )}
-      <Button type="submit" variant={has ? "outline" : "gold"} className="h-8 px-3 text-xs" disabled={pending}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
+      <Button type="submit" variant={has ? "outline" : "brand"} className="h-8 px-3 text-xs" disabled={pending}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
       {state.error && <span className="w-full text-right text-[11px] text-sell">{state.error}</span>}
     </form>
   );

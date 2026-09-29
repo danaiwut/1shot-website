@@ -48,7 +48,7 @@ export default async function NewsPage() {
               {(news as News[]).map((n) => (
                 <li key={n.id} className="px-5 py-4">
                   <a href={n.link} target="_blank" rel="noopener noreferrer" className="group flex items-start justify-between gap-3">
-                    <span className="text-sm font-medium group-hover:text-gold-strong">{n.title_th || n.title}</span>
+                    <span className="text-sm font-medium group-hover:text-accent">{n.title_th || n.title}</span>
                     <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-faint" />
                   </a>
                   {n.gold_impact && <p className={`mt-1.5 text-xs leading-relaxed ${impactTone(n.gold_impact)}`}>{n.gold_impact}</p>}

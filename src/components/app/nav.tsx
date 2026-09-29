@@ -24,16 +24,16 @@ export function AppNav({ staff }: { staff: boolean }) {
       key={i.href}
       href={i.href}
       className={cx(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-        active(i.href) ? "bg-panel-3 text-fg shadow-[inset_2px_0_0_var(--color-gold)]" : "text-muted hover:bg-panel-2 hover:text-fg",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+        active(i.href) ? "bg-brand text-white shadow-[0_10px_24px_-12px_rgb(178_0_22/0.8)]" : "text-muted hover:bg-panel-3 hover:text-fg",
       )}
     >
-      <i.icon className={cx("size-4", active(i.href) && "text-gold")} strokeWidth={1.8} />
+      <i.icon className="size-4" strokeWidth={1.8} />
       {i.label}
     </Link>
   );
   return (
-    <nav className="space-y-6">
+    <nav className="relative space-y-6">
       <div className="space-y-0.5">{MEMBER.map(item)}</div>
       {staff && (
         <div className="space-y-0.5">
@@ -51,11 +51,11 @@ export function MobileNav({ staff }: { staff: boolean }) {
   const path = usePathname();
   const items = [...MEMBER, ...(staff ? STAFF.slice(0, 1) : [])];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-ink/90 backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-panel/95 backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
       {items.map((i) => {
         const on = path === i.href || path.startsWith(`${i.href}/`);
         return (
-          <Link key={i.href} href={i.href} className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px]", on ? "text-gold" : "text-muted")}>
+          <Link key={i.href} href={i.href} className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px]", on ? "text-accent" : "text-muted")}>
             <i.icon className="size-5" strokeWidth={1.7} />
             {i.label.split(" ")[0]}
           </Link>

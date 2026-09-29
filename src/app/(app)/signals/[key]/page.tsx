@@ -86,7 +86,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
 }
 
 const dot = (tone: string) =>
-  ({ gold: "bg-gold", buy: "bg-buy", sell: "bg-sell", info: "bg-info", neutral: "bg-faint" })[tone] ?? "bg-faint";
+  ({ brand: "bg-brand", buy: "bg-buy", sell: "bg-sell", info: "bg-info", neutral: "bg-faint" })[tone] ?? "bg-faint";
 
 function Meta({ k, v }: { k: string; v: string }) {
   return (

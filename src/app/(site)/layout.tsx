@@ -1,50 +1,99 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { ButtonLink, Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
+
+const NAV = [
+  { href: "#indicators", label: "อินดิเคเตอร์" },
+  { href: "#guard", label: "การคุมความเสี่ยง" },
+  { href: "#how", label: "การทำงาน" },
+  { href: "#join", label: "สมัครสมาชิก" },
+];
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const viewer = isSupabaseConfigured() ? await getViewer() : null;
   return (
     <div className="relative">
-      <header className="sticky top-0 z-40 border-b border-line bg-ink/75 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <header className="surface-dark sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
           <Link href="/" aria-label="หน้าแรก"><Logo /></Link>
-          <nav className="hidden items-center gap-7 text-sm text-muted md:flex">
-            <a href="#how" className="hover:text-fg">การทำงาน</a>
-            <a href="#indicators" className="hover:text-fg">อินดิเคเตอร์</a>
-            <a href="#guard" className="hover:text-fg">การคุมความเสี่ยง</a>
-            <a href="#join" className="hover:text-fg">สมัครสมาชิก</a>
+          <nav className="hidden items-center gap-8 text-sm text-muted md:flex">
+            <Link href="/" className="relative py-1 text-fg after:absolute after:inset-x-0 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-brand">
+              หน้าแรก
+            </Link>
+            {NAV.map((n) => (
+              <a key={n.href} href={n.href} className="py-1 transition-colors hover:text-fg">{n.label}</a>
+            ))}
           </nav>
           <div className="flex items-center gap-2">
             {viewer ? (
-              <ButtonLink href="/dashboard">เข้าสู่แดชบอร์ด</ButtonLink>
+              <ButtonLink href="/dashboard">เข้าสู่แดชบอร์ด <ArrowRight className="size-4" /></ButtonLink>
             ) : (
               <>
                 <span className="hidden sm:block"><ButtonLink href="/login" variant="ghost">เข้าสู่ระบบ</ButtonLink></span>
-                <ButtonLink href="/signup">สมัครสมาชิก</ButtonLink>
+                <ButtonLink href="/signup">สมัครสมาชิก <ArrowRight className="size-4" /></ButtonLink>
               </>
             )}
           </div>
         </div>
       </header>
       {children}
-      <footer className="border-t border-line">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 text-sm text-muted sm:px-6 md:grid-cols-[1.2fr_1fr]">
-          <div className="space-y-3">
+      <footer className="surface-dark bg-ink">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 text-sm sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="space-y-4">
             <Logo />
-            <p className="max-w-md text-xs leading-relaxed">
+            <p className="max-w-xs text-xs leading-relaxed text-muted">
+              สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อม Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด
+            </p>
+          </div>
+          <FooterCol title="เมนู" links={NAV.slice(0, 3)} />
+          <FooterCol
+            title="สมาชิก"
+            links={[
+              { href: "/login", label: "เข้าสู่ระบบ" },
+              { href: "/signup", label: "สมัครสมาชิก" },
+              { href: "/dashboard", label: "แดชบอร์ด" },
+            ]}
+          />
+          <div>
+            <p className="font-semibold text-fg">ช่องทางรับสัญญาณ</p>
+            <ul className="mt-4 space-y-2.5 text-muted">
+              <li>เว็บไซต์ (อัปเดตสด)</li>
+              <li>ห้อง Telegram</li>
+              <li>TradingView Alert</li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-line">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-faint sm:px-6 md:flex-row md:items-start md:justify-between">
+            <p className="shrink-0">© {new Date().getFullYear()} 1SHOT Signals</p>
+            <p className="max-w-2xl leading-relaxed md:text-right">
               การเทรดทองคำและ CFD มีความเสี่ยงสูง อาจสูญเสียเงินทุนทั้งหมด สัญญาณเป็นข้อมูลจากอินดิเคเตอร์ ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล
               และผลในอดีตไม่ได้รับประกันผลในอนาคต
             </p>
           </div>
-          <div className="flex flex-wrap items-start gap-x-8 gap-y-2 md:justify-end">
-            <Link href="/login" className="hover:text-fg">เข้าสู่ระบบ</Link>
-            <Link href="/signup" className="hover:text-fg">สมัครสมาชิก</Link>
-            <a href="#indicators" className="hover:text-fg">อินดิเคเตอร์</a>
-          </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function FooterCol({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+  return (
+    <div>
+      <p className="font-semibold text-fg">{title}</p>
+      <ul className="mt-4 space-y-2.5 text-muted">
+        {links.map((l) => (
+          <li key={l.href}>
+            {l.href.startsWith("#") ? (
+              <a href={l.href} className="transition-colors hover:text-fg">{l.label}</a>
+            ) : (
+              <Link href={l.href} className="transition-colors hover:text-fg">{l.label}</Link>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

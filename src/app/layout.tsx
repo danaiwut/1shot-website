@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ทั้ง 10 ตัว ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อมระดับ Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด",
 };
 
-export const viewport: Viewport = { themeColor: "#07080a" };
+export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

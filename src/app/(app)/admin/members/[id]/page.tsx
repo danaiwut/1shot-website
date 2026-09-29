@@ -36,7 +36,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
               <Row k="TradingView" v={<span className="num">{member.tradingview_username ?? "—"}</span>} />
               <Row k="Exness" v={<span className="num">{member.exness_account ?? "—"}</span>} />
               <Row k="ตรวจ IB" v={<IbToggle userId={member.id} verified={member.ib_verified} disabled={!member.exness_account} />} />
-              <Row k="บทบาท" v={me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="gold">{member.role}</Badge>} />
+              <Row k="บทบาท" v={me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="brand">{member.role}</Badge>} />
             </dl>
           </Card>
           <Card>
@@ -66,7 +66,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
               return (
                 <li key={ind.code} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                   <div className="min-w-40">
-                    <p className="text-sm"><span className="num mr-2 text-gold">{ind.code}</span>{ind.name}</p>
+                    <p className="text-sm"><span className="num mr-2 text-accent">{ind.code}</span>{ind.name}</p>
                     <p className="text-[11px] text-muted">
                       {r ? (r.expires_at ? `${active ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ") : "ไม่มีสิทธิ์"}
                       {r?.note ? ` · ${r.note}` : ""}

@@ -22,14 +22,14 @@ export function ZoneMap({ shapes, entry, sl, tp, endAt }: { shapes: Shapes; entr
   const y = (p: number) => padY + ((hi - p) / (hi - lo)) * (H - padY * 2);
   const levels = [
     { p: tp, c: "var(--color-buy)", l: "TP" },
-    { p: entry, c: "var(--color-gold)", l: "Entry" },
+    { p: entry, c: "var(--color-fg)", l: "Entry" },
     { p: sl, c: "var(--color-sell)", l: "SL" },
   ].filter((v): v is { p: number; c: string; l: string } => Boolean(v.p));
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="แผนที่โซนของอินดิเคเตอร์">
       {[0.25, 0.5, 0.75].map((f) => (
-        <line key={f} x1={padL} x2={W - padR} y1={padY + f * (H - padY * 2)} y2={padY + f * (H - padY * 2)} stroke="rgb(255 255 255 / .05)" />
+        <line key={f} x1={padL} x2={W - padR} y1={padY + f * (H - padY * 2)} y2={padY + f * (H - padY * 2)} stroke="var(--color-line)" />
       ))}
       {shapes.boxes.map((b, i) => {
         const bx = x(b.t1), bw = Math.max(2, x(b.t2 ?? endAt) - bx);
@@ -37,12 +37,13 @@ export function ZoneMap({ shapes, entry, sl, tp, endAt }: { shapes: Shapes; entr
         return (
           <g key={`b${i}`}>
             <rect x={bx} y={by} width={bw} height={bh} rx="2" fill={b.fill} stroke={b.stroke} strokeDasharray={b.dashed ? "4 3" : undefined} />
-            {b.label && <text x={bx + 6} y={by + 13} fontSize="11" fill="rgb(236 232 223 / .85)">{b.label}</text>}
+            {b.label && <text x={bx + 6} y={by + 13} fontSize="11" fill="var(--color-fg)" fillOpacity=".85">{b.label}</text>}
           </g>
         );
       })}
       {shapes.lines.map((l, i) => {
-        const color = l.color === "#000000" || l.color === "#333333" ? "rgb(236 232 223 / .7)" : l.color;
+        // Indicator colours are authored for TradingView's light chart, which matches this surface.
+        const color = l.color;
         return (
           <g key={`l${i}`}>
             <line x1={x(l.t1)} x2={x(l.t2 ?? endAt)} y1={y(l.price)} y2={y(l.price2 ?? l.price)} stroke={color} strokeWidth={l.width} strokeDasharray={l.style === "dashed" ? "5 4" : undefined} />

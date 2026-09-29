@@ -27,7 +27,7 @@ export default async function AccountPage() {
             title="ข้อมูลสมาชิก"
             action={profile.ib_verified
               ? <Badge tone="buy"><BadgeCheck className="size-3" /> ผ่านการตรวจ IB</Badge>
-              : <Badge tone="gold"><Clock className="size-3" /> ยังไม่ผ่านการตรวจ IB</Badge>}
+              : <Badge tone="brand"><Clock className="size-3" /> ยังไม่ผ่านการตรวจ IB</Badge>}
           />
           <ProfileForm profile={profile} />
         </Card>
@@ -59,7 +59,7 @@ export default async function AccountPage() {
                   return (
                     <li key={r.code} className="flex items-center justify-between gap-4 px-5 py-3.5">
                       <div>
-                        <p className="text-sm"><span className="num mr-2 text-gold">{r.code}</span>{r.indicators?.name}</p>
+                        <p className="text-sm"><span className="num mr-2 text-accent">{r.code}</span>{r.indicators?.name}</p>
                         <p className="text-[11px] text-muted">{r.expires_at ? `${active ? "ใช้ได้ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</p>
                       </div>
                       {r.indicators?.telegram_room_id

@@ -4,25 +4,25 @@ import type { ComponentProps, ReactNode } from "react";
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 export { cx };
 
-type Variant = "gold" | "ghost" | "outline" | "danger";
+type Variant = "brand" | "ghost" | "outline" | "danger";
 const variants: Record<Variant, string> = {
-  gold: "bg-gold text-ink hover:bg-gold-strong shadow-[0_0_0_1px_rgb(243_205_121/0.4),0_8px_30px_-8px_rgb(226_182_91/0.5)]",
+  brand: "bg-brand text-white hover:bg-brand-strong shadow-[0_10px_30px_-10px_rgb(178_0_22/0.6)]",
   ghost: "text-fg hover:bg-panel-3",
-  outline: "border border-line-strong text-fg hover:border-gold/60 hover:text-gold-strong",
+  outline: "border border-line-strong text-fg hover:border-fg",
   danger: "border border-sell/40 text-sell hover:bg-sell-dim",
 };
-const base = "inline-flex items-center justify-center gap-2 rounded-lg px-4 h-10 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+const base = "inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
 
-export function Button({ variant = "gold", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
+export function Button({ variant = "brand", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(base, variants[variant], className)} {...props} />;
 }
 
-export function ButtonLink({ variant = "gold", className, ...props }: ComponentProps<typeof Link> & { variant?: Variant }) {
+export function ButtonLink({ variant = "brand", className, ...props }: ComponentProps<typeof Link> & { variant?: Variant }) {
   return <Link className={cx(base, variants[variant], className)} {...props} />;
 }
 
 export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cx("rounded-card border border-line bg-panel", className)} {...props} />;
+  return <div className={cx("rounded-card border border-line bg-panel shadow-[0_1px_2px_rgb(0_0_0/0.04)]", className)} {...props} />;
 }
 
 export function CardHeader({ title, action, hint }: { title: ReactNode; action?: ReactNode; hint?: ReactNode }) {
@@ -37,10 +37,10 @@ export function CardHeader({ title, action, hint }: { title: ReactNode; action?:
   );
 }
 
-type Tone = "neutral" | "gold" | "buy" | "sell" | "info";
+type Tone = "neutral" | "brand" | "buy" | "sell" | "info";
 const tones: Record<Tone, string> = {
   neutral: "bg-panel-3 text-muted border-line",
-  gold: "bg-gold-dim text-gold border-gold/25",
+  brand: "bg-brand-dim text-accent border-brand/25",
   buy: "bg-buy-dim text-buy border-buy/25",
   sell: "bg-sell-dim text-sell border-sell/25",
   info: "bg-info-dim text-info border-info/25",
@@ -65,7 +65,7 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
     <input
       className={cx(
         "h-10 w-full rounded-lg border border-line-strong bg-ink/60 px-3 text-sm text-fg placeholder:text-faint",
-        "transition-colors focus:border-gold/70 focus:outline-none focus:ring-2 focus:ring-gold/15",
+        "transition-colors focus:border-brand/70 focus:outline-none focus:ring-2 focus:ring-brand/15",
         className,
       )}
       {...props}
@@ -76,7 +76,7 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
 export function Select({ className, ...props }: ComponentProps<"select">) {
   return (
     <select
-      className={cx("h-10 w-full rounded-lg border border-line-strong bg-ink/60 px-3 text-sm text-fg focus:border-gold/70 focus:outline-none", className)}
+      className={cx("h-10 w-full rounded-lg border border-line-strong bg-ink/60 px-3 text-sm text-fg focus:border-brand/70 focus:outline-none", className)}
       {...props}
     />
   );
@@ -99,20 +99,15 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-2 font-semibold tracking-tight", className)}>
-      <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
-        <defs>
-          <linearGradient id="lg" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stopColor="#f7dc9a" />
-            <stop offset="1" stopColor="#b8862f" />
-          </linearGradient>
-        </defs>
-        <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="none" stroke="url(#lg)" strokeWidth="1.5" />
-        <path d="M7 15.5 10.5 12l2.5 2.5L17.5 8" fill="none" stroke="url(#lg)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="17.5" cy="8" r="1.6" fill="#f3cd79" />
+    <span className={cx("inline-flex items-center gap-2.5", className)}>
+      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden>
+        <rect width="32" height="32" rx="8" fill="var(--color-brand)" />
+        <path d="M8 21.5 13 16.5l3.5 3.5L24 12" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="24" cy="12" r="2.2" fill="#fff" />
       </svg>
-      <span>
-        1SHOT<span className="text-gold"> ·</span> <span className="font-normal text-muted">Signals</span>
+      <span className="flex flex-col leading-none">
+        <span className="text-[17px] font-bold tracking-tight">1SHOT</span>
+        <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-muted uppercase">Signals</span>
       </span>
     </span>
   );
