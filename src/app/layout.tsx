@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Anuphan, JetBrains_Mono } from "next/font/google";
+import { isMockMode } from "@/lib/mock/mode";
 import "./globals.css";
 
 const anuphan = Anuphan({ subsets: ["thai", "latin"], variable: "--font-anuphan", display: "swap" });
@@ -15,7 +16,14 @@ export const viewport: Viewport = { themeColor: "#000000" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="th" className={`${anuphan.variable} ${mono.variable}`}>
-      <body className="min-h-dvh font-sans">{children}</body>
+      <body className="min-h-dvh font-sans">
+        {isMockMode() && (
+          <div className="bg-brand px-4 py-1.5 text-center text-[11px] font-medium text-white">
+            โหมดตัวอย่าง (Mockup) · ข้อมูลทั้งหมดเป็นข้อมูลจำลอง ไม่ได้เชื่อมฐานข้อมูลจริง
+          </div>
+        )}
+        {children}
+      </body>
     </html>
   );
 }

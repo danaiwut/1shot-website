@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { publicEnv } from "@/lib/env";
+import { isMockMode } from "@/lib/mock/mode";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string; message?: string; email?: string };
@@ -41,7 +42,19 @@ export async function signup(_: AuthState, form: FormData): Promise<AuthState> {
     password,
     options: { data: { display_name }, emailRedirectTo: `${publicEnv.siteUrl()}/auth/confirm?next=/dashboard` },
   });
+  if (isMockMode() && !error) {
+    await supabase.auth.signInWithPassword({ email, password });
+    redirect("/account");
+  }
   if (error) return { email, error: error.code === "weak_password" ? "รหัสผ่านคาดเดาง่ายเกินไป" : "สมัครไม่สำเร็จ กรุณาลองใหม่" };
   // Same message whether or not the address already exists, to avoid account enumeration.
   return { email, message: `ส่งลิงก์ยืนยันไปที่ ${email} แล้ว เปิดอีเมลเพื่อเปิดใช้งานบัญชี` };
+}
+
+/** Mockup mode only: one-click sign-in as a sample account. */
+export async function demoLogin(form: FormData) {
+  if (!isMockMode()) redirect("/login");
+  const supabase = await createClient();
+  await supabase.auth.signInWithPassword({ email: String(form.get("email") ?? ""), password: "demo" });
+  redirect(safeNext(form.get("next")));
 }

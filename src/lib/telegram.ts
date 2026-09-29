@@ -1,5 +1,6 @@
 import "server-only";
 import { serverEnv } from "./env";
+import { isMockMode } from "./mock/mode";
 import { createAdminClient } from "./supabase/admin";
 import { sha256, urlToken } from "./secure";
 
@@ -8,6 +9,7 @@ const TOKEN_TTL_MS = 10 * 60 * 1000;
 export class TelegramError extends Error {}
 
 export async function tg<T = unknown>(method: string, params: Record<string, unknown>): Promise<T> {
+  if (isMockMode()) throw new TelegramError("โหมดตัวอย่าง: ไม่ได้ต่อบอท Telegram จริง จึงไม่มีลิงก์เข้าห้อง");
   const token = serverEnv.telegramToken();
   if (!token) throw new TelegramError("ยังไม่ได้ตั้งค่าบอท Telegram");
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -34,6 +36,8 @@ export async function issueLinkToken(userId: string) {
     tg_username: null,
   });
   if (error) throw new TelegramError("สร้างลิงก์ไม่สำเร็จ");
+  // Mockup mode has no bot: pretend a Telegram account opened the link so the confirm step can be tried.
+  if (isMockMode()) await redeemLinkToken(token, { id: 700000099, first_name: "Demo", last_name: "Telegram", username: "demo_trader" });
   const bot = serverEnv.telegramBotUsername();
   return { token, url: bot ? `https://t.me/${bot}?start=${token}` : null };
 }

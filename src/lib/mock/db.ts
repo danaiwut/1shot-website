@@ -1,0 +1,259 @@
+import { isStaff, type Role } from "../types";
+import { MOCK_SESSION_COOKIE } from "./mode";
+import { buildSeed, DEMO_OWNER_ID } from "./seed";
+
+/*
+ * In-memory stand-in for the Supabase client, covering exactly the query surface this app uses:
+ * select (with the embedded relations below) / insert / update / upsert / delete, the filters
+ * eq neq gt gte lt lte in is not ilike or, order / limit / range, single / maybeSingle, count,
+ * the `setups` view and `ingest_signal_events`. Data lives for the life of the server process.
+ */
+
+type Row = Record<string, unknown>;
+type Db = ReturnType<typeof buildSeed>;
+type TableName = keyof Db | "setups";
+
+const g = globalThis as unknown as { __mockDb?: Db; __mockSeq?: number };
+function db(): Db {
+  g.__mockDb ??= buildSeed();
+  return g.__mockDb;
+}
+const nextId = () => (g.__mockSeq = (g.__mockSeq ?? 10_000) + 1);
+
+const PRIMARY_KEYS: Record<string, string[]> = {
+  profiles: ["id"], indicators: ["code"], indicator_rights: ["user_id", "code"], telegram_links: ["user_id"],
+  telegram_link_tokens: ["user_id"], telegram_invites: ["invite_url"], daily_briefs: ["brief_date"],
+};
+const AUTO_ID = new Set(["signal_events", "news_items", "webhook_receipts"]);
+
+/** Mirrors the `public.setups` view: opening event + latest state per setup_key. */
+function setupsView(events: Row[]): Row[] {
+  const by = new Map<string, Row[]>();
+  for (const e of events) {
+    const k = String(e.setup_key);
+    if (!by.has(k)) by.set(k, []);
+    by.get(k)!.push(e);
+  }
+  const ts = (r: Row) => new Date(String(r.observed_at)).getTime();
+  const out: Row[] = [];
+  for (const [key, list] of by) {
+    list.sort((a, b) => ts(a) - ts(b) || Number(a.id) - Number(b.id));
+    const first = list.find((e) => e.kind !== "info");
+    if (!first) continue;
+    const last = list[list.length - 1];
+    out.push({
+      setup_key: key, code: first.code, indicator: first.indicator, setup_name: first.setup_name, setup_id: first.setup_id,
+      mode: first.mode, side: first.side, symbol: first.symbol, timeframe: first.timeframe, entry: first.entry, sl: first.sl, tp: first.tp,
+      opened_at: first.observed_at, status: last.kind, last_event: last.event, exit_price: last.exit_price, terminal: last.terminal,
+      updated_at: last.observed_at, events: list.length,
+    });
+  }
+  return out;
+}
+
+/** Embedded relations used by the pages' select strings, e.g. `*, indicators(name)`. */
+function embed(table: string, rows: Row[], select: string): Row[] {
+  const d = db();
+  const wants = (rel: string) => new RegExp(`(^|[,\\s])${rel}(!\\w+)?\\(`).test(select);
+  return rows.map((r) => {
+    const o = { ...r };
+    if (table === "indicator_rights" && wants("indicators")) o.indicators = d.indicators.find((i) => i.code === r.code) ?? null;
+    if (table === "profiles" && wants("telegram_links")) o.telegram_links = d.telegram_links.find((l) => l.user_id === r.id) ?? null;
+    if (table === "profiles" && wants("indicator_rights")) o.indicator_rights = d.indicator_rights.filter((x) => x.user_id === r.id);
+    return o;
+  });
+}
+
+type Filter = (r: Row) => boolean;
+const cmp = (a: unknown, b: unknown) => {
+  if (typeof a === "number" || typeof b === "number") return Number(a) - Number(b);
+  return String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0;
+};
+const likeToRegex = (pattern: string) =>
+  new RegExp(`^${pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".")}$`, "i");
+
+function opFilter(col: string, op: string, value: string): Filter {
+  switch (op) {
+    case "eq": return (r) => String(r[col]) === value;
+    case "neq": return (r) => String(r[col]) !== value;
+    case "ilike": { const re = likeToRegex(value); return (r) => re.test(String(r[col] ?? "")); }
+    case "is": return (r) => (value === "null" ? r[col] == null : String(r[col]) === value);
+    default: return () => true;
+  }
+}
+
+class Query implements PromiseLike<{ data: unknown; error: null | { message: string; code?: string }; count: number | null }> {
+  private op: "select" | "insert" | "update" | "upsert" | "delete" = "select";
+  private selectStr = "*";
+  private filters: Filter[] = [];
+  private orders: { col: string; asc: boolean }[] = [];
+  private limitN?: number;
+  private rangeAB?: [number, number];
+  private one?: "single" | "maybe";
+  private wantCount = false;
+  private payload: Row | Row[] = [];
+
+  constructor(private table: TableName, private visible: (table: string, r: Row) => boolean) {}
+
+  select(cols = "*", opts?: { count?: string }) { this.selectStr = cols; if (opts?.count) this.wantCount = true; return this; }
+  insert(rows: Row | Row[]) { this.op = "insert"; this.payload = rows; return this; }
+  update(patch: Row) { this.op = "update"; this.payload = patch; return this; }
+  upsert(rows: Row | Row[]) { this.op = "upsert"; this.payload = rows; return this; }
+  delete() { this.op = "delete"; return this; }
+
+  eq(c: string, v: unknown) { this.filters.push((r) => String(r[c]) === String(v)); return this; }
+  neq(c: string, v: unknown) { this.filters.push((r) => String(r[c]) !== String(v)); return this; }
+  gt(c: string, v: unknown) { this.filters.push((r) => r[c] != null && cmp(r[c], v) > 0); return this; }
+  gte(c: string, v: unknown) { this.filters.push((r) => r[c] != null && cmp(r[c], v) >= 0); return this; }
+  lt(c: string, v: unknown) { this.filters.push((r) => r[c] != null && cmp(r[c], v) < 0); return this; }
+  lte(c: string, v: unknown) { this.filters.push((r) => r[c] != null && cmp(r[c], v) <= 0); return this; }
+  in(c: string, vs: unknown[]) { const s = new Set(vs.map(String)); this.filters.push((r) => s.has(String(r[c]))); return this; }
+  is(c: string, v: null | boolean) { this.filters.push((r) => (v === null ? r[c] == null : r[c] === v)); return this; }
+  not(c: string, op: string, v: unknown) { const f = opFilter(c, op, String(v)); this.filters.push((r) => !f(r)); return this; }
+  ilike(c: string, p: string) { this.filters.push(opFilter(c, "ilike", p)); return this; }
+  /** PostgREST `or` syntax: "col.op.value,col.op.value". */
+  or(expr: string) {
+    const parts = expr.split(",").map((p) => { const [col, op, ...rest] = p.split("."); return opFilter(col, op, rest.join(".")); });
+    this.filters.push((r) => parts.some((f) => f(r)));
+    return this;
+  }
+  order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending ?? true }); return this; }
+  limit(n: number) { this.limitN = n; return this; }
+  range(a: number, b: number) { this.rangeAB = [a, b]; return this; }
+  single() { this.one = "single"; return this; }
+  maybeSingle() { this.one = "maybe"; return this; }
+
+  then<A = never, B = never>(ok?: ((v: Awaited<ReturnType<Query["run"]>>) => A | PromiseLike<A>) | null, fail?: ((e: unknown) => B | PromiseLike<B>) | null) {
+    return Promise.resolve().then(() => this.run()).then(ok, fail);
+  }
+
+  private match(r: Row) { return this.filters.every((f) => f(r)); }
+
+  private run() {
+    const d = db();
+    if (this.table === "setups") return this.finish(setupsView(d.signal_events).filter((r) => this.visible("setups", r)));
+    const table = d[this.table] as Row[];
+    const now = new Date().toISOString();
+
+    if (this.op === "insert" || this.op === "upsert") {
+      const keys = PRIMARY_KEYS[this.table];
+      const written = (Array.isArray(this.payload) ? this.payload : [this.payload]).map((input) => {
+        const row: Row = { ...input };
+        if (AUTO_ID.has(this.table) && row.id == null) row.id = nextId();
+        if (this.table === "webhook_receipts") row.received_at ??= now;
+        const existing = this.op === "upsert" && keys ? table.find((r) => keys.every((k) => String(r[k]) === String(row[k]))) : undefined;
+        if (existing) { Object.assign(existing, row, { updated_at: now }); return existing; }
+        table.push(row);
+        return row;
+      });
+      return this.finish(written);
+    }
+    const hits = table.filter((r) => this.match(r));
+    if (this.op === "update") {
+      for (const r of hits) Object.assign(r, this.payload, "updated_at" in r ? { updated_at: now } : {});
+      return this.finish(hits, true);
+    }
+    if (this.op === "delete") {
+      for (const r of hits) table.splice(table.indexOf(r), 1);
+      return this.finish(hits, true);
+    }
+    return this.finish(table.filter((r) => this.visible(this.table, r)));
+  }
+
+  private finish(rows: Row[], filtered = false) {
+    let out = filtered || this.op !== "select" ? rows : rows.filter((r) => this.match(r));
+    const count = this.wantCount ? out.length : null;
+    for (const { col, asc } of [...this.orders].reverse()) {
+      out = [...out].sort((a, b) => (a[col] == null ? 1 : b[col] == null ? -1 : cmp(a[col], b[col]) * (asc ? 1 : -1)));
+    }
+    if (this.rangeAB) out = out.slice(this.rangeAB[0], this.rangeAB[1] + 1);
+    if (this.limitN != null) out = out.slice(0, this.limitN);
+    out = embed(this.table, structuredClone(out), this.selectStr);
+    if (this.one) {
+      if (out.length === 0 && this.one === "single") return { data: null, error: { message: "no rows", code: "PGRST116" }, count };
+      return { data: out[0] ?? null, error: null, count };
+    }
+    return { data: out, error: null, count };
+  }
+}
+
+/** Row-level security, simplified: members see only their own rows and signals they hold a right for. */
+function rlsFor(uid: string | null) {
+  const d = db();
+  const me = d.profiles.find((p) => p.id === uid);
+  if (!me) return () => false;
+  if (isStaff(me.role as Role)) return () => true;
+  const now = new Date();
+  const codes = new Set(
+    d.indicator_rights.filter((r) => r.user_id === uid && (!r.expires_at || new Date(String(r.expires_at)) > now)).map((r) => String(r.code)),
+  );
+  return (table: string, r: Row) => {
+    switch (table) {
+      case "setups": case "signal_events": return codes.has(String(r.code));
+      case "profiles": return r.id === uid;
+      case "indicator_rights": case "telegram_links": case "telegram_link_tokens": return r.user_id === uid;
+      case "webhook_receipts": case "telegram_invites": return false;
+      default: return true;
+    }
+  };
+}
+
+/** Mirrors `ingest_signal_events`: idempotent on (code, event_id). Returns the number of new events. */
+function ingest(events: Row[]) {
+  const d = db();
+  let inserted = 0;
+  for (const e of events) {
+    if (d.signal_events.some((x) => x.code === e.code && x.event_id === e.event_id)) continue;
+    const obs = Number(e.observed_at);
+    const { body: _body, ...row } = e;
+    d.signal_events.push({ ...row, id: nextId(), observed_at: new Date(obs < 1e12 ? obs * 1000 : obs).toISOString() });
+    inserted++;
+  }
+  return inserted;
+}
+
+type CookieJar = {
+  get(name: string): { value: string } | undefined;
+  set?(name: string, value: string, options?: Record<string, unknown>): void;
+  delete?(name: string): void;
+};
+
+/** Server client acting as the signed-in demo user (session kept in a plain cookie). */
+export function createMockClient(cookies: CookieJar) {
+  const uid = () => cookies.get(MOCK_SESSION_COOKIE)?.value ?? null;
+  const signIn = (id: string) => cookies.set?.(MOCK_SESSION_COOKIE, id, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 7 });
+  return {
+    from: (table: TableName) => new Query(table, rlsFor(uid())),
+    rpc: async () => ({ data: null, error: null }),
+    auth: {
+      getClaims: async () => ({ data: uid() && db().profiles.some((p) => p.id === uid()) ? { claims: { sub: uid() } } : null, error: null }),
+      /** Any password works; an unknown email signs in as the demo owner. */
+      signInWithPassword: async ({ email }: { email: string }) => {
+        const p = db().profiles.find((x) => x.email === email);
+        signIn(String(p?.id ?? DEMO_OWNER_ID));
+        return { data: {}, error: null };
+      },
+      signUp: async ({ email, options }: { email: string; options?: { data?: { display_name?: string } } }) => {
+        if (!db().profiles.some((p) => p.email === email)) {
+          db().profiles.push({
+            id: crypto.randomUUID(), email, display_name: options?.data?.display_name ?? null, role: "member",
+            tradingview_username: null, exness_account: null, ib_verified: false, created_at: new Date().toISOString(),
+          });
+        }
+        return { data: {}, error: null };
+      },
+      signOut: async () => { cookies.delete?.(MOCK_SESSION_COOKIE); return { error: null }; },
+      verifyOtp: async () => ({ data: {}, error: null }),
+      exchangeCodeForSession: async () => ({ data: {}, error: null }),
+    },
+  };
+}
+
+/** Service-role equivalent: no RLS, plus the ingest RPC. */
+export function createMockAdminClient() {
+  return {
+    from: (table: TableName) => new Query(table, () => true),
+    rpc: async (name: string, args: { p_events?: Row[] }) =>
+      name === "ingest_signal_events" ? { data: ingest(args.p_events ?? []), error: null } : { data: null, error: null },
+  };
+}

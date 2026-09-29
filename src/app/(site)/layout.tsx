@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteMobileMenu } from "@/components/site/mobile-menu";
 import { ButtonLink, Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
+import { hasBackend } from "@/lib/env";
 
 const NAV = [
   { href: "#indicators", label: "อินดิเคเตอร์" },
@@ -13,7 +13,7 @@ const NAV = [
 ];
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const viewer = isSupabaseConfigured() ? await getViewer() : null;
+  const viewer = hasBackend() ? await getViewer() : null;
   return (
     <div className="relative">
       <header className="surface-dark sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-xl">
