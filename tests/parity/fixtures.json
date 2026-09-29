@@ -1,0 +1,637 @@
+{
+ "now": 1790000000.0,
+ "wf1": {
+  "setup_buy": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "pending",
+     "event": "SETUP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "setup_sell": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:SELL\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|SELL|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|SELL|a|b|c:SETUP\nEntry:4380\nSL:4390\nTP:4350\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "pending",
+     "event": "SETUP",
+     "mode": "Limit",
+     "side": "SELL",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|SELL|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|SELL|a|b|c:SETUP",
+     "entry": 4380.0,
+     "sl": 4390.0,
+     "tp": 4350.0,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|SELL|a|b|c",
+     "key": "wf1:fa21ddb03968db4a236faf5728b8cc1e21e3e9701bd996e40f191db92b451f2f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "entry_market_amd": {
+   "text": "[WF1]\nIndicator:AMD\nEvent:ENTRY\nMode:Market\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:ENTRY\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "AMD",
+     "indicator": "AMD Pro",
+     "kind": "entry",
+     "event": "ENTRY",
+     "mode": "Market",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:ENTRY",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "AMD Pro",
+     "seq": "AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:d6f69ae0e83d9a421fccc8049a501cc299516ab4e2449a8176546a8268051f16",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "tp_terminal": {
+   "text": "[WF1]\nIndicator:DT\nEvent:TP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP:1\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:true\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "tp",
+     "event": "TP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP:1",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": 4400.0,
+     "terminal": true,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "tp_explicit_exit": {
+   "text": "[WF1]\nIndicator:DT\nEvent:TP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:true\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\nExit:4399.5\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "tp",
+     "event": "TP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": 4399.5,
+     "terminal": true,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "sl_terminal": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SL\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SL\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:true\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "sl",
+     "event": "SL",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SL",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": 4370.0,
+     "terminal": true,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "sd_tp_level": {
+   "text": "[WF1]\nIndicator:SD\nEvent:TP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:SD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:SD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP:2R\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "SD",
+     "indicator": "Supply and Demand",
+     "kind": "tp",
+     "event": "TP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "SD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "SD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP:2R",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": 4401.5,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Supply and Demand",
+     "seq": "SD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:be2cfc897072460d36203cae42c703a6cf07ea16ee1b71fd80d5aa2508a67d03",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "close_no_price": {
+   "text": "[WF1]\nIndicator:DT\nEvent:CLOSE\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:CLOSE\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:true\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "close",
+     "event": "CLOSE",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:CLOSE",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": null,
+     "terminal": true,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "info_unlinked": {
+   "text": "[WF1]\nIndicator:DT\nEvent:INFO\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:INFO\nEntry:\nSL:\nTP:\nTerminal:false\nIdentity Status:UNLINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "info",
+     "event": "INFO",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:INFO",
+     "entry": null,
+     "sl": null,
+     "tp": null,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "UNLINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "summary": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SUMMARY\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SUMMARY\nEntry:\nSL:\nTP:\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "info",
+     "event": "SUMMARY",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SUMMARY",
+     "entry": null,
+     "sl": null,
+     "tp": null,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "setup_name": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\nSetup Name:Demand Zone 07\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "pending",
+     "event": "SETUP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Demand Zone 07",
+     "seq": "Demand Zone 07",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "two_blocks": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]\ntext\n[WF1]\nIndicator:DT\nEvent:TP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:true\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "ok": [
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "pending",
+     "event": "SETUP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    },
+    {
+     "code": "DT",
+     "indicator": "Daytrade X",
+     "kind": "tp",
+     "event": "TP",
+     "mode": "Limit",
+     "side": "BUY",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "5",
+     "version": "v3",
+     "setup_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "event_id": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:TP",
+     "entry": 4380.5,
+     "sl": 4370.0,
+     "tp": 4400.0,
+     "exit": 4400.0,
+     "terminal": true,
+     "identity_status": "LINKED",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789989900.0,
+     "setup": "Daytrade X",
+     "seq": "DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c",
+     "key": "wf1:b0acf50309567391ad6d83217ae80b1a25d667d3ab5107b10cefd63d54dec32f",
+     "contract": "WF1"
+    }
+   ]
+  },
+  "period_levels": {
+   "text": "[WF1]\nIndicator:LV\nEvent:INFO\nMode:None\nSide:NONE\nSymbol:OANDA:XAUUSD\nTimeframe:1D\nVersion:v1\nSetup ID:LV|v1|OANDA:XAUUSD|1789948800000\nEvent ID:LV|v1|OANDA:XAUUSD|1789948800000:INFO\nTerminal:false\nIdentity Status:REFERENCE\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789948800000\nDay Close Ms:1790035200000\nFeed Timezone:UTC\nPDH:4400\nPDL:4350\nPWH:4450\nPWL:4300\nPMH:4500\nPML:4200\nDaily Open:4380\nWeekly Open:4360\nMonthly Open:4320\n[/WF1]",
+   "ok": [
+    {
+     "code": "LV",
+     "indicator": "Period Levels",
+     "kind": "info",
+     "event": "INFO",
+     "mode": "None",
+     "side": "NONE",
+     "symbol": "XAUUSD",
+     "feed_symbol": "OANDA:XAUUSD",
+     "timeframe": "1D",
+     "version": "v1",
+     "setup_id": "LV|v1|OANDA:XAUUSD|1789948800000",
+     "event_id": "LV|v1|OANDA:XAUUSD|1789948800000:INFO",
+     "entry": null,
+     "sl": null,
+     "tp": null,
+     "exit": null,
+     "terminal": false,
+     "identity_status": "REFERENCE",
+     "observed_at": 1789990000.0,
+     "bar_time": 1789948800.0,
+     "setup": "Period Levels",
+     "seq": "LV|v1|OANDA:XAUUSD|1789948800000",
+     "key": "wf1:22b141fd8eeed2acf182718270e22fc40267f368a31b32ab1f8a32570fdb80c6",
+     "contract": "WF1",
+     "levels": {
+      "PDH": 4400.0,
+      "PDL": 4350.0,
+      "PWH": 4450.0,
+      "PWL": 4300.0,
+      "PMH": 4500.0,
+      "PML": 4200.0,
+      "Daily Open": 4380.0,
+      "Weekly Open": 4360.0,
+      "Monthly Open": 4320.0
+     },
+     "day_close": 1790035200.0,
+     "feed_timezone": "UTC",
+     "no_marker": true
+    }
+   ]
+  },
+  "err_empty": {
+   "text": "hello",
+   "error": "WF1 ไม่ครบ"
+  },
+  "err_unbalanced": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]\n[WF1]",
+   "error": "WF1 ไม่ครบ"
+  },
+  "err_dup_field": {
+   "text": "[WF1]\nIndicator:DT\nIndicator:DT\n[/WF1]",
+   "error": "WF1 ฟิลด์ซ้ำหรือไม่ถูกต้อง"
+  },
+  "err_blank_line": {
+   "text": "[WF1]\nIndicator:DT\n\nEvent:SETUP\n[/WF1]",
+   "error": "WF1 ฟิลด์ซ้ำหรือไม่ถูกต้อง"
+  },
+  "err_bad_code": {
+   "text": "[WF1]\nIndicator:ZZ\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 ชนิดเหตุการณ์ไม่ถูกต้อง"
+  },
+  "err_bad_order": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4390\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 ลำดับราคาไม่ถูกต้อง"
+  },
+  "err_mode_mismatch": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Market\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 โหมดไม่ตรงกับอินดิเคเตอร์"
+  },
+  "err_entry_limit": {
+   "text": "[WF1]\nIndicator:AMD\nEvent:ENTRY\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:AMD|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:ENTRY\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 Event และ Mode ขัดกัน"
+  },
+  "err_not_terminal": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SL\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SL\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 สถานะปิดไม่ถูกต้อง"
+  },
+  "err_future": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1790100000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 เวลาไม่ถูกต้อง"
+  },
+  "err_time_unit": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:s\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 เวลาไม่ถูกต้อง"
+  },
+  "err_sid_mismatch": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:EURUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 Setup ID ไม่ตรงกับข้อมูล"
+  },
+  "err_eid_mismatch": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:ENTRY\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 Event ID ไม่ตรง"
+  },
+  "err_price_zero": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:0\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 ราคาไม่ถูกต้อง"
+  },
+  "err_price_text": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:abc\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 ราคาไม่ครบ"
+  },
+  "err_terminal_bad": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:yes\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 Terminal ไม่ถูกต้อง"
+  },
+  "err_lv_bad": {
+   "text": "[WF1]\nIndicator:LV\nEvent:INFO\nMode:None\nSide:NONE\nSymbol:OANDA:XAUUSD\nTimeframe:5\nVersion:v1\nSetup ID:LV|v1|OANDA:XAUUSD|1789948800000\nEvent ID:LV|v1|OANDA:XAUUSD|1789948800000:INFO\nTerminal:false\nIdentity Status:REFERENCE\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789948800000\nDay Close Ms:1790035200000\nFeed Timezone:UTC\nPDH:4400\nPDL:4350\nPWH:4450\nPWL:4300\nPMH:4500\nPML:4200\nDaily Open:4380\nWeekly Open:4360\nMonthly Open:4320\n[/WF1]",
+   "error": "Period Levels ต้องเป็นข้อมูลอ้างอิงเท่านั้น"
+  },
+  "err_lv_high_low": {
+   "text": "[WF1]\nIndicator:LV\nEvent:INFO\nMode:None\nSide:NONE\nSymbol:OANDA:XAUUSD\nTimeframe:1D\nVersion:v1\nSetup ID:LV|v1|OANDA:XAUUSD|1789948800000\nEvent ID:LV|v1|OANDA:XAUUSD|1789948800000:INFO\nTerminal:false\nIdentity Status:REFERENCE\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789948800000\nDay Close Ms:1790035200000\nFeed Timezone:UTC\nPDH:4000\nPDL:4350\nPWH:4450\nPWL:4300\nPMH:4500\nPML:4200\nDaily Open:4380\nWeekly Open:4360\nMonthly Open:4320\n[/WF1]",
+   "error": "Period Levels High ต่ำกว่า Low"
+  },
+  "err_bad_tf": {
+   "text": "[WF1]\nIndicator:DT\nEvent:SETUP\nMode:Limit\nSide:BUY\nSymbol:OANDA:XAUUSD\nTimeframe:5m\nVersion:v3\nSetup ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c\nEvent ID:DT|v3|x|OANDA:XAUUSD|5|z1|BUY|a|b|c:SETUP\nEntry:4380.5\nSL:4370\nTP:4400\nTerminal:false\nIdentity Status:LINKED\nTime Unit:unix_ms\nObserved At Ms:1789990000000\nBar Time Ms:1789989900000\n[/WF1]",
+   "error": "WF1 ตัวตนสัญญาณไม่ครบ"
+  }
+ },
+ "shapes": [
+  {
+   "text": "Alert body\n#S B,acc,1789700000,1789712600,4386.5,4379.4,Accumulation 07;L,cisd,1789712900,1789719000,4384.2,CISD\ntrailer",
+   "clean": "Alert body\n\ntrailer",
+   "shapes": {
+    "boxes": [
+     {
+      "t1": 1789700000,
+      "t2": 1789712600,
+      "p1": 4386.5,
+      "p2": 4379.4,
+      "label": "Accumulation 07",
+      "fill": "rgba(33,150,243,.15)",
+      "stroke": "rgba(33,150,243,.7)",
+      "labelColor": "#000",
+      "labelPos": "inside",
+      "style_id": "acc"
+     }
+    ],
+    "lines": [
+     {
+      "t1": 1789712900,
+      "t2": 1789719000,
+      "price": 4384.2,
+      "label": "CISD",
+      "color": "#000000",
+      "style": "solid",
+      "width": 2,
+      "labelSide": "right",
+      "style_id": "cisd"
+     }
+    ]
+   }
+  },
+  {
+   "text": "Alert body\n#S B,zone_d,1789700000,0,4386.5,4379.4,Demand, strong;L,unknown,1789712900,0,4,384.2\ntrailer",
+   "clean": "Alert body\n\ntrailer",
+   "shapes": {
+    "boxes": [
+     {
+      "t1": 1789700000,
+      "t2": null,
+      "p1": 4386.5,
+      "p2": 4379.4,
+      "label": "Demand, strong",
+      "fill": "rgba(8,153,129,.5)",
+      "stroke": "rgba(8,153,129,.9)",
+      "labelColor": "#000",
+      "labelPos": "inside",
+      "style_id": "zone_d"
+     }
+    ],
+    "lines": [
+     {
+      "t1": 1789712900,
+      "t2": null,
+      "price": 4.0,
+      "label": "384.2",
+      "color": "#333333",
+      "style": "solid",
+      "width": 1.5,
+      "labelSide": "end",
+      "style_id": "unknown"
+     }
+    ]
+   }
+  },
+  {
+   "text": "Alert body\n#S P,structure,100,200,1.5,2.5,trend;P,structure,200,100,1,2,bad;X,foo\ntrailer",
+   "clean": "Alert body\n\ntrailer",
+   "shapes": {
+    "boxes": [],
+    "lines": [
+     {
+      "t1": 100,
+      "t2": 200,
+      "price": 1.5,
+      "price2": 2.5,
+      "label": "trend",
+      "color": "#333333",
+      "style": "solid",
+      "width": 1.5,
+      "labelSide": "center",
+      "style_id": "structure"
+     }
+    ]
+   }
+  },
+  {
+   "text": "Alert body\n#S B,acc,abc,1,2,3;L,sl,0,5,4380\ntrailer",
+   "clean": "Alert body\n\ntrailer",
+   "shapes": null
+  },
+  {
+   "text": "Alert body\n#S \ntrailer",
+   "clean": "Alert body\n\ntrailer",
+   "shapes": null
+  }
+ ],
+ "tf": {
+  "5m": 300,
+  "1H": 3600,
+  "15": 900,
+  "D": 86400,
+  "1d": 86400,
+  "W": 604800,
+  "2w": 1209600,
+  "30s": 30,
+  "": 300,
+  "abc": 300,
+  "None": 300,
+  "4h": 14400
+ }
+}
