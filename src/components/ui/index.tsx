@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
+/** Full width unless the caller sets its own base width (no tailwind-merge, so w-full would otherwise win). */
+const fullUnless = (className?: string) => !/(^|\s)w-/.test(className ?? "") && "w-full";
 export { cx };
 
 type Variant = "brand" | "ghost" | "outline" | "danger";
@@ -47,7 +49,7 @@ const tones: Record<Tone, string> = {
 };
 
 export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: Tone }) {
-  return <span className={cx("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-5", tones[tone], className)} {...props} />;
+  return <span className={cx("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium leading-5", tones[tone], className)} {...props} />;
 }
 
 export function Field({ label, hint, error, children }: { label: string; hint?: ReactNode; error?: string; children: ReactNode }) {
@@ -64,7 +66,8 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
   return (
     <input
       className={cx(
-        "h-10 w-full rounded-lg border border-line-strong bg-ink/60 px-3 text-sm text-fg placeholder:text-faint",
+        "h-10 rounded-lg border border-line-strong bg-panel px-3 text-sm text-fg placeholder:text-faint",
+        fullUnless(className),
         "transition-colors focus:border-brand/70 focus:outline-none focus:ring-2 focus:ring-brand/15",
         className,
       )}
@@ -76,7 +79,7 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
 export function Select({ className, ...props }: ComponentProps<"select">) {
   return (
     <select
-      className={cx("h-10 w-full rounded-lg border border-line-strong bg-ink/60 px-3 text-sm text-fg focus:border-brand/70 focus:outline-none", className)}
+      className={cx("h-10 rounded-lg border border-line-strong bg-panel px-3 text-sm text-fg focus:border-brand/70 focus:outline-none", fullUnless(className), className)}
       {...props}
     />
   );

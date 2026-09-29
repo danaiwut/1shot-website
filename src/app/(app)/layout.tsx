@@ -31,15 +31,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="surface-dark flex h-16 items-center justify-between bg-ink px-4 lg:hidden">
+        <header className="surface-dark sticky top-0 z-30 flex h-16 items-center justify-between bg-ink/95 px-4 backdrop-blur-xl lg:hidden">
           <Link href="/"><Logo /></Link>
-          <form action="/auth/signout" method="post">
-            <button className="rounded-md p-2 text-muted" aria-label="ออกจากระบบ"><LogOut className="size-4" /></button>
-          </form>
+          <Link href="/account" aria-label="บัญชีของฉัน" className="grid size-9 place-items-center rounded-full bg-brand text-sm font-semibold text-white uppercase">
+            {name.slice(0, 1)}
+          </Link>
         </header>
-        <main className="mx-auto max-w-6xl px-4 pt-8 pb-28 sm:px-6 lg:px-10 lg:pb-16">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 sm:pt-8 lg:px-10 lg:pb-16">{children}</main>
       </div>
-      <MobileNav staff={staff} />
+      <MobileNav staff={staff} name={name} email={profile.email} />
     </div>
   );
 }

@@ -16,8 +16,8 @@ export default async function IndicatorsAdminPage() {
         <CardHeader title="รายการ" />
         <ul className="divide-y divide-line">
           {((data ?? []) as Indicator[]).map((ind) => (
-            <li key={ind.code} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-56">
+            <li key={ind.code} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
+              <div className="min-w-0 sm:min-w-56">
                 <p className="text-sm font-medium"><span className="num mr-2 text-accent">{ind.code}</span>{ind.name}</p>
                 <p className="text-xs text-muted">{ind.family} · {ind.modes.join(" / ") || "ข้อมูลอ้างอิง"}</p>
               </div>

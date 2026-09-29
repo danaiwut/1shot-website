@@ -45,11 +45,11 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
     <>
       <PageHeader eyebrow="Signals" title="สัญญาณ" description="Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด" action={<LiveRefresh />} />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <Segmented items={STATUS_FILTERS.map((f) => ({ label: f.label, href: href({ status: f.id, page: "" }), on: f.id === statusId }))} />
         <Segmented items={[{ label: "ทุกฝั่ง", v: "" }, { label: "BUY", v: "BUY" }, { label: "SELL", v: "SELL" }].map((s) => ({ label: s.label, href: href({ side: s.v, page: "" }), on: side === s.v }))} />
       </div>
-      <div className="mb-6 flex flex-wrap gap-1.5">
+      <div className="-mx-4 mb-6 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
         <Chip href={href({ code: "", page: "" })} on={!code}>ทั้งหมด</Chip>
         {(indicators as Pick<Indicator, "code" | "name">[] | null)?.map((i) => (
           <Chip key={i.code} href={href({ code: i.code, page: "" })} on={code === i.code} title={i.name}>{i.code}</Chip>
@@ -65,7 +65,7 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
       </Card>
       {(count ?? 0) > setups.length && (
         <div className="mt-4 flex justify-center">
-          <Link href={href({ page: String(page + 1) })} scroll={false} className="rounded-lg border border-line-strong px-4 py-2 text-sm text-muted hover:text-fg">
+          <Link href={href({ page: String(page + 1) })} scroll={false} className="rounded-xl border border-line-strong bg-panel px-4 py-2 text-sm text-muted hover:text-fg">
             โหลดเพิ่ม ({setups.length}/{count})
           </Link>
         </div>
@@ -76,9 +76,9 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
 
 function Segmented({ items }: { items: { label: string; href: string; on: boolean }[] }) {
   return (
-    <div className="inline-flex rounded-lg border border-line bg-panel p-0.5">
+    <div className="inline-flex rounded-xl border border-line bg-panel p-1">
       {items.map((i) => (
-        <Link key={i.label} href={i.href} className={cx("rounded-md px-3 py-1.5 text-xs transition-colors", i.on ? "bg-panel-3 text-fg" : "text-muted hover:text-fg")}>
+        <Link key={i.label} href={i.href} className={cx("rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", i.on ? "bg-brand text-white" : "text-muted hover:text-fg")}>
           {i.label}
         </Link>
       ))}
@@ -88,7 +88,7 @@ function Segmented({ items }: { items: { label: string; href: string; on: boolea
 
 function Chip({ href, on, children, title }: { href: string; on: boolean; children: React.ReactNode; title?: string }) {
   return (
-    <Link href={href} title={title} className={cx("num rounded-md border px-2.5 py-1 text-xs transition-colors", on ? "border-brand/50 bg-brand-dim text-accent" : "border-line text-muted hover:border-line-strong hover:text-fg")}>
+    <Link href={href} title={title} className={cx("num shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors", on ? "border-fg bg-fg text-ink" : "border-line bg-panel text-muted hover:border-line-strong hover:text-fg")}>
       {children}
     </Link>
   );

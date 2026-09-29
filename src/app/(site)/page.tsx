@@ -112,25 +112,25 @@ export default function HomePage() {
 
       {/* Indicators */}
       <section id="indicators" className="scroll-mt-18">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <SectionHead
             eyebrow="Indicators"
             title={<>อินดิเคเตอร์ 10 ตัว<br />ในที่เดียว<span className="text-accent">.</span></>}
             aside="สิทธิ์แยกตามอินดิเคเตอร์ เลือกดูเฉพาะตัวที่คุณถือสิทธิ์ใน TradingView ทุกตัวส่งสัญญาณผ่านมาตรฐาน WF1 เดียวกัน"
           />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
             {CATALOG.map((ind) => (
               <Link
                 key={ind.code}
                 href={`/signals?code=${ind.code}`}
-                className="group flex flex-col rounded-card border border-line bg-panel p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-[0_18px_40px_-20px_rgb(178_0_22/0.35)]"
+                className="group flex flex-col rounded-card border border-line bg-panel p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-[0_18px_40px_-20px_rgb(178_0_22/0.35)]"
               >
                 <span className="num grid size-11 place-items-center rounded-xl bg-brand-dim text-sm font-bold text-accent transition-colors group-hover:bg-brand group-hover:text-white">
                   {ind.code}
                 </span>
-                <p className="mt-5 font-semibold">{ind.name}</p>
+                <p className="mt-4 text-sm font-semibold sm:text-base">{ind.name}</p>
                 <p className="mt-1.5 flex-1 text-xs leading-relaxed text-muted">{ind.description}</p>
-                <span className="mt-5 flex items-center justify-between text-xs">
+                <span className="mt-4 flex flex-wrap items-center justify-between gap-1 text-xs">
                   <span className="font-medium text-accent">ดูสัญญาณ →</span>
                   <span className="tracking-wider text-faint uppercase">{ind.family}</span>
                 </span>
@@ -142,7 +142,7 @@ export default function HomePage() {
 
       {/* Risk guard */}
       <section id="guard" className="scroll-mt-18 border-t border-line bg-panel-2">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="space-y-3">
               <p className="eyebrow">Risk guard</p>
@@ -175,8 +175,8 @@ export default function HomePage() {
 
       {/* Process */}
       <section id="how" className="scroll-mt-18">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-          <div className="grid gap-12 rounded-[28px] bg-brand-dim p-8 sm:p-12 lg:grid-cols-[0.8fr_2fr] lg:items-center">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="grid gap-10 rounded-[28px] bg-brand-dim p-6 sm:p-12 lg:grid-cols-[0.8fr_2fr] lg:items-center">
             <div className="space-y-3">
               <p className="eyebrow">Pipeline</p>
               <h2 className="text-3xl leading-tight font-bold tracking-tight">
@@ -184,7 +184,7 @@ export default function HomePage() {
               </h2>
               <p className="text-sm leading-relaxed text-muted">ทุกขั้นตอนตรวจแบบกำหนดตายตัว ระดับราคาที่เห็นคือระดับที่อินดิเคเตอร์ส่งมาจริง</p>
             </div>
-            <ol className="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            <ol className="relative grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
               <div aria-hidden className="absolute top-6 right-[12%] left-[12%] hidden border-t-2 border-dashed border-brand/25 lg:block" />
               {FLOW.map((f, i) => (
                 <li key={f.title} className="relative">
@@ -202,11 +202,11 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section id="join" className="scroll-mt-18 px-4 pb-24 sm:px-6">
+      <section id="join" className="scroll-mt-18 px-4 pb-16 sm:px-6 sm:pb-24">
         <div className="surface-dark relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-ink">
           <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-          <div className="relative flex flex-col gap-8 p-8 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-5">
+          <div className="relative flex flex-col gap-8 p-6 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col items-start gap-5 sm:flex-row">
               <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand text-white">
                 <Rocket className="size-6" strokeWidth={1.8} />
               </span>
@@ -224,7 +224,7 @@ export default function HomePage() {
                 </ol>
               </div>
             </div>
-            <ButtonLink href="/signup" className="h-12 shrink-0 px-6">
+            <ButtonLink href="/signup" className="h-12 w-full shrink-0 px-6 sm:w-auto">
               สมัครสมาชิก <ArrowRight className="size-4" />
             </ButtonLink>
           </div>

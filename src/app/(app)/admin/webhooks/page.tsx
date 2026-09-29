@@ -19,7 +19,7 @@ export default async function WebhooksPage() {
       <PageHeader eyebrow="Admin" title="Webhook log" description="Alert จาก TradingView 100 รายการล่าสุด" />
       <Card className="mb-6 p-5">
         <p className="text-xs text-muted">URL สำหรับตั้งใน TradingView Alert → Webhook URL</p>
-        <code className="num mt-2 block overflow-x-auto rounded-lg bg-ink px-3 py-2.5 text-xs">{publicEnv.siteUrl()}/api/webhook/tradingview/{masked}</code>
+        <code className="num mt-2 block overflow-x-auto rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-xs whitespace-nowrap">{publicEnv.siteUrl()}/api/webhook/tradingview/{masked}</code>
         <p className="mt-2 text-xs text-faint">ใช้ค่า secret จริงจากตัวแปรสภาพแวดล้อม เก็บ URL นี้เป็นความลับ ใครได้ไปก็ส่งสัญญาณปลอมเข้าระบบได้</p>
       </Card>
       <Card>
@@ -27,9 +27,9 @@ export default async function WebhooksPage() {
         {data?.length ? (
           <ul className="divide-y divide-line">
             {(data as Receipt[]).map((r) => (
-              <li key={r.id} className="px-5 py-3">
+              <li key={r.id} className="px-4 py-3 sm:px-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
+                  <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <Badge tone={r.ok ? (r.inserted ? "buy" : "neutral") : "sell"}>{r.ok ? (r.inserted ? `บันทึก ${r.inserted}` : "ซ้ำ") : "ปฏิเสธ"}</Badge>
                     {r.error && <span className="text-xs text-sell">{r.error}</span>}
                   </span>
@@ -38,7 +38,7 @@ export default async function WebhooksPage() {
                 {r.excerpt && (
                   <details className="mt-2">
                     <summary className="cursor-pointer text-[11px] text-muted">ดูข้อความ</summary>
-                    <pre className="num mt-2 max-h-48 overflow-auto rounded-lg bg-ink p-3 text-[11px] whitespace-pre-wrap text-muted">{r.excerpt}</pre>
+                    <pre className="num mt-2 max-h-48 overflow-auto rounded-lg border border-line bg-panel-2 p-3 text-[11px] whitespace-pre-wrap text-muted">{r.excerpt}</pre>
                   </details>
                 )}
               </li>

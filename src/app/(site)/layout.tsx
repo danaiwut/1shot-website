@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { SiteMobileMenu } from "@/components/site/mobile-menu";
 import { ButtonLink, Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -32,16 +33,17 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             ) : (
               <>
                 <span className="hidden sm:block"><ButtonLink href="/login" variant="ghost">เข้าสู่ระบบ</ButtonLink></span>
-                <ButtonLink href="/signup">สมัครสมาชิก <ArrowRight className="size-4" /></ButtonLink>
+                <span className="hidden min-[400px]:block"><ButtonLink href="/signup">สมัครสมาชิก <ArrowRight className="size-4" /></ButtonLink></span>
               </>
             )}
+            <SiteMobileMenu links={NAV} signedIn={Boolean(viewer)} />
           </div>
         </div>
       </header>
       {children}
       <footer className="surface-dark bg-ink">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 text-sm sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
-          <div className="space-y-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 text-sm sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="col-span-2 space-y-4 md:col-span-1">
             <Logo />
             <p className="max-w-xs text-xs leading-relaxed text-muted">
               สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อม Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด

@@ -39,7 +39,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
       <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
         <Card>
           <CardHeader title="ระดับราคา" hint="ตามที่อินดิเคเตอร์ส่งมา ณ ตอนเกิด Setup" />
-          <div className="px-5 pt-6 pb-10"><PriceLadder side={setup.side} entry={setup.entry} sl={setup.sl} tp={setup.tp} exit={setup.exit_price} /></div>
+          <div className="px-4 pt-6 pb-10 sm:px-5"><PriceLadder side={setup.side} entry={setup.entry} sl={setup.sl} tp={setup.tp} exit={setup.exit_price} /></div>
           <dl className="grid grid-cols-2 border-t border-line text-sm">
             <Meta k="Risk : Reward" v={r !== null ? `1 : ${r}` : "—"} />
             <Meta k="ราคาออก" v={fmtPrice(setup.exit_price)} />
@@ -52,7 +52,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
           {shapes && (
             <Card>
               <CardHeader title="โซนจากอินดิเคเตอร์" hint="กล่องและเส้นที่อินดิเคเตอร์วาด ไม่ใช่กราฟแท่งเทียน" />
-              <div className="p-4"><ZoneMap shapes={shapes} entry={setup.entry} sl={setup.sl} tp={setup.tp} endAt={endAt} /></div>
+              <div className="overflow-x-auto p-3 sm:p-4"><ZoneMap shapes={shapes} entry={setup.entry} sl={setup.sl} tp={setup.tp} endAt={endAt} /></div>
             </Card>
           )}
           <Card>
@@ -71,7 +71,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
                           {e.exit_price != null ? `ราคา ${fmtPrice(e.exit_price)}` : e.entry != null ? `Entry ${fmtPrice(e.entry)}` : ""}
                         </p>
                       </div>
-                      <time className="text-xs text-faint">{fmtDateTime(e.observed_at)}</time>
+                      <time className="text-[11px] text-faint sm:text-xs">{fmtDateTime(e.observed_at)}</time>
                     </div>
                   </li>
                 );

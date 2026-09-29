@@ -24,9 +24,9 @@ export function IbToggle({ userId, verified, disabled }: { userId: string; verif
         aria-checked={verified}
         disabled={busy || disabled}
         onClick={() => run(() => setIbVerified(userId, !verified))}
-        className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${verified ? "bg-buy" : "bg-panel-3"}`}
+        className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${verified ? "bg-buy" : "bg-line-strong"}`}
       >
-        <span className={`absolute top-0.5 size-5 rounded-full bg-fg transition-all ${verified ? "left-[22px]" : "left-0.5"}`} />
+        <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${verified ? "left-[22px]" : "left-0.5"}`} />
       </button>
     </span>
   );
@@ -61,7 +61,7 @@ export function GrantForm({ userId, code, current, has }: { userId: string; code
         <option value="lifetime">ตลอดชีพ</option>
       </Select>
       {duration === "date" && (
-        <input name="expires_on" type="date" defaultValue={defaultDate} className="h-8 rounded-lg border border-line-strong bg-ink/60 px-2 text-xs text-fg [color-scheme:dark]" />
+        <input name="expires_on" type="date" defaultValue={defaultDate} className="h-8 rounded-lg border border-line-strong bg-panel px-2 text-xs text-fg" />
       )}
       <Button type="submit" variant={has ? "outline" : "brand"} className="h-8 px-3 text-xs" disabled={pending}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
       {state.error && <span className="w-full text-right text-[11px] text-sell">{state.error}</span>}

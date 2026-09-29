@@ -1,28 +1,38 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, LayoutDashboard, Newspaper, Settings2, ShieldHalf, Webhook, Users, SlidersHorizontal } from "lucide-react";
+import {
+  Activity, LayoutDashboard, LogOut, Menu, Newspaper, Settings2, ShieldHalf, SlidersHorizontal, Users, Webhook, X,
+} from "lucide-react";
 import { cx } from "@/components/ui";
 
 const MEMBER = [
-  { href: "/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
-  { href: "/signals", label: "สัญญาณ", icon: Activity },
-  { href: "/news", label: "ข่าวและสรุปตลาด", icon: Newspaper },
-  { href: "/account", label: "บัญชีของฉัน", icon: Settings2 },
+  { href: "/dashboard", label: "ภาพรวม", short: "ภาพรวม", icon: LayoutDashboard },
+  { href: "/signals", label: "สัญญาณ", short: "สัญญาณ", icon: Activity },
+  { href: "/news", label: "ข่าวและสรุปตลาด", short: "ข่าว", icon: Newspaper },
+  { href: "/account", label: "บัญชีของฉัน", short: "บัญชี", icon: Settings2 },
 ];
 const STAFF = [
-  { href: "/admin", label: "สมาชิก", icon: Users },
-  { href: "/admin/indicators", label: "อินดิเคเตอร์และห้อง", icon: SlidersHorizontal },
-  { href: "/admin/webhooks", label: "Webhook log", icon: Webhook },
+  { href: "/admin", label: "สมาชิก", short: "สมาชิก", icon: Users },
+  { href: "/admin/indicators", label: "อินดิเคเตอร์และห้อง", short: "อินดิเคเตอร์", icon: SlidersHorizontal },
+  { href: "/admin/webhooks", label: "Webhook log", short: "Webhook", icon: Webhook },
 ];
+type Item = (typeof MEMBER)[number];
+
+function useActive() {
+  const path = usePathname();
+  return (href: string) =>
+    href === "/admin" ? path === "/admin" || path.startsWith("/admin/members") : path === href || path.startsWith(`${href}/`);
+}
 
 export function AppNav({ staff }: { staff: boolean }) {
-  const path = usePathname();
-  const active = (href: string) => (href === "/admin" ? path === "/admin" || path.startsWith("/admin/members") : path === href || path.startsWith(`${href}/`));
-  const item = (i: (typeof MEMBER)[number]) => (
+  const active = useActive();
+  const item = (i: Item) => (
     <Link
       key={i.href}
       href={i.href}
+      aria-current={active(i.href) ? "page" : undefined}
       className={cx(
         "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
         active(i.href) ? "bg-brand text-white shadow-[0_10px_24px_-12px_rgb(178_0_22/0.8)]" : "text-muted hover:bg-panel-3 hover:text-fg",
@@ -47,20 +57,71 @@ export function AppNav({ staff }: { staff: boolean }) {
   );
 }
 
-export function MobileNav({ staff }: { staff: boolean }) {
+/** Bottom tab bar + a sheet holding every destination (staff pages included) on small screens. */
+export function MobileNav({ staff, name, email }: { staff: boolean; name: string; email: string }) {
+  const active = useActive();
   const path = usePathname();
-  const items = [...MEMBER, ...(staff ? STAFF.slice(0, 1) : [])];
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [open]);
+  const staffActive = STAFF.some((i) => active(i.href));
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-panel/95 backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
-      {items.map((i) => {
-        const on = path === i.href || path.startsWith(`${i.href}/`);
-        return (
-          <Link key={i.href} href={i.href} className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px]", on ? "text-accent" : "text-muted")}>
+    <>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+        {MEMBER.map((i) => (
+          <Link
+            key={i.href}
+            href={i.href}
+            aria-current={active(i.href) ? "page" : undefined}
+            className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium", active(i.href) ? "text-accent" : "text-muted")}
+          >
             <i.icon className="size-5" strokeWidth={1.7} />
-            {i.label.split(" ")[0]}
+            {i.short}
           </Link>
-        );
-      })}
-    </nav>
+        ))}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-controls="mobile-sheet"
+          className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium", staffActive || open ? "text-accent" : "text-muted")}
+        >
+          <Menu className="size-5" strokeWidth={1.7} />
+          เมนู
+        </button>
+      </nav>
+
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="เมนู" id="mobile-sheet">
+          <button type="button" aria-label="ปิดเมนู" className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="surface-dark absolute inset-x-0 bottom-0 max-h-[85dvh] animate-rise overflow-y-auto rounded-t-3xl bg-ink px-4 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line-strong" />
+            <div className="mb-4 flex items-center gap-3 px-1">
+              <span className="grid size-10 place-items-center rounded-full bg-brand text-sm font-semibold text-white uppercase">{name.slice(0, 1)}</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{name}</p>
+                <p className="truncate text-xs text-muted">{email}</p>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-muted hover:bg-panel-3" aria-label="ปิด">
+                <X className="size-5" />
+              </button>
+            </div>
+            <AppNav staff={staff} />
+            <form action="/auth/signout" method="post" className="mt-4 border-t border-line pt-4">
+              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted hover:bg-panel-3 hover:text-fg">
+                <LogOut className="size-4" /> ออกจากระบบ
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

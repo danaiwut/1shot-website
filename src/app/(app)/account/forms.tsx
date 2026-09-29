@@ -9,7 +9,7 @@ import { confirmTelegramLink, joinRoom, saveProfile, startTelegramLink } from ".
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action, pending] = useActionState(saveProfile, {});
   return (
-    <form action={action} className="space-y-4 p-5">
+    <form action={action} className="space-y-4 p-4 sm:p-5">
       <Field label="ชื่อที่แสดง">
         <Input name="display_name" defaultValue={profile.display_name ?? ""} maxLength={60} />
       </Field>
@@ -83,7 +83,7 @@ export function TelegramLinker({ pending }: { pending: { name: string | null; us
             </a>
           ) : (
             <div className="flex items-center gap-2">
-              <code className="num flex-1 truncate rounded-md bg-ink px-3 py-2 text-xs">/start {link.token}</code>
+              <code className="num flex-1 truncate rounded-lg border border-line bg-panel px-3 py-2 text-xs">/start {link.token}</code>
               <Button variant="outline" className="h-8 px-2.5" onClick={() => navigator.clipboard.writeText(`/start ${link.token}`)} aria-label="คัดลอก"><Copy className="size-3.5" /></Button>
             </div>
           )}

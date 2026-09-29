@@ -35,7 +35,7 @@ export default async function AccountPage() {
         <div className="space-y-6">
           <Card id="telegram">
             <CardHeader title="Telegram" hint="ใช้รับลิงก์เข้าห้องสัญญาณตามสิทธิ์ของคุณ" />
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               {link ? (
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -57,7 +57,7 @@ export default async function AccountPage() {
                 {list.map((r) => {
                   const active = !r.expires_at || new Date(r.expires_at) > new Date();
                   return (
-                    <li key={r.code} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                    <li key={r.code} className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
                       <div>
                         <p className="text-sm"><span className="num mr-2 text-accent">{r.code}</span>{r.indicators?.name}</p>
                         <p className="text-[11px] text-muted">{r.expires_at ? `${active ? "ใช้ได้ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</p>

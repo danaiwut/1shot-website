@@ -29,13 +29,41 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
   return (
     <>
       <PageHeader eyebrow="Admin" title="สมาชิก" description={`ทั้งหมด ${rows.length}${rows.length === 200 ? "+" : ""} คน`} />
-      <form className="relative mb-4 max-w-md">
+      <form className="relative mb-4 md:max-w-md">
         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
         <Input name="q" defaultValue={q} placeholder="ค้นหาอีเมล, TradingView, เลขบัญชี Exness" className="pl-9" />
       </form>
-      <Card className="overflow-x-auto">
+      <Card className="overflow-hidden">
         {rows.length ? (
-          <table className="w-full min-w-[760px] text-sm">
+          <>
+          <ul className="divide-y divide-line md:hidden">
+            {rows.map((r) => {
+              const active = r.indicator_rights.filter((x) => !x.expires_at || new Date(x.expires_at) > now);
+              return (
+                <li key={r.id}>
+                  <Link href={`/admin/members/${r.id}`} className="flex items-start gap-3 px-4 py-3.5 active:bg-panel-2">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-dim text-sm font-semibold text-accent uppercase">
+                      {(r.display_name || r.email).slice(0, 1)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold">{r.display_name || r.email.split("@")[0]}</span>
+                        {r.role !== "member" && <Badge tone="brand">{r.role}</Badge>}
+                      </p>
+                      <p className="truncate text-xs text-muted">{r.email}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "brand"}>{r.ib_verified ? "IB ✓" : "รอตรวจ IB"}</Badge>}
+                        {r.telegram_links && <Badge>Telegram</Badge>}
+                        {active.length > 0 && <Badge className="num">{active.map((x) => x.code).join(" · ")}</Badge>}
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-faint">{fmtDate(r.created_at)}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <table className="hidden w-full text-sm md:table">
             <thead className="border-b border-line text-left text-[11px] tracking-wide text-faint uppercase">
               <tr>
                 <th className="px-5 py-3 font-medium">สมาชิก</th>
@@ -71,6 +99,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
               })}
             </tbody>
           </table>
+          </>
         ) : (
           <Empty title="ไม่พบสมาชิก" />
         )}

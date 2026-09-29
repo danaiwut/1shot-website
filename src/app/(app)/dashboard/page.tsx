@@ -38,7 +38,7 @@ export default async function DashboardPage() {
     <>
       <PageHeader eyebrow="Dashboard" title={`สวัสดี, ${name}`} description="สถานะบัญชีและสัญญาณล่าสุดจากอินดิเคเตอร์ที่คุณมีสิทธิ์" />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
         <Stat label="Setup ที่เปิดอยู่" value={open.length} hint="รอเข้า / เข้าแล้ว" />
         <Stat label="อินดิเคเตอร์ที่ใช้ได้" value={activeRights.length} hint={`จากทั้งหมด ${rights.length} รายการ`} />
         <Stat label="ความพร้อมบัญชี" value={`${progress}/${steps.length}`} hint={progress === steps.length ? "พร้อมใช้งานครบ" : "ทำขั้นตอนที่เหลือให้ครบ"} />
@@ -62,9 +62,9 @@ export default async function DashboardPage() {
                 <li key={s.label}>
                   <Link href={s.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-panel-2">
                     {s.done ? (
-                      <span className="grid size-5 place-items-center rounded-full bg-buy/20 text-buy"><Check className="size-3" strokeWidth={3} /></span>
+                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-buy text-white"><Check className="size-3" strokeWidth={3} /></span>
                     ) : (
-                      <Circle className="size-5 text-faint" strokeWidth={1.5} />
+                      <Circle className="size-5 shrink-0 text-faint" strokeWidth={1.5} />
                     )}
                     <span className={s.done ? "text-muted line-through decoration-faint" : ""}>{s.label}</span>
                     {s.note && <Badge tone="brand" className="ml-auto">{s.note}</Badge>}
@@ -107,10 +107,10 @@ export default async function DashboardPage() {
 
 function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint: string }) {
   return (
-    <Card className="p-5">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="num mt-2 text-3xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-faint">{hint}</p>
+    <Card className="p-3.5 sm:p-5">
+      <p className="text-[11px] leading-snug text-muted sm:text-xs">{label}</p>
+      <p className="num mt-1.5 text-2xl font-semibold sm:mt-2 sm:text-3xl">{value}</p>
+      <p className="mt-1 hidden text-xs text-faint sm:block">{hint}</p>
     </Card>
   );
 }

@@ -41,7 +41,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
           </Card>
           <Card>
             <CardHeader title="Telegram" />
-            <div className="flex items-center justify-between gap-3 px-5 py-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm sm:px-5">
               {link ? (
                 <>
                   <div>
@@ -64,7 +64,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
               const r = byCode.get(ind.code);
               const active = r && (!r.expires_at || new Date(r.expires_at) > now);
               return (
-                <li key={ind.code} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                <li key={ind.code} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
                   <div className="min-w-40">
                     <p className="text-sm"><span className="num mr-2 text-accent">{ind.code}</span>{ind.name}</p>
                     <p className="text-[11px] text-muted">
@@ -72,7 +72,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
                       {r?.note ? ` · ${r.note}` : ""}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <GrantForm userId={member.id} code={ind.code} current={r?.expires_at ?? null} has={Boolean(r)} />
                     {r && <RevokeButton userId={member.id} code={ind.code} />}
                   </div>
@@ -88,7 +88,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3">
+    <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
       <dt className="text-muted">{k}</dt>
       <dd>{v}</dd>
     </div>
