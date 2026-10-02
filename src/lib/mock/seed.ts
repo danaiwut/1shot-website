@@ -230,6 +230,14 @@ export function buildSeed(now = Date.now()) {
     order("00000000-0000-4000-8000-000000000003", ICT, "one_time", 90, "refunded", 12),
     order("00000000-0000-4000-8000-000000000005", ALL, "subscription", null, "pending", 0.1, { stripe_payment_intent_id: null }),
   ];
+  // What each paid order added, so refunding a sample order takes the matching access back.
+  for (const o of orders) {
+    if (o.status !== "paid" || (o.stripe_subscription_id && o.kind === "checkout")) continue;
+    o.grants = (o.codes as string[]).map((code) => {
+      const r = indicator_rights.find((x) => x.user_id === o.user_id && x.code === code);
+      return { code, had: false, before: null, after: r ? ((r.expires_at as string | null) ?? null) : iso(now), at: o.paid_at };
+    });
+  }
   const subscriptions: Row[] = [{
     id: SW_SUB, user_id: DEMO_MEMBER_ID, product_id: singles.SW, price_id: priceOf(singles.SW, "subscription").id, product_name: "Sweep Model",
     codes: ["SW"], status: "active", interval: "month", amount_satang: 79000, current_period_end: iso(now + 12 * D),

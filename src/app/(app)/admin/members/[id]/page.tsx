@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm } from "@/lib/store/pricing";
 import type { Indicator, IndicatorRight, Order, Profile, Subscription } from "@/lib/types";
+import { RefundButton } from "../../orders/refund-button";
 import { GrantForm, IbToggle, RevokeButton, RoleSelect, UnlinkButton } from "./controls";
 
 export const metadata = { title: "ข้อมูลสมาชิก" };
@@ -77,6 +78,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="num text-xs font-semibold">{fmtTHB(o.amount_satang)}</span>
                       <Badge tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</Badge>
+                      {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
                     </div>
                   </li>
                 ))}

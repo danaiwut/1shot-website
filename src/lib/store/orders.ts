@@ -100,18 +100,15 @@ export async function fulfillOrder(orderId: string, opts: { until?: Date | null;
   return true;
 }
 
+/** Grants the order's rights and records what changed (orders.grants), so a refund can undo exactly that. */
 async function grantForOrder(admin: Admin, order: Order, until: Date | null) {
   const isSub = order.billing === "subscription";
-  const { data: accessUntil, error } = await admin.rpc("grant_purchase", {
-    p_user: order.user_id,
-    p_codes: order.codes,
-    p_days: isSub ? null : order.duration_days,
+  const { error } = await admin.rpc("grant_order", {
+    p_order: order.id,
     // A subscription with an unknown period end still gets a month rather than lifetime.
     p_until: isSub ? (until ?? new Date(Date.now() + 31 * 864e5)).toISOString() : null,
-    p_note: `ซื้อ: ${order.product_name}`,
   });
-  if (error) throw new Error(`grant_purchase failed: ${error.message}`);
-  await admin.from("orders").update({ access_until: accessUntil ?? null }).eq("id", order.id);
+  if (error) throw new Error(`grant_order failed: ${error.message}`);
 }
 
 export async function setOrderStatus(orderId: string, status: "failed" | "canceled") {
@@ -193,10 +190,54 @@ export async function recordRenewal(invoice: Stripe.Invoice) {
   if (order) await fulfillOrder(order.id, { until: periodEnd(sub), receiptUrl: invoice.hosted_invoice_url ?? null });
 }
 
+/** Full refund → order "refunded" and the access it added is taken back. Partial refunds keep the order paid. */
 export async function markRefunded(charge: Stripe.Charge) {
   const pi = idOf(charge.payment_intent);
-  if (!pi || !charge.refunded) return; // partial refunds keep the order paid
-  await createAdminClient().from("orders").update({ status: "refunded" }).eq("stripe_payment_intent_id", pi);
+  if (!pi || !charge.refunded) return;
+  const admin = createAdminClient();
+  const { data: direct } = await admin.from("orders").select("id").eq("stripe_payment_intent_id", pi);
+  let ids = ((direct ?? []) as { id: string }[]).map((o) => o.id);
+  if (!ids.length) {
+    // Subscription payments are linked through their invoice.
+    const payments = await getStripe().invoicePayments.list({ payment: { type: "payment_intent", payment_intent: pi }, limit: 5 });
+    const invoices = payments.data.map((p) => idOf(p.invoice)).filter((x): x is string => Boolean(x));
+    if (invoices.length) {
+      const { data } = await admin.from("orders").select("id").in("stripe_invoice_id", invoices);
+      ids = ((data ?? []) as { id: string }[]).map((o) => o.id);
+    }
+  }
+  for (const id of ids) await revokeOrder(id);
+}
+
+/** Marks a paid order refunded and removes the rights it granted. Returns false if it was not paid. */
+export async function revokeOrder(orderId: string) {
+  const { data, error } = await createAdminClient().rpc("revoke_order", { p_order: orderId });
+  if (error) throw new Error(`revoke_order failed: ${error.message}`);
+  return Boolean(data);
+}
+
+/**
+ * Admin refund. Refunds the full payment in Stripe; the charge.refunded webhook then revokes the rights.
+ * In mockup mode there is no Stripe, so the order is revoked directly.
+ */
+export async function refundOrder(orderId: string) {
+  const admin = createAdminClient();
+  const { data: order } = await admin.from("orders").select("*").eq("id", orderId).maybeSingle<Order & { stripe_invoice_id: string | null }>();
+  if (!order || order.status !== "paid") throw new StoreError("คืนเงินได้เฉพาะคำสั่งซื้อที่ชำระแล้ว");
+  if (isMockMode()) {
+    await revokeOrder(orderId);
+    return;
+  }
+  const stripe = getStripe();
+  let pi = order.stripe_payment_intent_id;
+  if (!pi && order.stripe_invoice_id) {
+    const payments = await stripe.invoicePayments.list({ invoice: order.stripe_invoice_id, limit: 1 });
+    pi = idOf(payments.data[0]?.payment?.payment_intent);
+  }
+  if (!pi) throw new StoreError("ไม่พบรายการชำระเงินใน Stripe ของคำสั่งซื้อนี้");
+  await stripe.refunds.create({ payment_intent: pi }, { idempotencyKey: `refund-${orderId}` });
+  // Don't wait for the webhook to show the result.
+  await revokeOrder(orderId);
 }
 
 /** Customer-initiated cancel / resume. Access always runs to the end of the paid period. */

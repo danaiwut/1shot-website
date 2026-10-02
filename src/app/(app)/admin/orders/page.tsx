@@ -7,6 +7,7 @@ import { serverEnv } from "@/lib/env";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
 import type { Order, OrderStatus, Subscription } from "@/lib/types";
+import { RefundButton } from "./refund-button";
 
 export const metadata = { title: "คำสั่งซื้อ" };
 
@@ -38,7 +39,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="คำสั่งซื้อ" description="คำสั่งซื้อจาก Stripe และการสมัครแบบรายงวด คืนเงินได้จากหน้า Stripe แล้วสถานะจะอัปเดตเอง" />
+      <PageHeader eyebrow="Admin" title="คำสั่งซื้อ" description="คืนเงินจากที่นี่หรือจากหน้า Stripe ก็ได้ ระบบจะถอนสิทธิ์ที่ได้จากคำสั่งซื้อนั้นให้อัตโนมัติ" />
 
       <div className="mb-6 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <Stat label="รายได้ 30 วัน" value={fmtTHB(sum(paidRows.filter((o) => (o.paid_at ?? "") >= since30)))} />
@@ -76,6 +77,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                   </div>
                   <div className="flex items-center justify-end gap-2 md:order-4">
                     <Badge tone={st.tone}>{st.label}</Badge>
+                    {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
                     {o.stripe_payment_intent_id && !o.stripe_payment_intent_id.startsWith("pi_mock") && (
                       <a href={`${stripeBase}/payments/${o.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" className="text-faint hover:text-fg" aria-label="เปิดใน Stripe">
                         <ExternalLink className="size-3.5" />

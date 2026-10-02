@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockAdminClient } from "../src/lib/mock/db";
 import { DEMO_MEMBER_ID } from "../src/lib/mock/seed";
-import { createCheckout, fulfillOrder } from "../src/lib/store/orders";
+import { createCheckout, fulfillOrder, refundOrder, revokeOrder } from "../src/lib/store/orders";
 import { fmtTHB, termLabel } from "../src/lib/store/pricing";
 
 const admin = createMockAdminClient();
@@ -59,6 +59,55 @@ describe("store fulfilment (mockup mode)", () => {
     expect(await fulfillOrder(id)).toBe(true);
     expect(await fulfillOrder(id)).toBe(false);
     expect(days((await right(USER, "RC"))?.expires_at)).toBe(30);
+  });
+});
+
+const orderIdOf = (url: string) => new URL(url, "http://x").searchParams.get("order")!;
+
+describe("refunds take back exactly what the order gave", () => {
+  it("removes rights that only came from the refunded order", async () => {
+    const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("ICT Pack", "one_time", 90)));
+    await refundOrder(id);
+    for (const code of ["AMD", "AR", "OB", "SW"]) expect(await right(USER, code)).toBeNull();
+    const { data } = await admin.from("orders").select("status").eq("id", id).single();
+    expect((data as { status: string }).status).toBe("refunded");
+  });
+
+  it("keeps time added by other purchases", async () => {
+    const price = await priceFor("Orderblock", "one_time", 90);
+    const first = orderIdOf(await createCheckout(USER, "x@example.com", price));
+    await createCheckout(USER, "x@example.com", price);
+    expect(days((await right(USER, "OB"))?.expires_at)).toBe(180);
+    await refundOrder(first);
+    expect(days((await right(USER, "OB"))?.expires_at)).toBe(90);
+  });
+
+  it("restores the previous expiry when a lifetime purchase is refunded", async () => {
+    // Demo member has OB for ~25 more days, then buys OB for life.
+    const before = days((await right(DEMO_MEMBER_ID, "OB"))?.expires_at);
+    const id = orderIdOf(await createCheckout(DEMO_MEMBER_ID, "member@1shot.demo", await priceFor("Orderblock", "one_time", null)));
+    expect((await right(DEMO_MEMBER_ID, "OB"))?.expires_at).toBeNull();
+    await refundOrder(id);
+    expect(days((await right(DEMO_MEMBER_ID, "OB"))?.expires_at)).toBe(before);
+  });
+
+  it("never touches access that was already lifetime", async () => {
+    const id = orderIdOf(await createCheckout(DEMO_MEMBER_ID, "member@1shot.demo", await priceFor("Supply and Demand", "one_time", 90)));
+    await refundOrder(id);
+    expect((await right(DEMO_MEMBER_ID, "SD"))?.expires_at).toBeNull();
+  });
+
+  it("subscription refunds take the paid period back", async () => {
+    const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("All Access", "subscription")));
+    await refundOrder(id);
+    expect(await right(USER, "DT")).toBeNull();
+  });
+
+  it("is idempotent and only refunds paid orders", async () => {
+    const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("Orderblock", "one_time", 90)));
+    expect(await revokeOrder(id)).toBe(true);
+    expect(await revokeOrder(id)).toBe(false);
+    await expect(refundOrder(id)).rejects.toThrow(/ชำระแล้ว/);
   });
 });
 

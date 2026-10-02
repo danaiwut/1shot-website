@@ -225,25 +225,64 @@ function rlsFor(uid: string | null) {
   };
 }
 
-/** Mirrors `grant_purchase`: extends rights, never shortens them. Returns the latest expiry (null = lifetime). */
-function grantPurchase(a: { p_user: string; p_codes: string[]; p_days: number | null; p_until: string | null; p_note: string | null }) {
+type Grant = { code: string; had: boolean; before: string | null; after: string | null; at: string };
+const ms = (iso: string) => new Date(iso).getTime();
+
+/** Mirrors `grant_order`: extends rights (never shortens) and records the change on the order. */
+function grantOrder(a: { p_order: string; p_until: string | null }) {
   const d = db();
+  const o = d.orders.find((x) => x.id === a.p_order);
+  if (!o) throw new Error("order not found");
+  const now = new Date().toISOString();
+  const log: Grant[] = [];
   let latest: string | null = null;
-  for (const code of a.p_codes) {
-    const cur = d.indicator_rights.find((r) => r.user_id === a.p_user && r.code === code);
+  for (const code of o.codes as string[]) {
+    const cur = d.indicator_rights.find((r) => r.user_id === o.user_id && r.code === code);
+    const before = (cur?.expires_at as string | null | undefined) ?? null;
     let target: string | null;
-    if (cur && cur.expires_at == null) target = null;
-    else if (a.p_until == null && a.p_days == null) target = null;
-    else if (a.p_until != null) target = cur?.expires_at && String(cur.expires_at) > a.p_until ? String(cur.expires_at) : a.p_until;
-    else {
-      const from = Math.max(Date.now(), cur?.expires_at ? new Date(String(cur.expires_at)).getTime() : 0);
-      target = new Date(from + a.p_days! * 864e5).toISOString();
-    }
-    if (cur) Object.assign(cur, { expires_at: target, note: a.p_note, updated_at: new Date().toISOString() });
-    else d.indicator_rights.push({ user_id: a.p_user, code, expires_at: target, note: a.p_note, granted_by: null, updated_at: new Date().toISOString() });
+    if (cur && before === null) target = null;
+    else if (o.billing === "subscription") target = before && before > a.p_until! ? before : a.p_until;
+    else if (o.duration_days == null) target = null;
+    else target = new Date(Math.max(Date.now(), before ? ms(before) : 0) + Number(o.duration_days) * 864e5).toISOString();
+    const note = `ซื้อ: ${o.product_name}`;
+    if (cur) Object.assign(cur, { expires_at: target, note, updated_at: now });
+    else d.indicator_rights.push({ user_id: o.user_id, code, expires_at: target, note, granted_by: null, updated_at: now });
+    log.push({ code, had: Boolean(cur), before, after: target, at: now });
     if (target && (!latest || target > latest)) latest = target;
   }
+  Object.assign(o, { grants: log, access_until: latest });
   return latest;
+}
+
+/** Mirrors `revoke_order`: refunded order loses exactly the access it added. */
+function revokeOrder(a: { p_order: string }) {
+  const d = db();
+  const o = d.orders.find((x) => x.id === a.p_order);
+  if (!o || o.status !== "paid") return false;
+  o.status = "refunded";
+  const drop = (code: string) => d.indicator_rights.splice(d.indicator_rights.findIndex((r) => r.user_id === o.user_id && r.code === code), 1);
+  for (const g of (o.grants as Grant[] | null) ?? []) {
+    const cur = d.indicator_rights.find((r) => r.user_id === o.user_id && r.code === g.code);
+    if (!cur) continue;
+    const exp = (cur.expires_at as string | null) ?? null;
+    const note = `คืนเงิน: ${o.product_name}`;
+    if (g.after === null) {
+      if (g.had && g.before === null) continue;
+      if (exp !== null) continue;
+      const otherLifetime = d.orders.some((x) => x.user_id === o.user_id && x.id !== o.id && x.status === "paid"
+        && ((x.grants as Grant[] | null) ?? []).some((xg) => xg.code === g.code && xg.after === null && !(xg.had && xg.before === null)));
+      if (otherLifetime) continue;
+      if (g.had) Object.assign(cur, { expires_at: g.before, note }); else drop(g.code);
+    } else {
+      if (exp === null) continue;
+      const added = ms(g.after) - Math.max(g.before ? ms(g.before) : ms(g.at), ms(g.at));
+      const next = ms(exp) - added;
+      if (next <= Date.now() + 60e3) {
+        if (g.had) Object.assign(cur, { expires_at: new Date(Math.min(next, Date.now())).toISOString(), note }); else drop(g.code);
+      } else Object.assign(cur, { expires_at: new Date(Math.min(next, ms(exp))).toISOString(), note });
+    }
+  }
+  return true;
 }
 
 /** Mirrors `ingest_signal_events`: idempotent on (code, event_id). Returns the number of new events. */
@@ -303,7 +342,8 @@ export function createMockAdminClient() {
     from: (table: TableName) => new Query(table, () => true),
     rpc: async (name: string, args: Record<string, unknown>) => {
       if (name === "ingest_signal_events") return { data: ingest((args.p_events as Row[]) ?? []), error: null };
-      if (name === "grant_purchase") return { data: grantPurchase(args as Parameters<typeof grantPurchase>[0]), error: null };
+      if (name === "grant_order") return { data: grantOrder(args as Parameters<typeof grantOrder>[0]), error: null };
+      if (name === "revoke_order") return { data: revokeOrder(args as Parameters<typeof revokeOrder>[0]), error: null };
       return { data: null, error: null };
     },
   };
