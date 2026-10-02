@@ -1,12 +1,11 @@
 import {
-  ArrowRight, ArrowUpRight, BellRing, Bot, CandlestickChart, Clock3, Layers, LineChart, MonitorSmartphone, Rocket,
+  ArrowRight, BellRing, Bot, CandlestickChart, Clock3, Layers, LineChart, MonitorSmartphone, Rocket,
   Send, ShieldCheck, Target, Wallet,
 } from "lucide-react";
-import Link from "next/link";
-import { Badge, ButtonLink } from "@/components/ui";
-import { PriceLadder } from "@/components/signals/price-ladder";
+import { ButtonLink } from "@/components/ui";
 import { CursorRing } from "@/components/motion/cursor";
-import { CountUp, Depth, HeroFade, HeroHeadline, PriceTicker, Spotlight, TiltStage } from "@/components/motion/hero";
+import { CountUp } from "@/components/motion/hero";
+import { LiveHero } from "@/components/motion/live-hero";
 import { IntroCurtain } from "@/components/motion/intro";
 import { Magnetic } from "@/components/motion/magnetic";
 import { VelocityMarquee } from "@/components/motion/marquee";
@@ -46,12 +45,6 @@ const GUARDS = [
   { icon: BellRing, k: "SL ↓ เท่านั้น", tag: "ปรับ Stop", title: "ขยับเฉพาะทิศลดความเสี่ยง", v: "Setup ใหม่ปรับ SL ได้แต่ไม่แตะ TP และ Lot เดิม" },
 ];
 
-const SAMPLE_LIST = [
-  { code: "SD", name: "Supply and Demand", side: "SELL", status: "รอเข้า" },
-  { code: "OB", name: "Orderblock", side: "BUY", status: "เข้าแล้ว" },
-  { code: "SW", name: "Sweep Model", side: "BUY", status: "ถึง TP" },
-];
-
 export default async function HomePage() {
   const supabase = hasBackend() ? await createClient() : null;
   const [products, viewer] = supabase ? await Promise.all([loadCatalog(supabase), getViewer()]) : [[], null];
@@ -62,46 +55,12 @@ export default async function HomePage() {
     <main className="overflow-x-clip">
       <IntroCurtain />
       <CursorRing />
-      {/* Hero */}
-      <section className="surface-dark relative -mt-18 overflow-hidden bg-ink pt-18">
-        <div className="brand-glow pointer-events-none absolute inset-0 opacity-60" />
-        <Spotlight />
-        <div className="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_70%_20%,black_10%,transparent_65%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 pt-16 pb-16 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-24">
-          <div className="space-y-7">
-            <HeroFade delay={0.1}>
-              <p className="eyebrow flex items-center gap-2">
-                <span className="size-1.5 rounded-full bg-buy text-buy animate-pulse-dot" /> XAUUSD · สัญญาณทองคำ
-              </p>
-            </HeroFade>
-            <HeroHeadline
-              lines={[words("สัญญาณทองคำ"), words("ที่ตรวจสอบได้")]}
-              accent={words("ทุกจุด")}
-              className="text-[2.6rem] leading-[1.1] font-bold tracking-tight sm:text-6xl lg:text-[4.1rem]"
-            />
-            <HeroFade delay={1.3} className="space-y-7">
-            <p className="max-w-lg text-base leading-relaxed text-muted sm:text-lg">
-              รับ Setup จากอินดิเคเตอร์ 1SHOT ตรงจาก TradingView ทุก Setup มี Entry, SL และ TP ตั้งแต่ตอนเกิดสัญญาณ
-              แล้วติดตามได้จนปิดบนเว็บและใน Telegram
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Magnetic><ButtonLink href="/pricing" className="h-12 px-6">
-                ดูแพ็กเกจ <ArrowRight className="size-4" />
-              </ButtonLink></Magnetic>
-              <Magnetic><ButtonLink href="#how" variant="outline" className="h-12 px-6">
-                ดูการทำงาน <ArrowRight className="size-4" />
-              </ButtonLink></Magnetic>
-            </div>
-            </HeroFade>
-          </div>
-
-          <HeroVisual />
-        </div>
-
-        <div className="relative mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-          <Stagger className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+      {/* Hero: live simulated chart */}
+      <LiveHero lines={[words("สัญญาณทองคำ"), words("ที่ตรวจสอบได้")]}>
+        <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
+          <Stagger className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur lg:grid-cols-4">
             {STATS.map((s) => (
-              <StaggerItem key={s.k} className="flex items-center gap-3.5">
+              <StaggerItem key={s.k} className="flex items-center gap-3.5 bg-black/70 px-4 py-4 sm:px-5">
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand text-white">
                   <s.icon className="size-5" strokeWidth={1.8} />
                 </span>
@@ -113,7 +72,7 @@ export default async function HomePage() {
             ))}
           </Stagger>
         </div>
-      </section>
+      </LiveHero>
 
       {/* Integrations + velocity marquee */}
       <section className="relative overflow-hidden border-b border-line bg-panel-2">
@@ -270,73 +229,6 @@ function SectionHead({ eyebrow, title, aside }: { eyebrow: string; title: React.
         <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{title}</h2>
       </div>
       <p className="max-w-md text-sm leading-relaxed text-muted md:justify-self-end">{aside}</p>
-    </div>
-  );
-}
-
-/** Tilted stack of sample UI — illustrative only. */
-function HeroVisual() {
-  return (
-    <div className="relative">
-      <TiltStage className="relative mx-auto max-w-md">
-        {/* Back card: setup list */}
-        <Depth z={-80} className="surface-light absolute top-10 -left-10 hidden w-60 rounded-2xl bg-panel p-4 shadow-2xl sm:block">
-          <p className="text-[11px] font-semibold text-muted">Setup ล่าสุด</p>
-          <ul className="mt-3 space-y-2.5">
-            {SAMPLE_LIST.map((r) => (
-              <li key={r.code} className="flex items-center gap-2.5">
-                <span className="num grid size-7 place-items-center rounded-lg bg-brand-dim text-[10px] font-bold text-accent">{r.code}</span>
-                <span className="min-w-0 flex-1 truncate text-xs font-medium">{r.name}</span>
-                <Badge tone={r.side === "BUY" ? "buy" : "sell"} className="num px-1.5 text-[9px]">{r.side}</Badge>
-              </li>
-            ))}
-          </ul>
-        </Depth>
-
-        {/* Front card: ticket */}
-        <Depth z={40} className="relative">
-        <div className="relative animate-float rounded-3xl border border-line-strong bg-panel/85 p-1.5 shadow-[0_40px_100px_-30px_rgb(178_0_22/0.55)] backdrop-blur sm:ml-28">
-          <div className="rounded-[20px] border border-line bg-panel-2">
-            <div className="flex items-center justify-between border-b border-line px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="num grid size-9 place-items-center rounded-xl bg-brand text-xs font-bold text-white">AMD</span>
-                <div>
-                  <p className="text-sm font-semibold">AMD Pro · Distribution</p>
-                  <p className="num text-[11px] text-muted">XAUUSD · M5 · Limit</p>
-                </div>
-              </div>
-              <Badge tone="buy" className="num tracking-wider">BUY</Badge>
-            </div>
-            <div className="px-5 py-6">
-              <PriceLadder side="BUY" entry={4380.5} sl={4372} tp={4401.75} />
-            </div>
-            <div className="flex items-center justify-between border-t border-line px-5 py-2.5 text-[11px] text-muted">
-              <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-buy text-buy animate-pulse-dot" /> ราคาตัวอย่าง</span>
-              <PriceTicker start={4386.2} />
-            </div>
-            <div className="grid grid-cols-3 border-t border-line text-center text-[11px] text-muted">
-              {["SETUP", "RETEST", "TP"].map((s, i) => (
-                <div key={s} className={`py-3 ${i < 2 ? "border-r border-line" : ""}`}>
-                  <span className={i === 0 ? "font-semibold text-accent" : ""}>{s}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        </Depth>
-
-        {/* Floating chip */}
-        <Depth z={120} className="surface-light absolute -right-4 -bottom-6 hidden items-center gap-2.5 rounded-2xl bg-panel px-4 py-3 shadow-2xl sm:flex">
-          <span className="grid size-8 place-items-center rounded-lg bg-brand text-white"><Send className="size-4" /></span>
-          <div>
-            <p className="text-xs font-semibold">ส่งเข้า Telegram แล้ว</p>
-            <p className="text-[10px] text-muted">พร้อม Entry · SL · TP</p>
-          </div>
-          <ArrowUpRight className="size-4 text-faint" />
-        </Depth>
-      </TiltStage>
-      <p className="mt-10 text-center text-[10px] text-faint lg:text-right">ภาพตัวอย่างการแสดงผล ไม่ใช่สัญญาณจริง</p>
     </div>
   );
 }
