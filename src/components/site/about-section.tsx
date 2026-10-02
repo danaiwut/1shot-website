@@ -7,7 +7,7 @@ import { CATALOG } from "@/lib/domain/catalog";
  * Photo for the About card. Put the file in /public (e.g. public/images/about.jpg) and set the path
  * here; while it is null a branded panel is shown instead of a stock person.
  */
-const ABOUT_PHOTO: { src: string; alt: string } | null = null;
+const ABOUT_PHOTO: { src: string; alt: string } | null = { src: "/images/about.jpg", alt: "ทีม 1SHOT" };
 
 // Properties of the product, not marketing metrics.
 const FACTS = [
@@ -41,9 +41,13 @@ export function AboutSection() {
         {/* Photo card */}
         <div className="relative mx-auto w-full max-w-md lg:mx-0">
           <TickRing className="-bottom-14 -left-16 size-64 text-brand/50 sm:-left-20 sm:size-72" />
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl sm:aspect-[4/5] border border-line-strong bg-gradient-to-b from-panel-3 to-panel shadow-[0_40px_100px_-40px_rgb(178_0_22/0.7)]">
+          <div className={`relative ${ABOUT_PHOTO ? "aspect-[4/5]" : "aspect-[4/3] sm:aspect-[4/5]"} overflow-hidden rounded-3xl border border-line-strong bg-gradient-to-b from-panel-3 to-panel shadow-[0_40px_100px_-40px_rgb(178_0_22/0.7)]`}>
             {ABOUT_PHOTO ? (
-              <Image src={ABOUT_PHOTO.src} alt={ABOUT_PHOTO.alt} fill sizes="(min-width: 1024px) 28rem, 90vw" className="object-cover" />
+              <>
+                <Image src={ABOUT_PHOTO.src} alt={ABOUT_PHOTO.alt} fill sizes="(min-width: 1024px) 28rem, 90vw" className="object-cover object-[50%_20%]" />
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(80%_60%_at_80%_100%,rgb(178_0_22/0.35),transparent_70%)] mix-blend-screen" />
+              </>
             ) : (
               <BrandPanel />
             )}
