@@ -247,6 +247,6 @@ export function buildSeed(now = Date.now()) {
   return {
     profiles, indicators: INDICATORS, indicator_rights, signal_events, telegram_links,
     telegram_link_tokens: [] as Row[], telegram_invites: [] as Row[], daily_briefs, news_items, webhook_receipts,
-    products, product_prices, orders, subscriptions, stripe_customers: [] as Row[], stripe_events: [] as Row[],
+    products, product_prices, orders, subscriptions, stripe_customers: [] as Row[], stripe_events: [] as Row[], email_log: [] as Row[],
   };
 }

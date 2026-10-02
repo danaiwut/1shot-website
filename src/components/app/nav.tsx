@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Activity, CreditCard, LayoutDashboard, LogOut, Menu, Newspaper, Package, Receipt, Settings2, ShieldHalf, ShoppingBag, SlidersHorizontal, Users, Webhook, X,
+  Activity, CreditCard, LayoutDashboard, Mail, LogOut, Menu, Newspaper, Package, Receipt, Settings2, ShieldHalf, ShoppingBag, SlidersHorizontal, Users, Webhook, X,
 } from "lucide-react";
 import { cx } from "@/components/ui";
 
@@ -21,6 +21,7 @@ const STAFF = [
   { href: "/admin", label: "สมาชิก", short: "สมาชิก", icon: Users },
   { href: "/admin/orders", label: "คำสั่งซื้อ", short: "คำสั่งซื้อ", icon: Receipt },
   { href: "/admin/products", label: "สินค้าและราคา", short: "สินค้า", icon: Package },
+  { href: "/admin/emails", label: "อีเมลที่ส่ง", short: "อีเมล", icon: Mail },
   { href: "/admin/indicators", label: "อินดิเคเตอร์และห้อง", short: "อินดิเคเตอร์", icon: SlidersHorizontal },
   { href: "/admin/webhooks", label: "Webhook log", short: "Webhook", icon: Webhook },
 ];

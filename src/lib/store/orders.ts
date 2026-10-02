@@ -1,5 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
+import { sendPurchaseEmail, sendRefundEmail } from "../email/send";
 import { publicEnv } from "../env";
 import { isMockMode } from "../mock/mode";
 import { createAdminClient } from "../supabase/admin";
@@ -97,6 +98,8 @@ export async function fulfillOrder(orderId: string, opts: { until?: Date | null;
   }).eq("id", orderId).in("status", ["pending", "failed", "canceled"]).select("*").maybeSingle<Order>();
   if (!order) return false;
   await grantForOrder(admin, order, opts.until ?? null);
+  const { data: granted } = await admin.from("orders").select("*").eq("id", orderId).single<Order>();
+  await sendPurchaseEmail(granted ?? order);
   return true;
 }
 
@@ -216,8 +219,9 @@ export async function revokeOrder(orderId: string) {
   const { data, error } = await admin.rpc("revoke_order", { p_order: orderId });
   if (error) throw new Error(`revoke_order failed: ${error.message}`);
   if (!data) return false;
-  const { data: order } = await admin.from("orders").select("stripe_subscription_id").eq("id", orderId).maybeSingle<{ stripe_subscription_id: string | null }>();
+  const { data: order } = await admin.from("orders").select("*").eq("id", orderId).single<Order>();
   if (order?.stripe_subscription_id) await cancelSubscriptionNow(order.stripe_subscription_id);
+  if (order) await sendRefundEmail(order, Boolean(order.stripe_subscription_id));
   return true;
 }
 

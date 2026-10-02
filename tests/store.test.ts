@@ -131,3 +131,39 @@ describe("pricing labels", () => {
     expect(termLabel({ billing: "one_time", interval: null, duration_days: null })).toBe("ตลอดชีพ");
   });
 });
+
+describe("customer emails", () => {
+  const log = async () => ((await admin.from("email_log").select("*").eq("user_id", USER)).data ?? []) as { kind: string; subject: string; html: string; status: string }[];
+
+  it("logs one purchase email and one refund email per order", async () => {
+    const id = orderIdOf(await createCheckout(USER, "ploy.s@example.com", await priceFor("ICT Pack", "one_time", 90)));
+    expect((await log()).map((e) => e.kind)).toEqual(["purchase"]);
+    expect((await fulfillOrder(id))).toBe(false); // webhook retry
+    await refundOrder(id);
+    await revokeOrder(id);
+    const mails = await log();
+    expect(mails.map((e) => e.kind)).toEqual(["purchase", "refund"]);
+    expect(mails[0].html).toContain("ICT Pack");
+    expect(mails[0].html).toContain("฿4,990");
+    expect(mails[1].subject).toContain("คืนเงิน");
+    expect(mails.every((e) => e.status === "logged")).toBe(true); // mockup mode never sends
+  });
+
+  it("mentions the cancelled subscription in the refund email", async () => {
+    const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("All Access", "subscription")));
+    await refundOrder(id);
+    const refund = (await log()).find((e) => e.kind === "refund")!;
+    expect(refund.html).toContain("จะไม่มีการตัดเงินงวดถัดไป");
+  });
+
+  it("escapes product names", async () => {
+    const { purchaseEmail } = await import("../src/lib/email/templates");
+    const mail = purchaseEmail({
+      id: "abcdef12-0000-4000-8000-000000000000", user_id: USER, product_id: null, price_id: null, product_name: "<script>x</script>", codes: ["OB"],
+      billing: "one_time", interval: null, duration_days: 30, amount_satang: 99000, currency: "thb", status: "paid", kind: "checkout",
+      stripe_checkout_session_id: null, stripe_payment_intent_id: null, stripe_subscription_id: null, receipt_url: null, access_until: null, created_at: "", paid_at: null,
+    }, "Ploy", "https://example.com");
+    expect(mail.html).not.toContain("<script>");
+    expect(mail.html).toContain("&lt;script&gt;");
+  });
+});

@@ -23,9 +23,9 @@ const nextId = () => (g.__mockSeq = (g.__mockSeq ?? 10_000) + 1);
 const PRIMARY_KEYS: Record<string, string[]> = {
   profiles: ["id"], indicators: ["code"], indicator_rights: ["user_id", "code"], telegram_links: ["user_id"],
   telegram_link_tokens: ["user_id"], telegram_invites: ["invite_url"], daily_briefs: ["brief_date"],
-  products: ["id"], product_prices: ["id"], orders: ["id"], subscriptions: ["id"], stripe_customers: ["user_id"], stripe_events: ["id"],
+  products: ["id"], product_prices: ["id"], orders: ["id"], subscriptions: ["id"], stripe_customers: ["user_id"], stripe_events: ["id"], email_log: ["id"],
 };
-const AUTO_ID = new Set(["signal_events", "news_items", "webhook_receipts"]);
+const AUTO_ID = new Set(["signal_events", "news_items", "webhook_receipts", "email_log"]);
 const AUTO_UUID = new Set(["products", "product_prices", "orders"]);
 
 /** Mirrors the `public.setups` view: opening event + latest state per setup_key. */
@@ -166,7 +166,7 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
         if (AUTO_ID.has(this.table) && row.id == null) row.id = nextId();
         if (AUTO_UUID.has(this.table) && row.id == null) row.id = crypto.randomUUID();
         if (this.table === "webhook_receipts") row.received_at ??= now;
-        if (["orders", "products", "product_prices", "subscriptions", "stripe_customers"].includes(this.table)) row.created_at ??= now;
+        if (["orders", "products", "product_prices", "subscriptions", "stripe_customers", "email_log"].includes(this.table)) row.created_at ??= now;
         table.push(row);
         written.push(row);
       }
@@ -219,7 +219,7 @@ function rlsFor(uid: string | null) {
       case "profiles": return r.id === uid;
       case "indicator_rights": case "telegram_links": case "telegram_link_tokens": case "orders": case "subscriptions": return r.user_id === uid;
       case "products": case "product_prices": return r.active === true;
-      case "webhook_receipts": case "telegram_invites": case "stripe_customers": case "stripe_events": return false;
+      case "webhook_receipts": case "telegram_invites": case "stripe_customers": case "stripe_events": case "email_log": return false;
       default: return true;
     }
   };
