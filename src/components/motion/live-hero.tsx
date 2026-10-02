@@ -171,7 +171,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
               <motion.g key={trade.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.6 } }}>
                 {[
                   { p: trade.tp, c: "#34c79a", l: `TP ${fmt(trade.tp)}` },
-                  { p: trade.entry, c: "#ffffff", l: `ENTRY ${fmt(trade.entry)}` },
+                  { p: trade.entry, c: "#ffffff", l: `จุดเข้า ${fmt(trade.entry)}` },
                   { p: trade.sl, c: "#ff4d61", l: `SL ${fmt(trade.sl)}` },
                 ].map((lv, i) => (
                   <g key={lv.l}>
@@ -230,7 +230,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-buy opacity-75" />
               <span className="relative inline-flex size-2 rounded-full bg-buy" />
             </span>
-            Live demo · XAUUSD · ภาพจำลอง
+            ตัวอย่างการทำงาน · ทองคำ XAUUSD · ภาพจำลอง
           </motion.p>
 
           <h1 className="text-[2.9rem] leading-[1.02] font-black tracking-tight sm:text-7xl lg:text-[5.6rem]">
@@ -292,7 +292,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
   );
 }
 
-const STEPS: { key: Phase; label: string }[] = [{ key: "setup", label: "SETUP" }, { key: "entry", label: "ENTRY" }, { key: "hit", label: "TP" }];
+const STEPS: { key: Phase; label: string }[] = [{ key: "setup", label: "เกิด Setup" }, { key: "entry", label: "เข้าแล้ว" }, { key: "hit", label: "ถึง TP" }];
 
 /** Glass ticket mirroring the trade on the chart. */
 function Ticket({ trade, price }: { trade: Trade | null; price: number }) {
@@ -320,7 +320,7 @@ function Ticket({ trade, price }: { trade: Trade | null; price: number }) {
           )}
         </div>
         <dl className="num mt-5 grid grid-cols-3 gap-2 text-center">
-          {[["ENTRY", trade?.entry, "text-white"], ["SL", trade?.sl, "text-sell"], ["TP", trade?.tp, "text-buy"]].map(([k, v, c]) => (
+          {[["จุดเข้า", trade?.entry, "text-white"], ["SL", trade?.sl, "text-sell"], ["TP", trade?.tp, "text-buy"]].map(([k, v, c]) => (
             <div key={k as string} className="rounded-xl bg-white/5 py-2.5">
               <dt className="text-[10px] text-faint">{k}</dt>
               <dd className={`mt-0.5 text-sm font-semibold ${c}`}>{typeof v === "number" ? fmt(v) : "—"}</dd>

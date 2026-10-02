@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Anuphan, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Noto_Sans_Thai } from "next/font/google";
 import { isMockMode } from "@/lib/mock/mode";
 import "./globals.css";
 
-const anuphan = Anuphan({ subsets: ["thai", "latin"], variable: "--font-anuphan", display: "swap" });
+const notoThai = Noto_Sans_Thai({ subsets: ["thai", "latin"], variable: "--font-noto-thai", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th" className={`${anuphan.variable} ${mono.variable}`}>
+    <html lang="th" className={`${notoThai.variable} ${mono.variable}`}>
       <body className="min-h-dvh font-sans">
         {isMockMode() && (
           <div className="bg-brand px-4 py-1.5 text-center text-[11px] font-medium text-white">

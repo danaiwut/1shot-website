@@ -38,9 +38,9 @@ export function RoleSelect({ userId, role }: { userId: string; role: Role }) {
     <span className="flex items-center gap-2">
       {error && <span className="text-[11px] text-sell">{error}</span>}
       <Select className="h-8 w-32 text-xs" defaultValue={role} disabled={busy} onChange={(e) => run(() => setRole(userId, e.target.value as Role))}>
-        <option value="member">member</option>
-        <option value="admin">admin</option>
-        <option value="owner">owner</option>
+        <option value="member">สมาชิก</option>
+        <option value="admin">แอดมิน</option>
+        <option value="owner">เจ้าของ</option>
       </Select>
     </span>
   );

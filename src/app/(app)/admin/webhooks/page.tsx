@@ -4,7 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { fmtDateTime } from "@/lib/format";
 
-export const metadata = { title: "Webhook log" };
+export const metadata = { title: "บันทึก Webhook" };
 
 type Receipt = { id: number; received_at: string; ok: boolean; inserted: number; error: string | null; excerpt: string | null };
 
@@ -16,7 +16,7 @@ export default async function WebhooksPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="Webhook log" description="Alert จาก TradingView 100 รายการล่าสุด" />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="บันทึก Webhook" description="Alert จาก TradingView 100 รายการล่าสุด" />
       <Card className="mb-6 p-5">
         <p className="text-xs text-muted">URL สำหรับตั้งใน TradingView Alert → Webhook URL</p>
         <code className="num mt-2 block overflow-x-auto rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-xs whitespace-nowrap">{publicEnv.siteUrl()}/api/webhook/tradingview/{masked}</code>

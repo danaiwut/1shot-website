@@ -43,7 +43,7 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
 
   return (
     <>
-      <PageHeader eyebrow="Signals" title="สัญญาณ" description="Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด" action={<LiveRefresh />} />
+      <PageHeader eyebrow="สัญญาณสด" title="สัญญาณ" description="Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด" action={<LiveRefresh />} />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Segmented items={STATUS_FILTERS.map((f) => ({ label: f.label, href: href({ status: f.id, page: "" }), on: f.id === statusId }))} />

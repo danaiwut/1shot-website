@@ -23,7 +23,7 @@ const STAFF = [
   { href: "/admin/products", label: "สินค้าและราคา", short: "สินค้า", icon: Package },
   { href: "/admin/emails", label: "อีเมลที่ส่ง", short: "อีเมล", icon: Mail },
   { href: "/admin/indicators", label: "อินดิเคเตอร์และห้อง", short: "อินดิเคเตอร์", icon: SlidersHorizontal },
-  { href: "/admin/webhooks", label: "Webhook log", short: "Webhook", icon: Webhook },
+  { href: "/admin/webhooks", label: "บันทึก Webhook", short: "Webhook", icon: Webhook },
 ];
 type Item = (typeof MEMBER)[number];
 

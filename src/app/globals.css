@@ -7,7 +7,7 @@
  * flips back inside a dark region.
  */
 @theme {
-  --font-sans: var(--font-anuphan), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-noto-thai), "Noto Sans Thai", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   --color-ink: #ffffff;

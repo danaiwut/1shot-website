@@ -24,7 +24,7 @@ export default async function BillingPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Billing"
+        eyebrow="บิลและใบเสร็จ"
         title="การชำระเงิน"
         description="การสมัครแบบรายงวด ประวัติการซื้อ และใบเสร็จ"
         action={<div className="flex flex-wrap items-start gap-2">{subscriptions.length > 0 && <PortalButton />}<ButtonLink href="/store"><ShoppingBag className="size-4" /> ซื้อเพิ่ม</ButtonLink></div>}

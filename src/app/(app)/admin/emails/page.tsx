@@ -27,7 +27,7 @@ export default async function EmailsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="อีเมลที่ส่ง" description="อีเมลแจ้งลูกค้าเมื่อซื้อสำเร็จ ต่ออายุ และคืนเงิน 100 รายการล่าสุด" />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="อีเมลที่ส่ง" description="อีเมลแจ้งลูกค้าเมื่อซื้อสำเร็จ ต่ออายุ และคืนเงิน 100 รายการล่าสุด" />
       {!configured && (
         <div className="mb-6">
           <Notice>

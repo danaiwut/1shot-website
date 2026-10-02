@@ -59,7 +59,7 @@ export function ScrollPipeline() {
         <div className="relative mx-auto grid w-full max-w-6xl flex-1 content-center gap-5 px-4 pt-20 pb-6 sm:gap-8 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-14">
           <div className="space-y-6">
             <div className="space-y-3">
-              <p className="eyebrow">Pipeline</p>
+              <p className="eyebrow">ขั้นตอนการทำงาน</p>
               <h2 className="text-2xl leading-tight font-bold tracking-tight sm:text-4xl lg:text-5xl">
                 จาก Alert ถึงมือคุณ<br />ในไม่กี่วินาที<span className="text-accent">.</span>
               </h2>
@@ -118,7 +118,7 @@ export function ScrollPipeline() {
               {/* Entry / SL / TP levels */}
               {[
                 { y: TP_Y, c: "#34c79a", l: "TP 4,401.75", left: true },
-                { y: ENTRY_Y, c: "#ffffff", l: "ENTRY 4,380.50", left: false },
+                { y: ENTRY_Y, c: "#ffffff", l: "จุดเข้า 4,380.50", left: false },
                 { y: SL_Y, c: "#ff4d61", l: "SL 4,372.00", left: false },
               ].map((lv) => (
                 <g key={lv.l}>
@@ -138,7 +138,7 @@ export function ScrollPipeline() {
               </motion.g>
             </svg>
             <div className="mt-3 grid grid-cols-4 gap-2 text-center text-[10px] sm:text-[11px]">
-              {["ALERT", "VALIDATE", "DEDUPE", "DELIVER"].map((t, i) => (
+              {["รับ Alert", "ตรวจสอบ", "กันซ้ำ", "ส่งถึงคุณ"].map((t, i) => (
                 <motion.span
                   key={t}
                   animate={{ backgroundColor: i <= step ? "rgba(178,0,22,1)" : "rgba(255,255,255,0.06)", color: i <= step ? "#fff" : "#a6a6a6" }}
@@ -163,7 +163,7 @@ function StaticPipeline() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="grid gap-10 rounded-[28px] bg-brand-dim p-6 sm:p-12 lg:grid-cols-[0.8fr_2fr] lg:items-center">
           <div className="space-y-3">
-            <p className="eyebrow">Pipeline</p>
+            <p className="eyebrow">ขั้นตอนการทำงาน</p>
             <h2 className="text-3xl leading-tight font-bold tracking-tight">จาก Alert ถึงมือคุณ<br />ในไม่กี่วินาที<span className="text-accent">.</span></h2>
           </div>
           <ol className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">

@@ -39,7 +39,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="คำสั่งซื้อ" description="คืนเงินจากที่นี่หรือจากหน้า Stripe ก็ได้ ระบบจะถอนสิทธิ์ที่ได้จากคำสั่งซื้อนั้นให้อัตโนมัติ" />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="คำสั่งซื้อ" description="คืนเงินจากที่นี่หรือจากหน้า Stripe ก็ได้ ระบบจะถอนสิทธิ์ที่ได้จากคำสั่งซื้อนั้นให้อัตโนมัติ" />
 
       <div className="mb-6 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <Stat label="รายได้ 30 วัน" value={fmtTHB(sum(paidRows.filter((o) => (o.paid_at ?? "") >= since30)))} />

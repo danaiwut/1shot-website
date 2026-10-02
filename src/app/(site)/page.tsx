@@ -87,12 +87,12 @@ export default async function HomePage() {
           </ul>
         </div>
         <VelocityMarquee
-          items={["ENTRY", "STOP LOSS", "TAKE PROFIT", "XAUUSD", "VERIFIED", "1SHOT"]}
+          items={["จุดเข้า", "ตัดขาดทุน", "ทำกำไร", "ทองคำ", "ตรวจสอบได้", "1SHOT"]}
           outline
           className="mt-8 -rotate-2 bg-black py-4 text-5xl font-black tracking-tighter text-white sm:text-7xl"
         />
         <VelocityMarquee
-          items={["SMC", "ICT", "SUPPLY & DEMAND", "ORDERBLOCK", "SWEEP", "AMD"]}
+          items={["สาย SMC", "สาย ICT", "ซัพพลาย & ดีมานด์", "ออร์เดอร์บล็อก", "กวาดสภาพคล่อง", "AMD"]}
           baseSpeed={-2}
           className="-mt-3 mb-8 rotate-1 bg-brand py-3 text-3xl font-black tracking-tighter text-white/90 sm:text-5xl"
         />
@@ -102,7 +102,7 @@ export default async function HomePage() {
       <section id="indicators" className="scroll-mt-18">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal><SectionHead
-            eyebrow="Indicators"
+            eyebrow="อินดิเคเตอร์"
             title={<>อินดิเคเตอร์ 10 ตัว<br />ในที่เดียว<span className="text-accent">.</span></>}
             aside="สิทธิ์แยกตามอินดิเคเตอร์ เลือกดูเฉพาะตัวที่คุณถือสิทธิ์ใน TradingView ทุกตัวส่งสัญญาณผ่านมาตรฐาน WF1 เดียวกัน"
           /></Reveal>
@@ -134,7 +134,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <Reveal className="flex flex-wrap items-end justify-between gap-6">
             <div className="space-y-3">
-              <p className="eyebrow">Risk guard</p>
+              <p className="eyebrow">คุมความเสี่ยง</p>
               <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
                 กติกาความเสี่ยง<br />ที่ทำงานก่อนทุกออเดอร์<span className="text-accent">.</span>
               </h2>
@@ -171,7 +171,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
             <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
               <div className="space-y-3">
-                <p className="eyebrow">Pricing</p>
+                <p className="eyebrow">แพ็กเกจ</p>
                 <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
                   แพ็กเกจแนะนำ<span className="text-accent">.</span>
                 </h2>
@@ -190,7 +190,7 @@ export default async function HomePage() {
       <section id="join" className="scroll-mt-18 px-4 py-16 sm:px-6 sm:py-24">
         <Reveal className="surface-dark relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-ink">
           <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-          <VelocityMarquee items={["เริ่มเลย", "START NOW", "1SHOT"]} outline baseSpeed={1.5} className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-[7rem] font-black tracking-tighter text-white/[0.06] sm:text-[11rem]" />
+          <VelocityMarquee items={["เริ่มเลย", "สมัครวันนี้", "1SHOT"]} outline baseSpeed={1.5} className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-[7rem] font-black tracking-tighter text-white/[0.06] sm:text-[11rem]" />
           <div className="relative flex flex-col gap-8 p-6 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col items-start gap-5 sm:flex-row">
               <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand text-white">

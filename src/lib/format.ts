@@ -28,7 +28,7 @@ export function rMultiple(entry: number | null, sl: number | null, tp: number | 
 export const STATUS_LABEL: Record<SetupStatus, { label: string; tone: "brand" | "buy" | "sell" | "info" | "neutral" }> = {
   pending: { label: "รอเข้า", tone: "brand" },
   entry: { label: "เข้าแล้ว", tone: "info" },
-  retest: { label: "Retest", tone: "info" },
+  retest: { label: "รีเทสต์", tone: "info" },
   tp: { label: "ถึง TP", tone: "buy" },
   sl: { label: "โดน SL", tone: "sell" },
   cancel: { label: "ยกเลิก", tone: "neutral" },
@@ -38,3 +38,5 @@ export const STATUS_LABEL: Record<SetupStatus, { label: string; tone: "brand" | 
 };
 
 export const isOpenStatus = (s: SetupStatus) => s === "pending" || s === "entry" || s === "retest";
+
+export const ROLE_LABEL: Record<string, string> = { member: "สมาชิก", admin: "แอดมิน", owner: "เจ้าของ" };

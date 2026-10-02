@@ -16,7 +16,7 @@ export default async function PricingPage() {
       <section className="surface-dark relative -mt-18 overflow-hidden bg-ink pt-18">
         <div className="brand-glow pointer-events-none absolute inset-0 opacity-80" />
         <div className="relative mx-auto max-w-6xl px-4 pt-14 pb-14 text-center sm:px-6 sm:pt-20">
-          <p className="eyebrow">Pricing</p>
+          <p className="eyebrow">ราคา</p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-balance sm:text-5xl">
             เลือกแพ็กเกจที่ใช่<span className="text-accent">.</span>
           </h1>

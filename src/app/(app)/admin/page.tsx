@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge, Card, Empty, Input } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import type { Profile } from "@/lib/types";
 
 export const metadata = { title: "สมาชิก" };
@@ -28,7 +28,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
 
   return (
     <>
-      <PageHeader eyebrow="Admin" title="สมาชิก" description={`ทั้งหมด ${rows.length}${rows.length === 200 ? "+" : ""} คน`} />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="สมาชิก" description={`ทั้งหมด ${rows.length}${rows.length === 200 ? "+" : ""} คน`} />
       <form className="relative mb-4 md:max-w-md">
         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
         <Input name="q" defaultValue={q} placeholder="ค้นหาอีเมล, TradingView, เลขบัญชี Exness" className="pl-9" />
@@ -48,7 +48,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-2">
                         <span className="truncate text-sm font-semibold">{r.display_name || r.email.split("@")[0]}</span>
-                        {r.role !== "member" && <Badge tone="brand">{r.role}</Badge>}
+                        {r.role !== "member" && <Badge tone="brand">{ROLE_LABEL[r.role]}</Badge>}
                       </p>
                       <p className="truncate text-xs text-muted">{r.email}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -82,7 +82,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
                     <td className="px-5 py-3">
                       <Link href={`/admin/members/${r.id}`} className="block">
                         <span className="font-medium hover:text-accent">{r.display_name || r.email.split("@")[0]}</span>
-                        {r.role !== "member" && <Badge tone="brand" className="ml-2">{r.role}</Badge>}
+                        {r.role !== "member" && <Badge tone="brand" className="ml-2">{ROLE_LABEL[r.role]}</Badge>}
                         <span className="block text-xs text-muted">{r.email}</span>
                       </Link>
                     </td>

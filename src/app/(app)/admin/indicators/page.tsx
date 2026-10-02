@@ -11,7 +11,7 @@ export default async function IndicatorsAdminPage() {
   const { data } = await supabase.from("indicators").select("*").order("sort");
   return (
     <>
-      <PageHeader eyebrow="Admin" title="อินดิเคเตอร์และห้อง Telegram" description="ผูกห้อง Telegram กับอินดิเคเตอร์ สมาชิกที่มีสิทธิ์และผ่านการตรวจ IB จะขอลิงก์เข้าห้องได้ บอทต้องเป็นแอดมินในห้องนั้นและมีสิทธิ์เชิญสมาชิก" />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="อินดิเคเตอร์และห้อง Telegram" description="ผูกห้อง Telegram กับอินดิเคเตอร์ สมาชิกที่มีสิทธิ์และผ่านการตรวจ IB จะขอลิงก์เข้าห้องได้ บอทต้องเป็นแอดมินในห้องนั้นและมีสิทธิ์เชิญสมาชิก" />
       <Card>
         <CardHeader title="รายการ" />
         <ul className="divide-y divide-line">

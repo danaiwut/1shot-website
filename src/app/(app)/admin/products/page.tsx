@@ -16,7 +16,7 @@ export default async function ProductsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Admin"
+        eyebrow="ผู้ดูแลระบบ"
         title="สินค้าและราคา"
         description="สินค้าที่เปิดขายและมีราคาอย่างน้อย 1 ราคาจะแสดงในหน้าราคาและร้านค้า"
         action={<ButtonLink href="/admin/products/new"><Plus className="size-4" /> เพิ่มสินค้า</ButtonLink>}

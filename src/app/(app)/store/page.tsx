@@ -16,7 +16,7 @@ export default async function StorePage({ searchParams }: PageProps<"/store">) {
 
   return (
     <>
-      <PageHeader eyebrow="Store" title="ร้านค้า" description="ซื้อหรือต่ออายุสิทธิ์อินดิเคเตอร์ ซื้อซ้ำจะบวกเวลาต่อจากสิทธิ์เดิม" />
+      <PageHeader eyebrow="ซื้อ · ต่ออายุ" title="ร้านค้า" description="ซื้อหรือต่ออายุสิทธิ์อินดิเคเตอร์ ซื้อซ้ำจะบวกเวลาต่อจากสิทธิ์เดิม" />
       {canceled && <div className="mb-6"><Notice>ยกเลิกการชำระเงินแล้ว ยังไม่มีการตัดเงิน</Notice></div>}
       {codes.length > 0 && (
         <div className="mb-8 rounded-2xl border border-line bg-panel p-4">

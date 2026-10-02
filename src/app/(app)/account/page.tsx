@@ -20,7 +20,7 @@ export default async function AccountPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Account" title="บัญชีของฉัน" description={profile.email} />
+      <PageHeader eyebrow="ตั้งค่า" title="บัญชีของฉัน" description={profile.email} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -100,18 +101,17 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+/** JR monogram with the 1SHOT wordmark. The default has a white R (dark surfaces); tone="light" swaps it to black. */
+export function Logo({ className, tone = "dark", priority }: { className?: string; tone?: "dark" | "light"; priority?: boolean }) {
   return (
-    <span className={cx("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden>
-        <rect width="32" height="32" rx="8" fill="var(--color-brand)" />
-        <path d="M8 21.5 13 16.5l3.5 3.5L24 12" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="24" cy="12" r="2.2" fill="#fff" />
-      </svg>
-      <span className="flex flex-col leading-none">
-        <span className="text-[17px] font-bold tracking-tight">1SHOT</span>
-        <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-muted uppercase">Signals</span>
-      </span>
-    </span>
+    <Image
+      src={tone === "light" ? "/brand/logo-dark.png" : "/brand/logo.png"}
+      alt="1SHOT"
+      width={988}
+      height={342}
+      priority={priority}
+      className={cx("h-9 w-auto select-none", className)}
+      draggable={false}
+    />
   );
 }

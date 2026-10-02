@@ -39,32 +39,14 @@ export function IntroCurtain() {
             transition={{ duration: 1.5, ease: [0.65, 0, 0.35, 1] }}
           />
           <div className="flex items-center gap-4">
-            <motion.svg
-              viewBox="0 0 32 32"
-              className="size-16 sm:size-20"
-              initial={{ scale: 0, rotate: -90 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
-              aria-hidden
-            >
-              <rect width="32" height="32" rx="8" fill="#b20016" />
-              <motion.path
-                d="M8 21.5 13 16.5l3.5 3.5L24 12"
-                fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.7, delay: 0.45, ease: "easeInOut" }}
-              />
-              <motion.circle cx="24" cy="12" r="2.2" fill="#fff" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.1, type: "spring" }} />
-            </motion.svg>
-            <div className="overflow-hidden">
-              <motion.p
-                className="text-5xl font-bold tracking-tighter text-white sm:text-7xl"
-                initial={{ y: "110%" }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              >
-                1SHOT<span className="text-[#ff4d61]">.</span>
-              </motion.p>
-            </div>
+            <motion.img
+              src="/brand/logo.png"
+              alt="1SHOT"
+              className="h-24 w-auto sm:h-32"
+              initial={{ clipPath: "inset(0 100% 0 0)", scale: 0.9, filter: "blur(8px)" }}
+              animate={{ clipPath: "inset(0 0% 0 0)", scale: 1, filter: "blur(0px)" }}
+              transition={{ duration: 1.1, delay: 0.15, ease: [0.65, 0, 0.35, 1] }}
+            />
           </div>
         </motion.div>
       )}

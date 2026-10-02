@@ -8,7 +8,8 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 
 const RED = "#b20016";
 
-function layout({ preheader, title, intro, rows, cta, note }: {
+function layout({ site, preheader, title, intro, rows, cta, note }: {
+  site: string;
   preheader: string;
   title: string;
   intro: string;
@@ -23,16 +24,13 @@ function layout({ preheader, title, intro, rows, cta, note }: {
     </tr>`).join("");
   return `<!doctype html>
 <html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Anuphan','Sukhumvit Set','Noto Sans Thai',Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Noto Sans Thai','Sukhumvit Set','Leelawadee UI',Tahoma,Arial,sans-serif;">
   <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;">
         <tr><td style="background:#000000;padding:28px 32px;">
-          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:36px;height:36px;background:${RED};border-radius:9px;text-align:center;color:#ffffff;font-weight:700;font-size:14px;">1S</td>
-            <td style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:700;letter-spacing:-0.3px;">1SHOT <span style="color:#8c8c8c;font-weight:500;font-size:12px;letter-spacing:2px;">SIGNALS</span></td>
-          </tr></table>
+          <img src="${esc(site)}/brand/logo.png" width="132" height="46" alt="1SHOT" style="display:block;border:0;height:46px;width:132px;">
           <h1 style="margin:28px 0 0;color:#ffffff;font-size:26px;line-height:1.3;">${esc(title)}</h1>
         </td></tr>
         <tr><td style="padding:28px 32px 8px;">
@@ -76,7 +74,7 @@ export function purchaseEmail(o: Order, name: string, site: string) {
   const cta = { href: `${site}/dashboard`, label: "ไปที่แดชบอร์ด" };
   return {
     subject,
-    html: layout({ preheader: `${o.product_name} · ${fmtTHB(o.amount_satang)}`, title, intro, rows, cta, note }),
+    html: layout({ site, preheader: `${o.product_name} · ${fmtTHB(o.amount_satang)}`, title, intro, rows, cta, note }),
     text: textOf(title, intro, rows, cta.href, note),
   };
 }
@@ -98,7 +96,7 @@ export function refundEmail(o: Order, name: string, site: string, subscriptionCa
   const cta = { href: `${site}/billing`, label: "ดูประวัติการชำระเงิน" };
   return {
     subject,
-    html: layout({ preheader: `คืนเงิน ${fmtTHB(o.amount_satang)}`, title, intro, rows, cta, note }),
+    html: layout({ site, preheader: `คืนเงิน ${fmtTHB(o.amount_satang)}`, title, intro, rows, cta, note }),
     text: textOf(title, intro, rows, cta.href, note),
   };
 }

@@ -24,7 +24,7 @@ export default async function NewsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Market" title="ข่าวและสรุปตลาด" description="สรุปเช้าประจำวันและข่าวโลกที่มีผลต่อทองคำ" />
+      <PageHeader eyebrow="ข่าวสาร" title="ข่าวและสรุปตลาด" description="สรุปเช้าประจำวันและข่าวโลกที่มีผลต่อทองคำ" />
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
         <Card>
           <CardHeader title="สรุปเช้า" hint={brief ? fmtDate(brief.brief_date) : undefined} />

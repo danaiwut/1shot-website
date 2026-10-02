@@ -26,7 +26,7 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
     <>
       <Link href="/admin/products" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> สินค้าทั้งหมด</Link>
       <PageHeader
-        eyebrow="Admin · สินค้า"
+        eyebrow="ผู้ดูแลระบบ · สินค้า"
         title={product.name}
         description={`ขายแล้ว ${sold.length} รายการ · รายได้ ${fmtTHB(sold.reduce((s, o) => s + o.amount_satang, 0))}`}
         action={<Link href="/pricing" target="_blank" className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline">ดูหน้าราคา <ExternalLink className="size-3.5" /></Link>}

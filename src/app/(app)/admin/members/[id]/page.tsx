@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm } from "@/lib/store/pricing";
 import type { Indicator, IndicatorRight, Order, Profile, Subscription } from "@/lib/types";
 import { RefundButton } from "../../orders/refund-button";
@@ -32,7 +32,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
   return (
     <>
       <Link href="/admin" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> สมาชิกทั้งหมด</Link>
-      <PageHeader eyebrow="Member" title={member.display_name || member.email} description={`${member.email} · สมัคร ${fmtDate(member.created_at)}`} />
+      <PageHeader eyebrow="ข้อมูลสมาชิก" title={member.display_name || member.email} description={`${member.email} · สมัคร ${fmtDate(member.created_at)}`} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
         <div className="space-y-6">
@@ -42,7 +42,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
               <Row k="TradingView" v={<span className="num">{member.tradingview_username ?? "—"}</span>} />
               <Row k="Exness" v={<span className="num">{member.exness_account ?? "—"}</span>} />
               <Row k="ตรวจ IB" v={<IbToggle userId={member.id} verified={member.ib_verified} disabled={!member.exness_account} />} />
-              <Row k="บทบาท" v={me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="brand">{member.role}</Badge>} />
+              <Row k="บทบาท" v={me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="brand">{ROLE_LABEL[member.role]}</Badge>} />
             </dl>
           </Card>
           <Card>

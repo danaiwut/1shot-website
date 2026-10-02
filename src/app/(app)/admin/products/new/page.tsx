@@ -13,7 +13,7 @@ export default async function NewProductPage() {
   return (
     <>
       <Link href="/admin/products" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> สินค้าทั้งหมด</Link>
-      <PageHeader eyebrow="Admin" title="เพิ่มสินค้า" description="สร้างสินค้าก่อน แล้วเพิ่มราคาในหน้าถัดไป" />
+      <PageHeader eyebrow="ผู้ดูแลระบบ" title="เพิ่มสินค้า" description="สร้างสินค้าก่อน แล้วเพิ่มราคาในหน้าถัดไป" />
       <Card className="max-w-3xl">
         <CardHeader title="ข้อมูลสินค้า" />
         <ProductForm indicators={(data ?? []) as { code: string; name: string }[]} />

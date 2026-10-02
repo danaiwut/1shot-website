@@ -53,7 +53,7 @@ export function AboutSection() {
         {/* Copy */}
         <div className="space-y-7">
           <span className="inline-flex rounded-md border border-brand/30 bg-brand-dim px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-accent uppercase">
-            About 1SHOT
+            เกี่ยวกับ 1SHOT
           </span>
           <h2 className="text-3xl leading-[1.15] font-bold tracking-tight text-balance sm:text-[2.6rem]">
             เราสร้างอินดิเคเตอร์ <span className="text-accent">เพื่อเทรดเดอร์ทองคำ</span> โดยเฉพาะ
@@ -97,15 +97,9 @@ function BrandPanel() {
         <path d="M0 400 L50 380 L90 395 L140 340 L180 355 L230 290 L270 305 L320 240 L360 255 L400 200" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" />
       </svg>
       <div className="relative flex flex-col items-center gap-4 text-center">
-        <svg viewBox="0 0 32 32" className="size-24 drop-shadow-[0_20px_40px_rgb(178_0_22/0.6)]" aria-hidden>
-          <rect width="32" height="32" rx="8" fill="var(--color-brand)" />
-          <path d="M8 21.5 13 16.5l3.5 3.5L24 12" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="24" cy="12" r="2.2" fill="#fff" />
-        </svg>
-        <div>
-          <p className="text-2xl font-bold tracking-tight">1SHOT</p>
-          <p className="mt-1 text-[11px] font-medium tracking-[0.3em] text-muted uppercase">Signals · XAUUSD</p>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo.png" alt="1SHOT" className="w-56 drop-shadow-[0_20px_40px_rgb(178_0_22/0.6)]" />
+        <p className="text-[11px] font-medium tracking-[0.3em] text-muted">สัญญาณทองคำ · XAUUSD</p>
       </div>
     </div>
   );

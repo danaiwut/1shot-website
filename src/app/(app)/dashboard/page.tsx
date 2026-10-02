@@ -37,7 +37,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Dashboard" title={`สวัสดี, ${name}`} description="สถานะบัญชีและสัญญาณล่าสุดจากอินดิเคเตอร์ที่คุณมีสิทธิ์" />
+      <PageHeader eyebrow="แดชบอร์ด" title={`สวัสดี, ${name}`} description="สถานะบัญชีและสัญญาณล่าสุดจากอินดิเคเตอร์ที่คุณมีสิทธิ์" />
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
         <Stat label="Setup ที่เปิดอยู่" value={open.length} hint="รอเข้า / เข้าแล้ว" />
