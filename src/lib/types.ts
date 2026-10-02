@@ -72,3 +72,70 @@ export interface SignalEvent {
 }
 
 export const isStaff = (role: Role | undefined) => role === "admin" || role === "owner";
+
+export type Billing = "one_time" | "subscription";
+
+export interface ProductPrice {
+  id: string;
+  product_id: string;
+  billing: Billing;
+  amount_satang: number;
+  currency: "thb";
+  interval: "month" | "year" | null;
+  duration_days: number | null;
+  active: boolean;
+  sort: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  kind: "single" | "bundle";
+  codes: string[];
+  features: string[];
+  active: boolean;
+  featured: boolean;
+  sort: number;
+  product_prices?: ProductPrice[];
+}
+
+export type OrderStatus = "pending" | "paid" | "failed" | "canceled" | "refunded";
+
+export interface Order {
+  id: string;
+  user_id: string;
+  product_id: string | null;
+  price_id: string | null;
+  product_name: string;
+  codes: string[];
+  billing: Billing;
+  interval: string | null;
+  duration_days: number | null;
+  amount_satang: number;
+  currency: string;
+  status: OrderStatus;
+  kind: "checkout" | "renewal";
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_subscription_id: string | null;
+  receipt_url: string | null;
+  access_until: string | null;
+  created_at: string;
+  paid_at: string | null;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  product_id: string | null;
+  price_id: string | null;
+  product_name: string;
+  codes: string[];
+  status: string;
+  interval: string | null;
+  amount_satang: number;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  created_at: string;
+}

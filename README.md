@@ -20,7 +20,6 @@
 
 - ตรวจสิทธิ์ TradingView อัตโนมัติ (`tv_verify.py`) — ตอนนี้แอดมินให้สิทธิ์เองในหน้า Admin
 - ตรวจ IB ผ่าน Exness API (`exness_link.py`) — ตอนนี้แอดมินกดยืนยัน IB เอง
-- ร้านค้า / Stripe / ต่ออายุ (`products.py`, `renewal.py`)
 - MT5 Gateway + Worker (`mt5-automation/`) — ต้องรันบน Windows/Wine แยกจากเว็บอยู่แล้ว
 - AI Agent Machine (สถิติ + Claude) และบอทส่งสัญญาณเข้าห้อง (`tv_alert.py`)
 - กราฟแท่งเทียน (ยังไม่มีแหล่งราคา) — หน้า Setup แสดงเฉพาะโซนที่อินดิเคเตอร์วาด
@@ -38,6 +37,7 @@ npm run dev        # เปิด /login แล้วกด "เข้าเป�
 - บัญชีตัวอย่าง: `admin@1shot.demo` (owner) และ `member@1shot.demo` (สมาชิก) รหัสผ่านอะไรก็ได้ อีเมลอื่นจะเข้าเป็น owner
 - สมัครสมาชิกได้จริงในโหมดนี้ (เข้าระบบทันที ไม่ต้องยืนยันอีเมล) และเชื่อม Telegram แบบจำลองได้
 - แก้ข้อมูล ให้สิทธิ์ ตรวจ IB ได้ทุกอย่าง แต่ข้อมูลจะกลับเป็นค่าเริ่มต้นเมื่อรีสตาร์ตเซิร์ฟเวอร์
+- ซื้อสินค้าได้จริงในโหมดนี้ (ไม่ผ่าน Stripe ชำระสำเร็จทันที) เพื่อดู flow ร้านค้า → การชำระเงิน → สิทธิ์
 - ทดสอบ Webhook ได้ที่ `POST /api/webhook/tradingview/demo-secret` (ใช้ secret นี้เฉพาะโหมดตัวอย่าง)
 - บังคับเปิด/ปิดด้วย `NEXT_PUBLIC_MOCK_MODE=1` / `NEXT_PUBLIC_MOCK_MODE=0` เมื่อใส่ค่า Supabase แล้วจะใช้ข้อมูลจริงอัตโนมัติ
 
@@ -60,6 +60,24 @@ npm run dev                  # http://localhost:3000
    update public.profiles set role = 'owner' where email = 'you@example.com';
    ```
 5. นำเข้าข่าวและสรุปเช้าเดิม: `npm run import:legacy -- /path/to/tvaccess`
+
+### Stripe (ร้านค้า)
+
+ลูกค้าซื้อได้ 2 แบบ: **รายงวด** (ตัดบัตรอัตโนมัติรายเดือน/รายปี) และ **จ่ายครั้งเดียว** (ใช้ได้ตามจำนวนวัน หรือตลอดชีพ)
+ชำระสำเร็จแล้วระบบเพิ่ม `indicator_rights` ให้เอง ซื้อซ้ำจะบวกเวลาต่อจากของเดิม และไม่ลดสิทธิ์ที่มีอยู่ เส้นทางฟรีผ่าน Exness IB (แอดมินให้สิทธิ์เอง) ยังใช้ได้เหมือนเดิม
+
+1. รัน `supabase/migrations/20261002000000_store.sql`
+2. Stripe Dashboard → Developers → API keys → ใส่ `STRIPE_SECRET_KEY`
+3. Developers → Webhooks → Add endpoint `{SITE_URL}/api/stripe/webhook` เลือก event:
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `checkout.session.expired`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `charge.refunded` แล้วใส่ Signing secret เป็น `STRIPE_WEBHOOK_SECRET`
+4. Settings → Payment methods: เปิด **Cards** และ **PromptPay** (PromptPay ใช้ได้เฉพาะแบบจ่ายครั้งเดียว)
+5. Settings → Billing → Customer portal: กด Save ครั้งหนึ่ง เพื่อให้ปุ่ม "จัดการบัตรและใบแจ้งหนี้" ใช้งานได้
+6. เข้า Admin → สินค้าและราคา เพื่อสร้างสินค้า (รายตัว/แพ็กเกจรวม) และเพิ่มราคา
+
+ทดสอบในเครื่อง: `stripe listen --forward-to localhost:3000/api/stripe/webhook` แล้วใช้บัตรทดสอบ `4242 4242 4242 4242`
+คืนเงินทำที่หน้า Stripe แล้วสถานะคำสั่งซื้อจะเปลี่ยนเป็น "คืนเงินแล้ว" เอง (สิทธิ์ที่ให้ไปแล้วแอดมินยกเลิกเองในหน้าสมาชิก)
 
 ### TradingView
 

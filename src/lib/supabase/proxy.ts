@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, publicEnv } from "../env";
 import { isMockMode, MOCK_SESSION_COOKIE } from "../mock/mode";
 
-const MEMBER_PATHS = ["/dashboard", "/signals", "/news", "/account", "/admin"];
+const MEMBER_PATHS = ["/dashboard", "/signals", "/news", "/account", "/admin", "/store", "/billing"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

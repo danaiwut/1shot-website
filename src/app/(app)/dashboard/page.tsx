@@ -26,10 +26,11 @@ export default async function DashboardPage() {
 
   const steps = [
     { done: Boolean(profile.tradingview_username), label: "ชื่อผู้ใช้ TradingView", href: "/account" },
-    { done: Boolean(profile.exness_account), label: "บัญชี Exness", href: "/account" },
-    { done: profile.ib_verified, label: "ผ่านการตรวจ IB", href: "/account", note: profile.exness_account && !profile.ib_verified ? "รอแอดมินตรวจ" : undefined },
+    {
+      done: activeRights.length > 0, label: "ซื้อแพ็กเกจ หรือรับฟรีผ่าน IB", href: activeRights.length ? "/billing" : "/store",
+      note: !activeRights.length && profile.exness_account && !profile.ib_verified ? "IB รอแอดมินตรวจ" : undefined,
+    },
     { done: Boolean(linkRes.data), label: "เชื่อม Telegram", href: "/account#telegram" },
-    { done: activeRights.length > 0, label: "มีสิทธิ์อินดิเคเตอร์", href: "/account" },
   ];
   const progress = steps.filter((s) => s.done).length;
   const name = profile.display_name || profile.email.split("@")[0];
@@ -74,8 +75,22 @@ export default async function DashboardPage() {
             </ul>
           </Card>
 
+          {activeRights.length === 0 && (
+            <div className="surface-dark relative overflow-hidden rounded-card bg-ink p-5">
+              <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
+              <div className="relative">
+                <p className="font-semibold">ยังไม่มีสิทธิ์อินดิเคเตอร์</p>
+                <p className="mt-1 text-sm text-muted">ซื้อแพ็กเกจเพื่อเริ่มรับสัญญาณทันที หรือกรอกเลขบัญชี Exness ภายใต้ IB เพื่อขอใช้ฟรี</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ButtonLink href="/store">ดูแพ็กเกจ <ArrowUpRight className="size-4" /></ButtonLink>
+                  <ButtonLink href="/account" variant="outline">ใช้ฟรีผ่าน IB</ButtonLink>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Card>
-            <CardHeader title="สิทธิ์อินดิเคเตอร์" />
+            <CardHeader title="สิทธิ์อินดิเคเตอร์" action={<ButtonLink href="/store" variant="ghost" className="h-8 px-2.5 text-xs">ซื้อ / ต่ออายุ</ButtonLink>} />
             {rights.length ? (
               <ul className="divide-y divide-line">
                 {rights.map((r) => {
@@ -89,7 +104,7 @@ export default async function DashboardPage() {
                 })}
               </ul>
             ) : (
-              <Empty title="ยังไม่มีสิทธิ์">แอดมินจะเพิ่มสิทธิ์หลังตรวจชื่อผู้ใช้ TradingView และบัญชี IB</Empty>
+              <Empty title="ยังไม่มีสิทธิ์">ซื้อได้ที่ร้านค้า หรือรอแอดมินให้สิทธิ์หลังตรวจบัญชี IB</Empty>
             )}
           </Card>
 

@@ -16,7 +16,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <Field label="ชื่อผู้ใช้ TradingView" hint="ใช้ตรวจและให้สิทธิ์อินดิเคเตอร์ในบัญชี TradingView ของคุณ">
         <Input name="tradingview_username" defaultValue={profile.tradingview_username ?? ""} placeholder="เช่น trader_1shot" autoComplete="off" />
       </Field>
-      <Field label="เลขบัญชี Exness" hint="ถ้าเปลี่ยนเลขบัญชี ต้องรอแอดมินตรวจ IB ใหม่">
+      <Field label="เลขบัญชี Exness (ไม่บังคับ)" hint="กรอกถ้าเปิดบัญชีภายใต้ IB ของเรา เพื่อขอใช้ฟรี แอดมินจะตรวจแล้วให้สิทธิ์ ถ้าซื้อแพ็กเกจแล้วไม่ต้องกรอก">
         <Input name="exness_account" defaultValue={profile.exness_account ?? ""} inputMode="numeric" placeholder="เช่น 12345678" autoComplete="off" />
       </Field>
       {state.error && <Notice tone="error">{state.error}</Notice>}

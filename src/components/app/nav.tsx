@@ -3,18 +3,24 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Activity, LayoutDashboard, LogOut, Menu, Newspaper, Settings2, ShieldHalf, SlidersHorizontal, Users, Webhook, X,
+  Activity, CreditCard, LayoutDashboard, LogOut, Menu, Newspaper, Package, Receipt, Settings2, ShieldHalf, ShoppingBag, SlidersHorizontal, Users, Webhook, X,
 } from "lucide-react";
 import { cx } from "@/components/ui";
 
 const MEMBER = [
   { href: "/dashboard", label: "ภาพรวม", short: "ภาพรวม", icon: LayoutDashboard },
   { href: "/signals", label: "สัญญาณ", short: "สัญญาณ", icon: Activity },
+  { href: "/store", label: "ร้านค้า", short: "ร้านค้า", icon: ShoppingBag },
+  { href: "/billing", label: "การชำระเงิน", short: "ชำระเงิน", icon: CreditCard },
   { href: "/news", label: "ข่าวและสรุปตลาด", short: "ข่าว", icon: Newspaper },
   { href: "/account", label: "บัญชีของฉัน", short: "บัญชี", icon: Settings2 },
 ];
+/** Bottom tab bar on phones; everything else lives in the "เมนู" sheet. */
+const TABS = ["/dashboard", "/signals", "/store", "/account"];
 const STAFF = [
   { href: "/admin", label: "สมาชิก", short: "สมาชิก", icon: Users },
+  { href: "/admin/orders", label: "คำสั่งซื้อ", short: "คำสั่งซื้อ", icon: Receipt },
+  { href: "/admin/products", label: "สินค้าและราคา", short: "สินค้า", icon: Package },
   { href: "/admin/indicators", label: "อินดิเคเตอร์และห้อง", short: "อินดิเคเตอร์", icon: SlidersHorizontal },
   { href: "/admin/webhooks", label: "Webhook log", short: "Webhook", icon: Webhook },
 ];
@@ -70,12 +76,12 @@ export function MobileNav({ staff, name, email }: { staff: boolean; name: string
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
   }, [open]);
-  const staffActive = STAFF.some((i) => active(i.href));
+  const inSheet = [...MEMBER.filter((i) => !TABS.includes(i.href)), ...STAFF].some((i) => active(i.href));
 
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
-        {MEMBER.map((i) => (
+        {MEMBER.filter((i) => TABS.includes(i.href)).map((i) => (
           <Link
             key={i.href}
             href={i.href}
@@ -91,7 +97,7 @@ export function MobileNav({ staff, name, email }: { staff: boolean; name: string
           onClick={() => setOpen(true)}
           aria-expanded={open}
           aria-controls="mobile-sheet"
-          className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium", staffActive || open ? "text-accent" : "text-muted")}
+          className={cx("flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium", inSheet || open ? "text-accent" : "text-muted")}
         >
           <Menu className="size-5" strokeWidth={1.7} />
           เมนู

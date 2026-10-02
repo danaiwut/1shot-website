@@ -27,7 +27,7 @@ export default async function AccountPage() {
             title="ข้อมูลสมาชิก"
             action={profile.ib_verified
               ? <Badge tone="buy"><BadgeCheck className="size-3" /> ผ่านการตรวจ IB</Badge>
-              : <Badge tone="brand"><Clock className="size-3" /> ยังไม่ผ่านการตรวจ IB</Badge>}
+              : profile.exness_account ? <Badge tone="brand"><Clock className="size-3" /> IB รอตรวจ</Badge> : undefined}
           />
           <ProfileForm profile={profile} />
         </Card>
@@ -63,7 +63,7 @@ export default async function AccountPage() {
                         <p className="text-[11px] text-muted">{r.expires_at ? `${active ? "ใช้ได้ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</p>
                       </div>
                       {r.indicators?.telegram_room_id
-                        ? <RoomButton code={r.code} disabled={!active || !link || !profile.ib_verified} />
+                        ? <RoomButton code={r.code} disabled={!active || !link} />
                         : <span className="text-[11px] text-faint">ไม่มีห้อง</span>}
                     </li>
                   );

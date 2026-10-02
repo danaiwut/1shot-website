@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SiteMobileMenu } from "@/components/site/mobile-menu";
+import { SiteNavLinks } from "@/components/site/nav-links";
 import { ButtonLink, Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { hasBackend } from "@/lib/env";
 
 const NAV = [
-  { href: "#indicators", label: "อินดิเคเตอร์" },
-  { href: "#guard", label: "การคุมความเสี่ยง" },
-  { href: "#how", label: "การทำงาน" },
-  { href: "#about", label: "เกี่ยวกับเรา" },
-  { href: "#join", label: "สมัครสมาชิก" },
+  { href: "/#indicators", label: "อินดิเคเตอร์" },
+  { href: "/pricing", label: "ราคา" },
+  { href: "/#guard", label: "การคุมความเสี่ยง" },
+  { href: "/#how", label: "การทำงาน" },
+  { href: "/#about", label: "เกี่ยวกับเรา" },
 ];
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -20,14 +21,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <header className="surface-dark sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
           <Link href="/" aria-label="หน้าแรก"><Logo /></Link>
-          <nav className="hidden items-center gap-7 text-sm text-muted lg:flex">
-            <Link href="/" className="relative py-1 text-fg after:absolute after:inset-x-0 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-brand">
-              หน้าแรก
-            </Link>
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="py-1 transition-colors hover:text-fg">{n.label}</a>
-            ))}
-          </nav>
+          <SiteNavLinks links={NAV} />
           <div className="flex items-center gap-2">
             {viewer ? (
               <ButtonLink href="/dashboard">เข้าสู่แดชบอร์ด <ArrowRight className="size-4" /></ButtonLink>
@@ -50,7 +44,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
               สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อม Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด
             </p>
           </div>
-          <FooterCol title="เมนู" links={NAV.slice(0, 3)} />
+          <FooterCol title="เมนู" links={NAV.slice(0, 4)} />
           <FooterCol
             title="สมาชิก"
             links={[
@@ -89,7 +83,7 @@ function FooterCol({ title, links }: { title: string; links: { href: string; lab
       <ul className="mt-4 space-y-2.5 text-muted">
         {links.map((l) => (
           <li key={l.href}>
-            {l.href.startsWith("#") ? (
+            {l.href.includes("#") ? (
               <a href={l.href} className="transition-colors hover:text-fg">{l.label}</a>
             ) : (
               <Link href={l.href} className="transition-colors hover:text-fg">{l.label}</Link>

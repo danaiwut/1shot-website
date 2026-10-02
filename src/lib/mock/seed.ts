@@ -164,8 +164,81 @@ export function buildSeed(now = Date.now()) {
     id: i + 1, ok, inserted, error, excerpt, received_at: iso(now - (min as number) * 60e3),
   }));
 
+  // Store. Prices are placeholders for the mockup — set real ones in Admin → สินค้าและราคา.
+  const products: Row[] = [];
+  const product_prices: Row[] = [];
+  let pid = 1;
+  const uuid = (prefix: string, n: number) => `${prefix}000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const addProduct = (p: { name: string; description: string; kind: "single" | "bundle"; codes: string[]; features?: string[]; featured?: boolean; sort: number }, prices: [string, number, string | null, number | null][]) => {
+    const id = uuid("10", pid++);
+    products.push({ id, features: [], featured: false, active: true, created_at: iso(now - 60 * D), updated_at: iso(now - 60 * D), ...p });
+    prices.forEach(([billing, baht, interval, days], i) => product_prices.push({
+      id: uuid("20", product_prices.length + 1), product_id: id, billing, amount_satang: baht * 100, currency: "thb",
+      interval, duration_days: days, active: true, sort: i, created_at: iso(now - 60 * D),
+    }));
+    return id;
+  };
+  const allCodes = INDICATORS.filter((i) => !i.is_reference).map((i) => String(i.code));
+  const ALL = addProduct({
+    name: "All Access", kind: "bundle", codes: allCodes, featured: true, sort: 10,
+    description: "ปลดล็อกอินดิเคเตอร์ 1SHOT ครบทุกตัว พร้อมห้องสัญญาณ Telegram ทุกห้อง",
+    features: ["อินดิเคเตอร์ครบ 9 ตัว", "ห้องสัญญาณ Telegram ทุกห้อง", "สัญญาณใหม่แบบเรียลไทม์", "ได้อินดิเคเตอร์ตัวใหม่อัตโนมัติ"],
+  }, [["subscription", 2990, "month", null], ["subscription", 29900, "year", null], ["one_time", 59000, null, null]]);
+  const ICT = addProduct({
+    name: "ICT Pack", kind: "bundle", codes: ["AMD", "AR", "OB", "SW"], sort: 20,
+    description: "ชุดอินดิเคเตอร์สาย ICT สำหรับเทรดตามสภาพคล่องและ Orderblock",
+    features: ["AMD Pro · Asian Range · Orderblock · Sweep Model", "ห้องสัญญาณของแต่ละตัว"],
+  }, [["subscription", 1990, "month", null], ["one_time", 4990, null, 90]]);
+  addProduct({
+    name: "SMC + Supply & Demand", kind: "bundle", codes: ["DT", "TF", "SD"], sort: 30,
+    description: "สาย SMC และ Supply/Demand สำหรับเทรดระหว่างวันและตามเทรนด์",
+    features: ["Daytrade X · Trend Final · Supply and Demand", "เป้า TP หลายระดับ (R)"],
+  }, [["subscription", 1590, "month", null], ["one_time", 3990, null, 90]]);
+  const singles: Record<string, string> = {};
+  INDICATORS.filter((i) => !i.is_reference).forEach((ind, i) => {
+    singles[String(ind.code)] = addProduct(
+      { name: String(ind.name), kind: "single", codes: [String(ind.code)], sort: 100 + i, description: String(ind.description) },
+      [["subscription", 790, "month", null], ["one_time", 1990, null, 90], ["one_time", 5900, null, null]],
+    );
+  });
+
+  const priceOf = (productId: string, billing: string, days: number | null = null) =>
+    product_prices.find((p) => p.product_id === productId && p.billing === billing && (billing === "subscription" || p.duration_days === days))!;
+  let oid = 1;
+  const order = (user_id: string, productId: string, billing: string, days: number | null, status: string, daysAgo: number, extra: Row = {}): Row => {
+    const product = products.find((p) => p.id === productId)!;
+    const price = priceOf(productId, billing, days);
+    return {
+      id: uuid("30", oid++), user_id, product_id: productId, price_id: price.id, product_name: product.name, codes: product.codes,
+      billing, interval: price.interval, duration_days: price.duration_days, amount_satang: price.amount_satang, currency: "thb",
+      status, kind: "checkout", stripe_checkout_session_id: `cs_mock_${oid}`, stripe_payment_intent_id: status === "paid" ? `pi_mock_${oid}` : null,
+      stripe_subscription_id: null, stripe_invoice_id: null, receipt_url: null, access_until: null,
+      created_at: iso(now - daysAgo * D), paid_at: status === "paid" || status === "refunded" ? iso(now - daysAgo * D + 60e3) : null, ...extra,
+    };
+  };
+  const SW_SUB = "sub_mock_member_sw";
+  const orders: Row[] = [
+    order(DEMO_MEMBER_ID, singles.OB, "one_time", 90, "paid", 65, { access_until: iso(now + 25 * D) }),
+    order(DEMO_MEMBER_ID, singles.SD, "one_time", null, "paid", 40),
+    order(DEMO_MEMBER_ID, singles.SW, "subscription", null, "paid", 48, { stripe_subscription_id: SW_SUB }),
+    order(DEMO_MEMBER_ID, singles.SW, "subscription", null, "paid", 18, { stripe_subscription_id: SW_SUB, kind: "renewal", stripe_checkout_session_id: null }),
+    order(DEMO_MEMBER_ID, singles.AMD, "one_time", 90, "paid", 93),
+    order(DEMO_MEMBER_ID, ICT, "subscription", null, "canceled", 5, { stripe_payment_intent_id: null }),
+    order("00000000-0000-4000-8000-000000000006", singles.TF, "one_time", 90, "paid", 50),
+    order("00000000-0000-4000-8000-000000000006", singles.RC, "one_time", 90, "paid", 50),
+    order("00000000-0000-4000-8000-000000000007", ALL, "subscription", null, "failed", 2, { stripe_payment_intent_id: null }),
+    order("00000000-0000-4000-8000-000000000003", ICT, "one_time", 90, "refunded", 12),
+    order("00000000-0000-4000-8000-000000000005", ALL, "subscription", null, "pending", 0.1, { stripe_payment_intent_id: null }),
+  ];
+  const subscriptions: Row[] = [{
+    id: SW_SUB, user_id: DEMO_MEMBER_ID, product_id: singles.SW, price_id: priceOf(singles.SW, "subscription").id, product_name: "Sweep Model",
+    codes: ["SW"], status: "active", interval: "month", amount_satang: 79000, current_period_end: iso(now + 12 * D),
+    cancel_at_period_end: false, created_at: iso(now - 48 * D), updated_at: iso(now - 18 * D),
+  }];
+
   return {
     profiles, indicators: INDICATORS, indicator_rights, signal_events, telegram_links,
     telegram_link_tokens: [] as Row[], telegram_invites: [] as Row[], daily_briefs, news_items, webhook_receipts,
+    products, product_prices, orders, subscriptions, stripe_customers: [] as Row[], stripe_events: [] as Row[],
   };
 }

@@ -95,11 +95,9 @@ export async function confirmLink(userId: string) {
 
 async function memberMayJoin(userId: string, roomId: string) {
   const admin = createAdminClient();
-  const [{ data: profile }, { data: indicator }] = await Promise.all([
-    admin.from("profiles").select("ib_verified").eq("id", userId).single(),
-    admin.from("indicators").select("code").eq("telegram_room_id", roomId).maybeSingle(),
-  ]);
-  if (!profile?.ib_verified || !indicator) return false;
+  // An active right is what counts — bought through Stripe or granted by staff for the Exness IB route.
+  const { data: indicator } = await admin.from("indicators").select("code").eq("telegram_room_id", roomId).maybeSingle();
+  if (!indicator) return false;
   const { data: right } = await admin
     .from("indicator_rights")
     .select("expires_at")
@@ -119,7 +117,7 @@ export async function requestRoomInvite(userId: string, code: string) {
   if (!link) throw new TelegramError("กรุณาเชื่อม Telegram ก่อน");
   const room = indicator?.telegram_room_id;
   if (!room) throw new TelegramError("อินดิเคเตอร์นี้ยังไม่มีห้อง Telegram");
-  if (!(await memberMayJoin(userId, room))) throw new TelegramError("ยังไม่มีสิทธิ์ห้องนี้ หรือยังไม่ผ่านการตรวจ IB กรุณาติดต่อแอดมิน");
+  if (!(await memberMayJoin(userId, room))) throw new TelegramError("ยังไม่มีสิทธิ์ห้องนี้ หรือสิทธิ์หมดอายุแล้ว");
 
   const expires = Math.floor(Date.now() / 1000) + 600;
   const invite = await tg<{ invite_link: string }>("createChatInviteLink", {

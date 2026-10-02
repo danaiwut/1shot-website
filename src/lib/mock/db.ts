@@ -23,8 +23,10 @@ const nextId = () => (g.__mockSeq = (g.__mockSeq ?? 10_000) + 1);
 const PRIMARY_KEYS: Record<string, string[]> = {
   profiles: ["id"], indicators: ["code"], indicator_rights: ["user_id", "code"], telegram_links: ["user_id"],
   telegram_link_tokens: ["user_id"], telegram_invites: ["invite_url"], daily_briefs: ["brief_date"],
+  products: ["id"], product_prices: ["id"], orders: ["id"], subscriptions: ["id"], stripe_customers: ["user_id"], stripe_events: ["id"],
 };
 const AUTO_ID = new Set(["signal_events", "news_items", "webhook_receipts"]);
+const AUTO_UUID = new Set(["products", "product_prices", "orders"]);
 
 /** Mirrors the `public.setups` view: opening event + latest state per setup_key. */
 function setupsView(events: Row[]): Row[] {
@@ -52,7 +54,7 @@ function setupsView(events: Row[]): Row[] {
 }
 
 /** Embedded relations used by the pages' select strings, e.g. `*, indicators(name)`. */
-function embed(table: string, rows: Row[], select: string): Row[] {
+function embed(table: string, rows: Row[], select: string, this_visible: (r: Row) => boolean = () => true): Row[] {
   const d = db();
   const wants = (rel: string) => new RegExp(`(^|[,\\s])${rel}(!\\w+)?\\(`).test(select);
   return rows.map((r) => {
@@ -60,6 +62,13 @@ function embed(table: string, rows: Row[], select: string): Row[] {
     if (table === "indicator_rights" && wants("indicators")) o.indicators = d.indicators.find((i) => i.code === r.code) ?? null;
     if (table === "profiles" && wants("telegram_links")) o.telegram_links = d.telegram_links.find((l) => l.user_id === r.id) ?? null;
     if (table === "profiles" && wants("indicator_rights")) o.indicator_rights = d.indicator_rights.filter((x) => x.user_id === r.id);
+    if (table === "products" && wants("product_prices")) {
+      o.product_prices = d.product_prices.filter((p) => p.product_id === r.id && this_visible(p)).sort((a, b) => Number(a.sort) - Number(b.sort));
+    }
+    if ((table === "orders" || table === "subscriptions") && wants("profiles")) {
+      const p = d.profiles.find((x) => x.id === r.user_id);
+      o.profiles = p ? { email: p.email, display_name: p.display_name } : null;
+    }
     return o;
   });
 }
@@ -92,13 +101,20 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
   private one?: "single" | "maybe";
   private wantCount = false;
   private payload: Row | Row[] = [];
+  private conflictKeys?: string[];
+  private ignoreDuplicates = false;
 
   constructor(private table: TableName, private visible: (table: string, r: Row) => boolean) {}
 
   select(cols = "*", opts?: { count?: string }) { this.selectStr = cols; if (opts?.count) this.wantCount = true; return this; }
   insert(rows: Row | Row[]) { this.op = "insert"; this.payload = rows; return this; }
   update(patch: Row) { this.op = "update"; this.payload = patch; return this; }
-  upsert(rows: Row | Row[]) { this.op = "upsert"; this.payload = rows; return this; }
+  upsert(rows: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
+    this.op = "upsert"; this.payload = rows;
+    this.conflictKeys = opts?.onConflict?.split(",").map((k) => k.trim());
+    this.ignoreDuplicates = Boolean(opts?.ignoreDuplicates);
+    return this;
+  }
   delete() { this.op = "delete"; return this; }
 
   eq(c: string, v: unknown) { this.filters.push((r) => String(r[c]) === String(v)); return this; }
@@ -136,16 +152,24 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
     const now = new Date().toISOString();
 
     if (this.op === "insert" || this.op === "upsert") {
-      const keys = PRIMARY_KEYS[this.table];
-      const written = (Array.isArray(this.payload) ? this.payload : [this.payload]).map((input) => {
+      const keys = this.conflictKeys ?? PRIMARY_KEYS[this.table];
+      const written: Row[] = [];
+      for (const input of Array.isArray(this.payload) ? this.payload : [this.payload]) {
         const row: Row = { ...input };
+        const existing = this.op === "upsert" && keys ? table.find((r) => keys.every((k) => row[k] != null && String(r[k]) === String(row[k]))) : undefined;
+        if (existing) {
+          if (this.ignoreDuplicates) continue;
+          Object.assign(existing, row, "updated_at" in existing ? { updated_at: now } : {});
+          written.push(existing);
+          continue;
+        }
         if (AUTO_ID.has(this.table) && row.id == null) row.id = nextId();
+        if (AUTO_UUID.has(this.table) && row.id == null) row.id = crypto.randomUUID();
         if (this.table === "webhook_receipts") row.received_at ??= now;
-        const existing = this.op === "upsert" && keys ? table.find((r) => keys.every((k) => String(r[k]) === String(row[k]))) : undefined;
-        if (existing) { Object.assign(existing, row, { updated_at: now }); return existing; }
+        if (["orders", "products", "product_prices", "subscriptions", "stripe_customers"].includes(this.table)) row.created_at ??= now;
         table.push(row);
-        return row;
-      });
+        written.push(row);
+      }
       return this.finish(written);
     }
     const hits = table.filter((r) => this.match(r));
@@ -168,7 +192,7 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
     }
     if (this.rangeAB) out = out.slice(this.rangeAB[0], this.rangeAB[1] + 1);
     if (this.limitN != null) out = out.slice(0, this.limitN);
-    out = embed(this.table, structuredClone(out), this.selectStr);
+    out = embed(this.table, structuredClone(out), this.selectStr, (r) => this.visible("product_prices", r));
     if (this.one) {
       if (out.length === 0 && this.one === "single") return { data: null, error: { message: "no rows", code: "PGRST116" }, count };
       return { data: out[0] ?? null, error: null, count };
@@ -181,7 +205,9 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
 function rlsFor(uid: string | null) {
   const d = db();
   const me = d.profiles.find((p) => p.id === uid);
-  if (!me) return () => false;
+  const catalogue = (table: string, r: Row) =>
+    table === "indicators" || ((table === "products" || table === "product_prices") && r.active === true);
+  if (!me) return catalogue; // anonymous visitors see the public price list only
   if (isStaff(me.role as Role)) return () => true;
   const now = new Date();
   const codes = new Set(
@@ -191,11 +217,33 @@ function rlsFor(uid: string | null) {
     switch (table) {
       case "setups": case "signal_events": return codes.has(String(r.code));
       case "profiles": return r.id === uid;
-      case "indicator_rights": case "telegram_links": case "telegram_link_tokens": return r.user_id === uid;
-      case "webhook_receipts": case "telegram_invites": return false;
+      case "indicator_rights": case "telegram_links": case "telegram_link_tokens": case "orders": case "subscriptions": return r.user_id === uid;
+      case "products": case "product_prices": return r.active === true;
+      case "webhook_receipts": case "telegram_invites": case "stripe_customers": case "stripe_events": return false;
       default: return true;
     }
   };
+}
+
+/** Mirrors `grant_purchase`: extends rights, never shortens them. Returns the latest expiry (null = lifetime). */
+function grantPurchase(a: { p_user: string; p_codes: string[]; p_days: number | null; p_until: string | null; p_note: string | null }) {
+  const d = db();
+  let latest: string | null = null;
+  for (const code of a.p_codes) {
+    const cur = d.indicator_rights.find((r) => r.user_id === a.p_user && r.code === code);
+    let target: string | null;
+    if (cur && cur.expires_at == null) target = null;
+    else if (a.p_until == null && a.p_days == null) target = null;
+    else if (a.p_until != null) target = cur?.expires_at && String(cur.expires_at) > a.p_until ? String(cur.expires_at) : a.p_until;
+    else {
+      const from = Math.max(Date.now(), cur?.expires_at ? new Date(String(cur.expires_at)).getTime() : 0);
+      target = new Date(from + a.p_days! * 864e5).toISOString();
+    }
+    if (cur) Object.assign(cur, { expires_at: target, note: a.p_note, updated_at: new Date().toISOString() });
+    else d.indicator_rights.push({ user_id: a.p_user, code, expires_at: target, note: a.p_note, granted_by: null, updated_at: new Date().toISOString() });
+    if (target && (!latest || target > latest)) latest = target;
+  }
+  return latest;
 }
 
 /** Mirrors `ingest_signal_events`: idempotent on (code, event_id). Returns the number of new events. */
@@ -253,7 +301,10 @@ export function createMockClient(cookies: CookieJar) {
 export function createMockAdminClient() {
   return {
     from: (table: TableName) => new Query(table, () => true),
-    rpc: async (name: string, args: { p_events?: Row[] }) =>
-      name === "ingest_signal_events" ? { data: ingest(args.p_events ?? []), error: null } : { data: null, error: null },
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      if (name === "ingest_signal_events") return { data: ingest((args.p_events as Row[]) ?? []), error: null };
+      if (name === "grant_purchase") return { data: grantPurchase(args as Parameters<typeof grantPurchase>[0]), error: null };
+      return { data: null, error: null };
+    },
   };
 }

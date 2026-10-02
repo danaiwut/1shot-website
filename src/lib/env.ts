@@ -22,6 +22,8 @@ export const serverEnv = {
   telegramToken: () => process.env.TELEGRAM_BOT_TOKEN ?? "",
   telegramBotUsername: () => process.env.TELEGRAM_BOT_USERNAME ?? "",
   telegramWebhookSecret: () => process.env.TELEGRAM_WEBHOOK_SECRET ?? "",
+  stripeSecretKey: () => process.env.STRIPE_SECRET_KEY ?? "",
+  stripeWebhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET ?? "",
 };
 
 /** Real Supabase or the in-memory mockup: either way the auth/data calls work. */

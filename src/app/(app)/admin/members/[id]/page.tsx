@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/app/page-header";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
-import type { Indicator, IndicatorRight, Profile } from "@/lib/types";
+import { fmtTHB, ORDER_STATUS, orderTerm } from "@/lib/store/pricing";
+import type { Indicator, IndicatorRight, Order, Profile, Subscription } from "@/lib/types";
 import { GrantForm, IbToggle, RevokeButton, RoleSelect, UnlinkButton } from "./controls";
 
 export const metadata = { title: "ข้อมูลสมาชิก" };
@@ -13,12 +14,16 @@ export const metadata = { title: "ข้อมูลสมาชิก" };
 export default async function MemberPage({ params }: PageProps<"/admin/members/[id]">) {
   const { id } = await params;
   const { supabase, profile: me } = await requireStaff();
-  const [{ data: member }, { data: link }, { data: rights }, { data: indicators }] = await Promise.all([
+  const [{ data: member }, { data: link }, { data: rights }, { data: indicators }, { data: orders }, { data: subs }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).maybeSingle<Profile>(),
     supabase.from("telegram_links").select("*").eq("user_id", id).maybeSingle(),
     supabase.from("indicator_rights").select("*").eq("user_id", id).order("code"),
     supabase.from("indicators").select("*").eq("is_reference", false).order("sort"),
+    supabase.from("orders").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("subscriptions").select("*").eq("user_id", id).in("status", ["active", "trialing", "past_due"]),
   ]);
+  const purchases = (orders ?? []) as Order[];
+  const liveSubs = (subs ?? []) as Subscription[];
   if (!member) notFound();
   const byCode = new Map(((rights ?? []) as IndicatorRight[]).map((r) => [r.code, r]));
   const now = new Date();
@@ -54,6 +59,31 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
                 <span className="text-muted">ยังไม่เชื่อม</span>
               )}
             </div>
+          </Card>
+          <Card>
+            <CardHeader
+              title="การซื้อ"
+              hint={liveSubs.length ? `สมัครรายงวดอยู่ ${liveSubs.map((x) => x.product_name).join(", ")}` : undefined}
+              action={<Link href="/admin/orders" className="text-xs text-accent hover:underline">ทั้งหมด</Link>}
+            />
+            {purchases.length ? (
+              <ul className="divide-y divide-line text-sm">
+                {purchases.map((o) => (
+                  <li key={o.id} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                    <div className="min-w-0">
+                      <p className="truncate">{o.product_name} <span className="text-muted">· {orderTerm(o)}</span></p>
+                      <p className="text-[11px] text-faint">{fmtDate(o.created_at)}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="num text-xs font-semibold">{fmtTHB(o.amount_satang)}</span>
+                      <Badge tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-5 py-4 text-sm text-muted">ยังไม่เคยซื้อ</p>
+            )}
           </Card>
         </div>
 

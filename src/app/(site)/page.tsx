@@ -6,7 +6,12 @@ import Link from "next/link";
 import { Badge, ButtonLink } from "@/components/ui";
 import { PriceLadder } from "@/components/signals/price-ladder";
 import { AboutSection } from "@/components/site/about-section";
+import { CatalogView } from "@/components/store/catalog-view";
+import { getViewer } from "@/lib/auth";
 import { CATALOG } from "@/lib/domain/catalog";
+import { hasBackend } from "@/lib/env";
+import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
+import { createClient } from "@/lib/supabase/server";
 
 // Every figure below is a property of the product, not a marketing metric.
 const STATS = [
@@ -43,7 +48,11 @@ const SAMPLE_LIST = [
   { code: "SW", name: "Sweep Model", side: "BUY", status: "ถึง TP" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = hasBackend() ? await createClient() : null;
+  const [products, viewer] = supabase ? await Promise.all([loadCatalog(supabase), getViewer()]) : [[], null];
+  const owned = viewer && supabase ? await loadOwnership(supabase, viewer.userId) : undefined;
+  const bundles = products.filter((p) => p.kind === "bundle");
   return (
     <main>
       {/* Hero */}
@@ -202,6 +211,24 @@ export default function HomePage() {
         </div>
       </section>
 
+      {bundles.length > 0 && (
+        <section id="pricing" className="scroll-mt-18 border-t border-line bg-panel-2">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+              <div className="space-y-3">
+                <p className="eyebrow">Pricing</p>
+                <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
+                  แพ็กเกจแนะนำ<span className="text-accent">.</span>
+                </h2>
+                <p className="max-w-md text-sm leading-relaxed text-muted">จ่ายรายเดือนหรือครั้งเดียว ได้สิทธิ์ทันทีหลังชำระ หรือเปิดบัญชีผ่าน Exness IB เพื่อใช้ฟรี</p>
+              </div>
+              <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด · ซื้อรายตัว <ArrowRight className="size-4" /></ButtonLink>
+            </div>
+            <CatalogView products={bundles} access={owned?.access} subscribed={owned?.subscribed} from="/pricing" bundlesOnly />
+          </div>
+        </section>
+      )}
+
       <AboutSection />
 
       {/* CTA */}
@@ -216,10 +243,10 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">พร้อมรับสัญญาณแล้ว?</h2>
-                  <p className="mt-1 text-sm text-muted">สมัครฟรี แล้วทำตาม 3 ขั้นตอนนี้เพื่อเปิดสิทธิ์</p>
+                  <p className="mt-1 text-sm text-muted">สมัครฟรี แล้วทำตาม 3 ขั้นตอนนี้</p>
                 </div>
                 <ol className="flex flex-wrap gap-2 text-xs">
-                  {["สมัครและยืนยันอีเมล", "ใส่ TradingView + บัญชี Exness ภายใต้ IB", "เชื่อม Telegram รับสิทธิ์เข้าห้อง"].map((s, i) => (
+                  {["สมัครสมาชิก", "ซื้อแพ็กเกจ หรือรับฟรีผ่าน Exness IB", "เชื่อม Telegram เข้าห้องสัญญาณ"].map((s, i) => (
                     <li key={s} className="flex items-center gap-2 rounded-full border border-line-strong px-3 py-1.5 text-muted">
                       <span className="num text-accent">{i + 1}</span>{s}
                     </li>
