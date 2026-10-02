@@ -106,7 +106,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                     <p className="text-xs text-muted">{s.product_name} · <span className="num">{fmtTHB(s.amount_satang)}/{s.interval === "year" ? "ปี" : "เดือน"}</span></p>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted">
-                    {s.current_period_end && <span>{s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} {fmtDate(s.current_period_end)}</span>}
+                    {s.current_period_end && s.status !== "canceled" && <span>{s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} {fmtDate(s.current_period_end)}</span>}
                     <Badge tone={st.tone}>{st.label}</Badge>
                     {s.cancel_at_period_end && <Badge>ไม่ต่ออายุ</Badge>}
                     {!s.id.startsWith("sub_mock") && (

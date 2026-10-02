@@ -97,10 +97,22 @@ describe("refunds take back exactly what the order gave", () => {
     expect((await right(DEMO_MEMBER_ID, "SD"))?.expires_at).toBeNull();
   });
 
-  it("subscription refunds take the paid period back", async () => {
+  it("subscription refunds take the paid period back and cancel the subscription", async () => {
     const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("All Access", "subscription")));
     await refundOrder(id);
     expect(await right(USER, "DT")).toBeNull();
+    const { data: subs } = await admin.from("subscriptions").select("status").eq("user_id", USER);
+    expect((subs as { status: string }[]).map((x) => x.status)).toEqual(["canceled"]);
+    // Cancelled, so the same package can be subscribed to again.
+    await expect(createCheckout(USER, "x@example.com", await priceFor("All Access", "subscription"))).resolves.toContain("/billing/success");
+  });
+
+  it("one-time refunds leave subscriptions alone", async () => {
+    await createCheckout(USER, "x@example.com", await priceFor("All Access", "subscription"));
+    const id = orderIdOf(await createCheckout(USER, "x@example.com", await priceFor("Orderblock", "one_time", 90)));
+    await refundOrder(id);
+    const { data: subs } = await admin.from("subscriptions").select("status").eq("user_id", USER);
+    expect((subs as { status: string }[]).map((x) => x.status)).toEqual(["active"]);
   });
 
   it("is idempotent and only refunds paid orders", async () => {

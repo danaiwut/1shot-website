@@ -210,10 +210,28 @@ export async function markRefunded(charge: Stripe.Charge) {
 }
 
 /** Marks a paid order refunded and removes the rights it granted. Returns false if it was not paid. */
+/** If the order belonged to a subscription, that subscription is cancelled immediately too. */
 export async function revokeOrder(orderId: string) {
-  const { data, error } = await createAdminClient().rpc("revoke_order", { p_order: orderId });
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("revoke_order", { p_order: orderId });
   if (error) throw new Error(`revoke_order failed: ${error.message}`);
-  return Boolean(data);
+  if (!data) return false;
+  const { data: order } = await admin.from("orders").select("stripe_subscription_id").eq("id", orderId).maybeSingle<{ stripe_subscription_id: string | null }>();
+  if (order?.stripe_subscription_id) await cancelSubscriptionNow(order.stripe_subscription_id);
+  return true;
+}
+
+/** Ends a subscription right away (no further charges). Safe if it is already cancelled. */
+async function cancelSubscriptionNow(subscriptionId: string) {
+  const admin = createAdminClient();
+  if (isMockMode()) {
+    await admin.from("subscriptions").update({ status: "canceled", cancel_at_period_end: false }).eq("id", subscriptionId);
+    return;
+  }
+  const stripe = getStripe();
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
+  const ended = sub.status === "canceled" || sub.status === "incomplete_expired";
+  await syncSubscription(ended ? sub : await stripe.subscriptions.cancel(subscriptionId, { prorate: false, invoice_now: false }));
 }
 
 /**
