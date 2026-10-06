@@ -62,7 +62,7 @@ export default async function BillingPage() {
             })}
           </ul>
         ) : (
-          <Empty title="ไม่มีการสมัครแบบรายงวด"><Link href="/store" className="text-accent hover:underline">ดูแพ็กเกจรายเดือน</Link></Empty>
+          <Empty title="ไม่มีการสมัครแบบรายงวด"><Link href="/store" className="text-accent underline underline-offset-4">ดูแพ็กเกจรายเดือน</Link></Empty>
         )}
         {ended.length > 0 && (
           <p className="border-t border-line px-5 py-3 text-xs text-faint">สิ้นสุดแล้ว: {ended.map((s) => s.product_name).join(", ")}</p>
@@ -79,7 +79,7 @@ export default async function BillingPage() {
                 <li key={o.id} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 px-4 py-3.5 sm:grid-cols-[1.4fr_1fr_auto_auto] sm:px-5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{o.product_name} <span className="text-muted">· {orderTerm(o)}</span></p>
-                    <p className="text-[11px] text-faint">{fmtDateTime(o.paid_at ?? o.created_at)}{o.kind === "renewal" && " · ต่ออายุอัตโนมัติ"}</p>
+                    <p className="text-xs text-faint">{fmtDateTime(o.paid_at ?? o.created_at)}{o.kind === "renewal" && " · ต่ออายุอัตโนมัติ"}</p>
                   </div>
                   <p className="num text-right text-sm font-semibold sm:order-none">{fmtTHB(o.amount_satang)}</p>
                   <p className="text-xs text-muted">
@@ -87,9 +87,12 @@ export default async function BillingPage() {
                   </p>
                   <div className="flex items-center justify-end gap-2">
                     <Badge tone={st.tone}>{st.label}</Badge>
+                    {o.status === "paid" && o.codes.length === 1 && (
+                      <Link href={`/indicators/${o.codes[0]}#reviews`} className="text-xs text-accent underline underline-offset-4">รีวิว<span className="sr-only"> {o.product_name}</span></Link>
+                    )}
                     {o.receipt_url && (
-                      <a href={o.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
-                        ใบเสร็จ <ExternalLink className="size-3" />
+                      <a href={o.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent underline underline-offset-4">
+                        ใบเสร็จ <ExternalLink className="size-3" /><span className="sr-only"> {o.product_name} (เปิดแท็บใหม่)</span>
                       </a>
                     )}
                   </div>

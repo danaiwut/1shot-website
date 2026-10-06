@@ -1,19 +1,15 @@
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Rocket } from "lucide-react";
 import { ButtonLink } from "@/components/ui";
-import { CATALOG } from "@/lib/domain/catalog";
 
-/**
- * Photo for the About card. Put the file in /public (e.g. public/images/about.jpg) and set the path
- * here; while it is null a branded panel is shown instead of a stock person.
- */
-const ABOUT_PHOTO: { src: string; alt: string } | null = { src: "/images/about.jpg", alt: "ทีม 1SHOT" };
+/** Team photo for the About card (public/images/about.jpg). */
+const ABOUT_PHOTO = { src: "/images/about.jpg", alt: "ทีม 1SHOT" };
 
-// Properties of the product, not marketing metrics.
-const FACTS = [
-  { v: String(CATALOG.length), k: "อินดิเคเตอร์บน TradingView" },
-  { v: "4", k: "ขั้นตรวจก่อนส่งสัญญาณ" },
-  { v: "100%", k: "Setup มี Entry · SL · TP" },
+// Properties of the product, not marketing metrics. The indicator count comes from the DB.
+const facts = (indicatorCount: number) => [
+  { v: String(indicatorCount), k: "อินดิเคเตอร์บน TradingView" },
+  { v: "WF1", k: "มาตรฐานสัญญาณเดียวกันทุกตัว" },
+  { v: "2", k: "ช่องทาง เว็บ + Telegram" },
 ];
 
 /** Ring of fine radial ticks, like the reference's decorative circles. */
@@ -31,7 +27,7 @@ function TickRing({ className }: { className: string }) {
   );
 }
 
-export function AboutSection() {
+export function AboutSection({ indicatorCount, actionHref = "/signup", actionLabel = "สมัครสมาชิกฟรี" }: { indicatorCount: number; actionHref?: string; actionLabel?: string }) {
   return (
     <section id="about" className="surface-dark relative scroll-mt-18 overflow-hidden bg-ink">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_70%_at_25%_50%,rgb(178_0_22/0.28),transparent_70%)]" />
@@ -41,22 +37,16 @@ export function AboutSection() {
         {/* Photo card */}
         <div className="relative mx-auto w-full max-w-md lg:mx-0">
           <TickRing className="-bottom-14 -left-16 size-64 text-brand/50 sm:-left-20 sm:size-72" />
-          <div className={`relative ${ABOUT_PHOTO ? "aspect-[4/5]" : "aspect-[4/3] sm:aspect-[4/5]"} overflow-hidden rounded-3xl border border-line-strong bg-gradient-to-b from-panel-3 to-panel shadow-[0_40px_100px_-40px_rgb(178_0_22/0.7)]`}>
-            {ABOUT_PHOTO ? (
-              <>
+          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-line-strong bg-gradient-to-b from-panel-3 to-panel shadow-[0_40px_100px_-40px_rgb(178_0_22/0.7)]">
                 <Image src={ABOUT_PHOTO.src} alt={ABOUT_PHOTO.alt} fill sizes="(min-width: 1024px) 28rem, 90vw" className="object-cover object-[50%_20%]" />
                 <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <div aria-hidden className="absolute inset-0 bg-[radial-gradient(80%_60%_at_80%_100%,rgb(178_0_22/0.35),transparent_70%)] mix-blend-screen" />
-              </>
-            ) : (
-              <BrandPanel />
-            )}
           </div>
         </div>
 
         {/* Copy */}
         <div className="space-y-7">
-          <span className="inline-flex rounded-md border border-brand/30 bg-brand-dim px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-accent uppercase">
+          <span className="inline-flex rounded-md border border-brand/30 bg-brand-dim px-2.5 py-1 text-xs font-semibold tracking-[0.18em] text-accent uppercase">
             เกี่ยวกับ 1SHOT
           </span>
           <h2 className="text-3xl leading-[1.15] font-bold tracking-tight text-balance sm:text-[2.6rem]">
@@ -68,43 +58,40 @@ export function AboutSection() {
             ไม่มีใครแก้ตัวเลขย้อนหลัง คุณจึงตรวจสอบผลของทุก Setup ได้ด้วยตัวเอง
           </p>
           <dl className="grid grid-cols-3 gap-2.5 sm:max-w-lg sm:gap-3">
-            {FACTS.map((f) => (
+            {facts(indicatorCount).map((f) => (
               <div key={f.k} className="rounded-2xl border border-line bg-panel-2/80 p-3.5 backdrop-blur sm:p-4">
                 <dt className="sr-only">{f.k}</dt>
                 <dd className="num text-2xl font-semibold sm:text-[1.7rem]">{f.v}</dd>
-                <dd className="mt-1 text-[11px] leading-snug text-muted">{f.k}</dd>
+                <dd className="mt-1 text-xs leading-snug text-muted">{f.k}</dd>
               </div>
             ))}
           </dl>
-          <ButtonLink href="/signup" className="h-12 px-7">
-            เริ่มใช้งาน <ArrowRight className="size-4" />
-          </ButtonLink>
+        </div>
+
+        <div id="how" className="scroll-mt-18 lg:col-span-2">
+          <div className="relative overflow-hidden rounded-3xl border border-line-strong bg-panel/80 p-5 shadow-[0_24px_70px_-42px_rgb(178_0_22/0.9)] sm:p-7">
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_130%_at_100%_50%,rgb(178_0_22/0.22),transparent_70%)]" />
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4 sm:items-center">
+                <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/25"><Rocket className="size-5" strokeWidth={1.8} /></span>
+                <div>
+                  <h3 className="text-xl font-bold tracking-tight sm:text-2xl">เริ่มใช้งานได้ใน 3 ขั้นตอน</h3>
+                  <ol className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
+                    {["สมัครสมาชิก", "เลือกแพ็กเกจหรือรับสิทธิ์ผ่าน Exness IB", "เชื่อม Telegram เพื่อรับสัญญาณ"].map((step, index) => (
+                      <li key={step} className="flex items-center gap-2 rounded-full border border-line bg-panel-2/70 px-3 py-1.5">
+                        <span className="num font-semibold text-accent">{index + 1}</span>{step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+              <ButtonLink href={actionHref} className="h-12 w-full shrink-0 px-7 sm:w-auto">
+                {actionLabel} <ArrowRight className="size-4" />
+              </ButtonLink>
+            </div>
+          </div>
         </div>
       </div>
     </section>
-  );
-}
-
-/** Placeholder until a real photo is set: logo mark over a faint price chart. */
-function BrandPanel() {
-  return (
-    <div className="absolute inset-0 grid place-items-center">
-      <div className="grid-bg absolute inset-0 opacity-60 [mask-image:radial-gradient(circle_at_50%_45%,black_20%,transparent_75%)]" />
-      <svg viewBox="0 0 400 500" className="absolute inset-0 size-full" preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <linearGradient id="about-area" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="var(--color-brand)" stopOpacity=".45" />
-            <stop offset="1" stopColor="var(--color-brand)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d="M0 400 L50 380 L90 395 L140 340 L180 355 L230 290 L270 305 L320 240 L360 255 L400 200 L400 500 L0 500Z" fill="url(#about-area)" />
-        <path d="M0 400 L50 380 L90 395 L140 340 L180 355 L230 290 L270 305 L320 240 L360 255 L400 200" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" />
-      </svg>
-      <div className="relative flex flex-col items-center gap-4 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/logo.png" alt="1SHOT" className="w-56 drop-shadow-[0_20px_40px_rgb(178_0_22/0.6)]" />
-        <p className="text-[11px] font-medium tracking-[0.3em] text-muted">สัญญาณทองคำ · XAUUSD</p>
-      </div>
-    </div>
   );
 }

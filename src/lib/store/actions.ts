@@ -3,18 +3,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getViewer, requireViewer } from "../auth";
-import { hasBackend } from "../env";
+import { isSupabaseConfigured } from "../env";
 import { billingPortalUrl, createCheckout, setCancelAtPeriodEnd } from "./orders";
 import { StoreError } from "./stripe";
 
 export type BuyState = { error?: string };
 
-/** Buy button → Stripe Checkout (or straight to the success page in mockup mode). */
+/** Buy button → Stripe Checkout. */
 export async function buy(_: BuyState, form: FormData): Promise<BuyState> {
   const priceId = z.uuid().safeParse(form.get("price_id"));
   if (!priceId.success) return { error: "กรุณาเลือกราคา" };
   const back = String(form.get("from") ?? "/store");
-  if (!hasBackend()) return { error: "ระบบชำระเงินยังไม่พร้อม" };
+  if (!isSupabaseConfigured()) return { error: "ระบบชำระเงินยังไม่พร้อม" };
   const viewer = await getViewer();
   if (!viewer) redirect(`/login?next=${encodeURIComponent(back.startsWith("/") ? back : "/store")}`);
 

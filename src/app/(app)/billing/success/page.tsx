@@ -26,7 +26,7 @@ export default async function SuccessPage({ searchParams }: PageProps<"/billing/
       <Card className="overflow-hidden text-center">
         <div className={`surface-dark relative px-6 pt-10 pb-8 ${paid ? "bg-ink" : "bg-ink"}`}>
           <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-          <Icon className={`relative mx-auto size-14 ${paid ? "text-buy" : failed ? "text-sell" : "text-accent"}`} strokeWidth={1.6} />
+          <Icon aria-hidden className={`relative mx-auto size-14 ${paid ? "text-buy" : failed ? "text-sell" : "text-accent"}`} strokeWidth={1.6} />
           <h1 className="relative mt-4 text-2xl font-bold tracking-tight">
             {paid ? "ชำระเงินสำเร็จ" : failed ? "การชำระเงินไม่สำเร็จ" : "กำลังยืนยันการชำระเงิน…"}
           </h1>

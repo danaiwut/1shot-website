@@ -27,7 +27,7 @@ export function ZoneMap({ shapes, entry, sl, tp, endAt }: { shapes: Shapes; entr
   ].filter((v): v is { p: number; c: string; l: string } => Boolean(v.p));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="แผนที่โซนของอินดิเคเตอร์">
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={`แผนที่โซนของอินดิเคเตอร์: ${shapes.boxes.length} กล่อง ${shapes.lines.length} เส้น${levels.length ? ` · ${levels.map((v) => `${v.l} ${fmtPrice(v.p)}`).join(" · ")}` : ""}`}>
       {[0.25, 0.5, 0.75].map((f) => (
         <line key={f} x1={padL} x2={W - padR} y1={padY + f * (H - padY * 2)} y2={padY + f * (H - padY * 2)} stroke="var(--color-line)" />
       ))}

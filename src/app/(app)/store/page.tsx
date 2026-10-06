@@ -20,10 +20,10 @@ export default async function StorePage({ searchParams }: PageProps<"/store">) {
       {canceled && <div className="mb-6"><Notice>ยกเลิกการชำระเงินแล้ว ยังไม่มีการตัดเงิน</Notice></div>}
       {codes.length > 0 && (
         <div className="mb-8 rounded-2xl border border-line bg-panel p-4">
-          <p className="text-xs font-medium text-muted">สิทธิ์ที่คุณมีตอนนี้ · <Link href="/billing" className="text-accent hover:underline">ดูการชำระเงิน</Link></p>
+          <h2 className="text-xs font-medium text-muted">สิทธิ์ที่คุณมีตอนนี้ · <Link href="/billing" className="text-accent underline underline-offset-4">ดูการชำระเงิน</Link></h2>
           <ul className="mt-2.5 flex flex-wrap gap-1.5">
             {codes.map(([code, exp]) => (
-              <li key={code} className="num rounded-full border border-buy/30 bg-buy-dim px-2.5 py-1 text-[11px] font-semibold text-buy">
+              <li key={code} className="num rounded-full border border-buy/30 bg-buy-dim px-2.5 py-1 text-xs font-semibold text-buy">
                 {code} · {exp ? `ถึง ${fmtDate(exp)}` : "ตลอดชีพ"}
               </li>
             ))}

@@ -9,5 +9,5 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./tests/stubs/empty.ts", import.meta.url)),
     },
   },
-  test: { env: { NEXT_PUBLIC_MOCK_MODE: "1" } },
+  test: { env: { NEXT_PUBLIC_SUPABASE_URL: "http://supabase.test", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test", SUPABASE_SECRET_KEY: "test" } },
 });

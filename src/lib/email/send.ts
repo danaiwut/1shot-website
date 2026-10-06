@@ -1,6 +1,5 @@
 import "server-only";
 import { publicEnv, serverEnv } from "../env";
-import { isMockMode } from "../mock/mode";
 import { createAdminClient } from "../supabase/admin";
 import type { Order } from "../types";
 import { purchaseEmail, refundEmail } from "./templates";
@@ -10,7 +9,7 @@ type Kind = "purchase" | "renewal" | "refund";
 /**
  * Sends one transactional email per (order, kind) through Resend, and records it in email_log.
  * Never throws: a mail problem must not undo a payment or a refund that already happened.
- * Without RESEND_API_KEY / EMAIL_FROM (or in mockup mode) the email is only logged.
+ * Without RESEND_API_KEY / EMAIL_FROM the email is only logged.
  */
 async function deliver(kind: Kind, order: Order, build: (name: string, site: string) => { subject: string; html: string; text: string }) {
   try {
@@ -27,7 +26,7 @@ async function deliver(kind: Kind, order: Order, build: (name: string, site: str
 
     const key = serverEnv.resendApiKey();
     const from = serverEnv.emailFrom();
-    if (isMockMode() || !key || !from) return;
+    if (!key || !from) return;
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

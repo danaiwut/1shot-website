@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Noto_Sans_Thai } from "next/font/google";
-import { isMockMode } from "@/lib/mock/mode";
+import { MotionPrefProvider } from "@/components/motion/motion-pref";
+import { MOTION_SCRIPT, THEME_SCRIPT } from "@/lib/prefs";
 import "./globals.css";
 
 const notoThai = Noto_Sans_Thai({ subsets: ["thai", "latin"], variable: "--font-noto-thai", display: "swap" });
@@ -15,14 +16,13 @@ export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th" className={`${notoThai.variable} ${mono.variable}`}>
+    <html lang="th" data-scroll-behavior="smooth" suppressHydrationWarning className={`${notoThai.variable} ${mono.variable}`}>
+      <head>
+        {/* Applies the saved theme and "หยุดภาพเคลื่อนไหว" choice before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT + MOTION_SCRIPT }} />
+      </head>
       <body className="min-h-dvh font-sans">
-        {isMockMode() && (
-          <div className="bg-brand px-4 py-1.5 text-center text-[11px] font-medium text-white">
-            โหมดตัวอย่าง (Mockup) · ข้อมูลทั้งหมดเป็นข้อมูลจำลอง ไม่ได้เชื่อมฐานข้อมูลจริง
-          </div>
-        )}
-        {children}
+        <MotionPrefProvider>{children}</MotionPrefProvider>
       </body>
     </html>
   );

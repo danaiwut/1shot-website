@@ -1,18 +1,19 @@
 "use client";
+import { useReduce } from "./use-reduce";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 const KEY = "1shot-intro-seen";
 
 /** First visit of the session: black curtain with the mark, then it lifts away. Click to skip. */
 export function IntroCurtain() {
-  const reduce = useReducedMotion();
+  const reduce = useReduce();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     let seen = true;
     try { seen = sessionStorage.getItem(KEY) === "1"; sessionStorage.setItem(KEY, "1"); } catch { /* private mode */ }
-    if (!seen && !reduce) setShow(true);
+    if (!seen && !reduce && document.documentElement.dataset.motion !== "off") setShow(true);
   }, [reduce]);
   // Separate effect so a double-invoked mount (React strict mode) can't leave the curtain up.
   useEffect(() => {

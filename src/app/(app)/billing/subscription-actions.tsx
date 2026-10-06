@@ -14,18 +14,18 @@ export function SubscriptionToggle({ id, cancelAtPeriodEnd, endsOn }: { id: stri
   return (
     <div className="flex flex-col items-start gap-1 sm:items-end">
       {cancelAtPeriodEnd ? (
-        <Button variant="outline" className="h-9 px-3 text-xs" disabled={busy} onClick={() => run(false)}>ต่ออายุอัตโนมัติอีกครั้ง</Button>
+        <Button variant="outline" className="h-11 px-3 text-sm" disabled={busy} onClick={() => run(false)}>ต่ออายุอัตโนมัติอีกครั้ง</Button>
       ) : (
         <Button
           variant="danger"
-          className="h-9 px-3 text-xs"
+          className="h-11 px-3 text-sm"
           disabled={busy}
           onClick={() => confirm(`ยกเลิกการต่ออายุ? ยังใช้งานได้ถึง ${endsOn}`) && run(true)}
         >
           ยกเลิกการต่ออายุ
         </Button>
       )}
-      {error && <span className="text-[11px] text-sell">{error}</span>}
+      {error && <span role="alert" className="text-xs text-sell">{error}</span>}
     </div>
   );
 }
@@ -38,7 +38,7 @@ export function PortalButton() {
       <Button variant="outline" disabled={busy} onClick={() => start(async () => { const r = await openBillingPortal(); if (r?.error) setError(r.error); })}>
         จัดการบัตรและใบแจ้งหนี้
       </Button>
-      {error && <span className="max-w-56 text-right text-[11px] text-sell">{error}</span>}
+      {error && <span role="alert" className="max-w-56 text-right text-xs text-sell">{error}</span>}
     </span>
   );
 }

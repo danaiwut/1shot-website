@@ -4,6 +4,8 @@ import { Badge, Card, CardHeader, Empty } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import type { IndicatorRight } from "@/lib/types";
+import { changePassword } from "../../(auth)/actions";
+import { PasswordForm } from "../../(auth)/auth-form";
 import { ProfileForm, RoomButton, TelegramLinker } from "./forms";
 
 export const metadata = { title: "บัญชีของฉัน" };
@@ -32,7 +34,12 @@ export default async function AccountPage() {
           <ProfileForm profile={profile} />
         </Card>
 
-        <div className="space-y-6">
+        <Card id="password" className="lg:col-start-1">
+          <CardHeader title="รหัสผ่าน" hint="ลืมรหัสผ่านปัจจุบัน? ออกจากระบบแล้วใช้ “ลืมรหัสผ่าน” ที่หน้าเข้าสู่ระบบ" />
+          <div className="p-4 sm:p-5"><PasswordForm action={changePassword} email={profile.email} withCurrent submit="เปลี่ยนรหัสผ่าน" /></div>
+        </Card>
+
+        <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <Card id="telegram">
             <CardHeader title="Telegram" hint="ใช้รับลิงก์เข้าห้องสัญญาณตามสิทธิ์ของคุณ" />
             <div className="p-4 sm:p-5">
@@ -60,11 +67,11 @@ export default async function AccountPage() {
                     <li key={r.code} className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
                       <div>
                         <p className="text-sm"><span className="num mr-2 text-accent">{r.code}</span>{r.indicators?.name}</p>
-                        <p className="text-[11px] text-muted">{r.expires_at ? `${active ? "ใช้ได้ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</p>
+                        <p className="text-xs text-muted">{r.expires_at ? `${active ? "ใช้ได้ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</p>
                       </div>
                       {r.indicators?.telegram_room_id
                         ? <RoomButton code={r.code} disabled={!active || !link} />
-                        : <span className="text-[11px] text-faint">ไม่มีห้อง</span>}
+                        : <span className="text-xs text-muted">ไม่มีห้อง</span>}
                     </li>
                   );
                 })}

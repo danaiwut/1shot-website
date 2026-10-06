@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, Send } from "lucide-react";
+import { Check, Copy, ExternalLink, Send } from "lucide-react";
 import { Button, Field, Input, Notice } from "@/components/ui";
 import type { Profile } from "@/lib/types";
 import { confirmTelegramLink, joinRoom, saveProfile, startTelegramLink } from "./actions";
@@ -79,15 +79,15 @@ export function TelegramLinker({ pending }: { pending: { name: string | null; us
           <p className="text-sm">เปิดบอทแล้วกด <b>Start</b> ภายใน 10 นาที หน้านี้จะอัปเดตเองเมื่อบอทได้รับรหัส</p>
           {link.url ? (
             <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-accent hover:underline">
-              เปิดบอท Telegram <ExternalLink className="size-3.5" />
+              เปิดบอท Telegram <ExternalLink className="size-3.5" /><span className="sr-only"> (เปิดแท็บใหม่)</span>
             </a>
           ) : (
             <div className="flex items-center gap-2">
               <code className="num flex-1 truncate rounded-lg border border-line bg-panel px-3 py-2 text-xs">/start {link.token}</code>
-              <Button variant="outline" className="h-8 px-2.5" onClick={() => navigator.clipboard.writeText(`/start ${link.token}`)} aria-label="คัดลอก"><Copy className="size-3.5" /></Button>
+              <CopyButton text={`/start ${link.token}`} />
             </div>
           )}
-          <p className="flex items-center gap-2 text-xs text-muted"><span className="size-1.5 rounded-full bg-brand animate-pulse-dot" /> รอการยืนยันจาก Telegram…</p>
+          <p role="status" className="flex items-center gap-2 text-xs text-muted"><span aria-hidden className="size-1.5 rounded-full bg-brand animate-pulse-dot" /> รอการยืนยันจาก Telegram…</p>
         </div>
       )}
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
@@ -102,7 +102,8 @@ export function RoomButton({ code, disabled }: { code: string; disabled?: boolea
     <div className="flex flex-col items-end gap-1">
       <Button
         variant="outline"
-        className="h-8 px-3 text-xs"
+        className="h-11 px-3 text-sm"
+        aria-label={`ขอเข้าห้อง ${code}`}
         disabled={busy || disabled}
         onClick={() => start(async () => {
           setError(undefined);
@@ -113,7 +114,19 @@ export function RoomButton({ code, disabled }: { code: string; disabled?: boolea
       >
         {busy ? "กำลังสร้าง…" : "ขอเข้าห้อง"}
       </Button>
-      {error && <span className="max-w-56 text-right text-[11px] text-sell">{error}</span>}
+      {error && <span role="alert" className="max-w-56 text-right text-xs text-sell">{error}</span>}
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <>
+      <Button variant="outline" className="h-11 px-2.5" aria-label="คัดลอกคำสั่ง" onClick={() => navigator.clipboard.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 2000); })}>
+        {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      </Button>
+      <span role="status" className="sr-only">{done ? "คัดลอกแล้ว" : ""}</span>
+    </>
   );
 }

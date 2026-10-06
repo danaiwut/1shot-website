@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/app/page-header";
 import { LiveRefresh } from "@/components/signals/live-refresh";
 import { SetupRow } from "@/components/signals/setup-row";
-import { Card, cx, Empty } from "@/components/ui";
+import { Card, cx, Empty, FilterLink } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import type { Indicator, Setup } from "@/lib/types";
 
@@ -45,20 +45,22 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
     <>
       <PageHeader eyebrow="สัญญาณสด" title="สัญญาณ" description="Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด" action={<LiveRefresh />} />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Segmented items={STATUS_FILTERS.map((f) => ({ label: f.label, href: href({ status: f.id, page: "" }), on: f.id === statusId }))} />
-        <Segmented items={[{ label: "ทุกฝั่ง", v: "" }, { label: "BUY", v: "BUY" }, { label: "SELL", v: "SELL" }].map((s) => ({ label: s.label, href: href({ side: s.v, page: "" }), on: side === s.v }))} />
-      </div>
-      <div className="-mx-4 mb-6 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
-        <Chip href={href({ code: "", page: "" })} on={!code}>ทั้งหมด</Chip>
-        {(indicators as Pick<Indicator, "code" | "name">[] | null)?.map((i) => (
-          <Chip key={i.code} href={href({ code: i.code, page: "" })} on={code === i.code} title={i.name}>{i.code}</Chip>
-        ))}
+      <div className="mb-6 space-y-3 rounded-card border border-line bg-panel p-3 sm:p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Segmented label="สถานะ" items={STATUS_FILTERS.map((f) => ({ label: f.label, href: href({ status: f.id, page: "" }), on: f.id === statusId }))} />
+          <Segmented label="ฝั่ง" items={[{ label: "ทุกฝั่ง", v: "" }, { label: "BUY", v: "BUY" }, { label: "SELL", v: "SELL" }].map((s) => ({ label: s.label, href: href({ side: s.v, page: "" }), on: side === s.v }))} />
+        </div>
+        <nav aria-label="กรองตามอินดิเคเตอร์" className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
+          <FilterLink href={href({ code: "", page: "" })} on={!code}>ทุกอินดิเคเตอร์</FilterLink>
+          {(indicators as Pick<Indicator, "code" | "name">[] | null)?.map((i) => (
+            <FilterLink key={i.code} href={href({ code: i.code, page: "" })} on={code === i.code} title={i.name} className="num">{i.code}</FilterLink>
+          ))}
+        </nav>
       </div>
 
       <Card>
         {setups.length ? (
-          <div className="divide-y divide-line">{setups.map((s) => <SetupRow key={s.setup_key} s={s} />)}</div>
+          <ul aria-label={`สัญญาณ ${setups.length} จาก ${count ?? setups.length} รายการ`} className="divide-y divide-line">{setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}</ul>
         ) : (
           <Empty title="ไม่พบสัญญาณตามตัวกรอง">ลองเปลี่ยนตัวกรอง หรือรอ Setup ใหม่จากอินดิเคเตอร์</Empty>
         )}
@@ -74,22 +76,20 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
   );
 }
 
-function Segmented({ items }: { items: { label: string; href: string; on: boolean }[] }) {
+function Segmented({ label, items }: { label: string; items: { label: string; href: string; on: boolean }[] }) {
   return (
-    <div className="inline-flex rounded-xl border border-line bg-panel p-1">
+    <nav aria-label={`กรองตาม${label}`} className="inline-flex items-center gap-1 rounded-xl border border-line bg-panel-2 p-1">
+      <span aria-hidden className="px-2 text-xs text-muted">{label}</span>
       {items.map((i) => (
-        <Link key={i.label} href={i.href} className={cx("rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", i.on ? "bg-brand text-white" : "text-muted hover:text-fg")}>
+        <Link
+          key={i.label}
+          href={i.href}
+          aria-current={i.on ? "true" : undefined}
+          className={cx("rounded-lg px-3 py-1.5 text-xs transition-colors", i.on ? "bg-panel font-semibold text-fg shadow-[0_1px_3px_rgb(0_0_0/0.12)] ring-1 ring-line-strong" : "font-medium text-muted hover:text-fg")}
+        >
           {i.label}
         </Link>
       ))}
-    </div>
-  );
-}
-
-function Chip({ href, on, children, title }: { href: string; on: boolean; children: React.ReactNode; title?: string }) {
-  return (
-    <Link href={href} title={title} className={cx("num shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors", on ? "border-fg bg-fg text-ink" : "border-line bg-panel text-muted hover:border-line-strong hover:text-fg")}>
-      {children}
-    </Link>
+    </nav>
   );
 }

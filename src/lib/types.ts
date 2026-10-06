@@ -20,6 +20,10 @@ export interface Indicator {
   telegram_room_id: string | null;
   sort: number;
   is_reference: boolean;
+  /** Feature bullets for the public page. */
+  points: string[];
+  /** Object path in the public `indicator-images` bucket. */
+  image_path: string | null;
 }
 
 export interface IndicatorRight {
@@ -137,5 +141,49 @@ export interface Subscription {
   amount_satang: number;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  created_at: string;
+}
+
+export type SupportKind = "rights" | "room" | "help";
+export type SupportStatus = "open" | "answered" | "resolved";
+
+export interface SupportRequest {
+  id: string;
+  user_id: string;
+  kind: SupportKind;
+  indicator_code: string | null;
+  message: string;
+  status: SupportStatus;
+  assigned_to: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupportMessage {
+  id: number;
+  request_id: string;
+  author_id: string | null;
+  from_staff: boolean;
+  body: string;
+  created_at: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  published: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditEntry {
+  id: number;
+  actor_id: string | null;
+  subject_id: string | null;
+  action: string;
+  detail: Record<string, unknown>;
   created_at: string;
 }

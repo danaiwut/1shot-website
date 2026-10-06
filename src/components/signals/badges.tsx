@@ -7,7 +7,7 @@ export function StatusBadge({ status, terminal }: { status: SetupStatus; termina
   const live = !terminal && (status === "pending" || status === "entry" || status === "retest");
   return (
     <Badge tone={s.tone}>
-      {live && <span className="size-1.5 rounded-full bg-current animate-pulse-dot" />}
+      {live && <span aria-hidden className="size-1.5 rounded-full bg-current animate-pulse-dot" />}
       {s.label}
     </Badge>
   );

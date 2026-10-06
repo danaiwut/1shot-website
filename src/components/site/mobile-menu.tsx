@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { ButtonLink } from "@/components/ui";
 
-export function SiteMobileMenu({ links, signedIn }: { links: { href: string; label: string }[]; signedIn: boolean }) {
+export function SiteMobileMenu({ links, signedIn, staff = false }: { links: { href: string; label: string }[]; signedIn: boolean; staff?: boolean }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -35,7 +35,7 @@ export function SiteMobileMenu({ links, signedIn }: { links: { href: string; lab
           </nav>
           <div className="mt-5 grid grid-cols-2 gap-2">
             {signedIn ? (
-              <ButtonLink href="/dashboard" className="col-span-2 h-11">เข้าสู่แดชบอร์ด <ArrowRight className="size-4" /></ButtonLink>
+              <ButtonLink href={staff ? "/admin" : "/dashboard"} className="col-span-2 h-11">{staff ? "ระบบหลังบ้าน" : "เข้าสู่แดชบอร์ด"} <ArrowRight className="size-4" /></ButtonLink>
             ) : (
               <>
                 <ButtonLink href="/login" variant="outline" className="h-11">เข้าสู่ระบบ</ButtonLink>

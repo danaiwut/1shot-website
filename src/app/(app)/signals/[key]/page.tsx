@@ -11,7 +11,13 @@ import { requireViewer } from "@/lib/auth";
 import { fmtDateTime, fmtPrice, rMultiple, STATUS_LABEL } from "@/lib/format";
 import type { Setup, SignalEvent } from "@/lib/types";
 
-export const metadata = { title: "รายละเอียดสัญญาณ" };
+/** Each signal gets its own page title (WCAG 2.4.2). */
+export async function generateMetadata({ params }: PageProps<"/signals/[key]">) {
+  const key = decodeURIComponent((await params).key);
+  const { supabase } = await requireViewer();
+  const { data } = await supabase.from("setups").select("code, setup_name, side").eq("setup_key", key).maybeSingle<Pick<Setup, "code" | "setup_name" | "side">>();
+  return { title: data ? `${data.code} ${data.setup_name}${data.side ? ` ${data.side}` : ""} · สัญญาณ` : "รายละเอียดสัญญาณ" };
+}
 
 export default async function SignalDetailPage({ params }: PageProps<"/signals/[key]">) {
   const key = decodeURIComponent((await params).key);
@@ -28,7 +34,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
 
   return (
     <>
-      <Link href="/signals" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> กลับไปหน้าสัญญาณ</Link>
+      <Link href="/signals" className="mb-5 inline-flex underline-offset-4 hover:underline items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> กลับไปหน้าสัญญาณ</Link>
       <PageHeader
         eyebrow={`${setup.code} · ${setup.indicator}`}
         title={<span className="flex flex-wrap items-center gap-3">{setup.setup_name} <SideBadge side={setup.side} /> <StatusBadge status={setup.status} terminal={setup.terminal} /></span>}
@@ -58,12 +64,12 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
           <Card>
             <CardHeader title="ไทม์ไลน์" />
             <ol className="relative px-5 py-5">
-              <span className="absolute top-7 bottom-7 left-[27px] w-px bg-line-strong" />
+              <span aria-hidden className="absolute top-7 bottom-7 left-[27px] w-px bg-line-strong" />
               {timeline.map((e) => {
                 const s = STATUS_LABEL[e.kind] ?? STATUS_LABEL.info;
                 return (
                   <li key={e.id} className="relative flex gap-4 py-2.5 pl-0">
-                    <span className={`relative z-10 mt-1 size-3 shrink-0 rounded-full border-2 border-panel ${dot(s.tone)}`} />
+                    <span aria-hidden className={`relative z-10 mt-1 size-3 shrink-0 rounded-full border-2 border-panel ${dot(s.tone)}`} />
                     <div className="flex flex-1 flex-wrap items-baseline justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium">{e.event} <Badge tone={s.tone} className="ml-1.5">{s.label}</Badge></p>
@@ -71,7 +77,7 @@ export default async function SignalDetailPage({ params }: PageProps<"/signals/[
                           {e.exit_price != null ? `ราคา ${fmtPrice(e.exit_price)}` : e.entry != null ? `Entry ${fmtPrice(e.entry)}` : ""}
                         </p>
                       </div>
-                      <time className="text-[11px] text-faint sm:text-xs">{fmtDateTime(e.observed_at)}</time>
+                      <time className="text-xs text-faint sm:text-xs">{fmtDateTime(e.observed_at)}</time>
                     </div>
                   </li>
                 );
@@ -91,7 +97,7 @@ const dot = (tone: string) =>
 function Meta({ k, v }: { k: string; v: string }) {
   return (
     <div className="border-line px-5 py-3 odd:border-r [&:nth-child(-n+2)]:border-b">
-      <dt className="text-[11px] text-faint">{k}</dt>
+      <dt className="text-xs text-faint">{k}</dt>
       <dd className="num mt-0.5">{v}</dd>
     </div>
   );

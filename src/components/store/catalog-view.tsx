@@ -15,7 +15,7 @@ type Props = {
 export function CatalogView({ products, access, subscribed = [], from, bundlesOnly = false }: Props) {
   const bundles = products.filter((p) => p.kind === "bundle");
   const singles = products.filter((p) => p.kind === "single");
-  if (!products.length) return <Empty title="ยังไม่มีสินค้าเปิดขาย">แอดมินเพิ่มสินค้าและราคาได้ที่หน้า Admin → สินค้าและราคา</Empty>;
+  if (!products.length) return <Empty title="ยังไม่มีสินค้าเปิดขาย">กำลังเตรียมแพ็กเกจสำหรับคุณ ระหว่างนี้ดูรายละเอียด Indicator และสมัครสมาชิกเพื่อเริ่มใช้ Period Levels ฟรีได้</Empty>;
 
   return (
     <div className="@container space-y-12">
@@ -28,7 +28,7 @@ export function CatalogView({ products, access, subscribed = [], from, bundlesOn
         <div>
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold tracking-tight">ซื้อรายตัว</h3>
+              <h2 className="text-lg font-bold tracking-tight">ซื้อรายตัว</h2>
               <p className="text-sm text-muted">เลือกเฉพาะอินดิเคเตอร์ที่ใช้จริง</p>
             </div>
           </div>

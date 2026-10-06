@@ -1,13 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, publicEnv } from "../env";
-import { isMockMode, MOCK_SESSION_COOKIE } from "../mock/mode";
 
-const MEMBER_PATHS = ["/dashboard", "/signals", "/news", "/account", "/admin", "/store", "/billing"];
+const MEMBER_PATHS = ["/dashboard", "/signals", "/news", "/account", "/admin", "/store", "/billing", "/support", "/guide", "/announcements", "/activity"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  if (isMockMode()) return guard(request, response, Boolean(request.cookies.get(MOCK_SESSION_COOKIE)?.value));
   if (!isSupabaseConfigured()) return response;
 
   const supabase = createServerClient(publicEnv.supabaseUrl(), publicEnv.supabaseKey(), {
@@ -35,7 +33,7 @@ function guard(request: NextRequest, response: NextResponse, signedIn: boolean) 
     url.search = `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(url);
   }
-  if (signedIn && (path === "/login" || path === "/signup")) {
+  if (signedIn && (path === "/login" || path === "/signup" || path === "/forgot-password")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";

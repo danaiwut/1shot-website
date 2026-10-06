@@ -9,13 +9,13 @@ export function SetupRow({ s }: { s: Setup }) {
   return (
     <Link href={`/signals/${encodeURIComponent(s.setup_key)}`} className="@container block transition-colors hover:bg-panel-2">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-2.5 px-4 py-3.5 sm:px-5 @2xl:grid-cols-[auto_minmax(0,1.4fr)_repeat(3,minmax(0,0.75fr))_3.5rem_6rem] @2xl:gap-x-4">
-        <span className="num grid size-10 place-items-center rounded-xl bg-brand-dim text-[11px] font-bold text-accent">{s.code}</span>
+        <span className="num grid size-10 place-items-center rounded-xl bg-brand-dim text-xs font-bold text-accent">{s.code}</span>
         <div className="min-w-0">
           <p className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold">{s.setup_name}</span>
             <span className="@2xl:hidden"><SideBadge side={s.side} /></span>
           </p>
-          <p className="num truncate text-[11px] text-muted">
+          <p className="num truncate text-xs text-muted">
             {s.symbol.replace(/^.*:/, "")} · {s.timeframe} · {s.mode ?? "—"} · {fmtRelative(s.updated_at)}
           </p>
         </div>
@@ -29,7 +29,7 @@ export function SetupRow({ s }: { s: Setup }) {
 
         <div className="col-start-3 row-start-1 flex flex-col items-end gap-1 @2xl:col-auto @2xl:row-auto">
           <StatusBadge status={s.status} terminal={s.terminal} />
-          {r !== null && <span className="num text-[10px] text-faint">1:{r}R</span>}
+          {r !== null && <span className="num text-xs text-faint">1:{r}R</span>}
         </div>
       </div>
     </Link>
@@ -39,7 +39,7 @@ export function SetupRow({ s }: { s: Setup }) {
 function Cell({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] text-faint">{label}</p>
+      <p className="text-xs text-faint">{label}</p>
       <p className={`num truncate text-xs @2xl:text-sm ${tone ?? ""}`}>{value}</p>
     </div>
   );

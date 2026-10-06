@@ -1,234 +1,106 @@
-import {
-  ArrowRight, BellRing, Bot, CandlestickChart, Clock3, Layers, LineChart, MonitorSmartphone, Rocket,
-  Send, ShieldCheck, Target, Wallet,
-} from "lucide-react";
+import { ArrowRight, CandlestickChart, MonitorSmartphone, Target } from "lucide-react";
 import { ButtonLink } from "@/components/ui";
-import { CursorRing } from "@/components/motion/cursor";
 import { CountUp } from "@/components/motion/hero";
-import { LiveHero } from "@/components/motion/live-hero";
 import { IntroCurtain } from "@/components/motion/intro";
-import { Magnetic } from "@/components/motion/magnetic";
+import { LiveHero } from "@/components/motion/live-hero";
 import { VelocityMarquee } from "@/components/motion/marquee";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
-import { MotionRoot } from "@/components/motion/root";
-import { ScrollPipeline } from "@/components/motion/scroll-pipeline";
-import { SpotlightCard } from "@/components/motion/spotlight-card";
 import { AboutSection } from "@/components/site/about-section";
 import { CatalogView } from "@/components/store/catalog-view";
+import { IndicatorExplorer } from "@/components/store/indicator-explorer";
 import { getViewer } from "@/lib/auth";
-import { CATALOG } from "@/lib/domain/catalog";
-import { hasBackend } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
+import { loadIndicators, type PublicIndicator } from "@/lib/indicators";
+import { loadRatings, type Rating } from "@/lib/reviews/data";
 import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
+import { indicatorOffers } from "@/lib/store/offers";
 import { createClient } from "@/lib/supabase/server";
 
-// Every figure below is a property of the product, not a marketing metric.
-const STATS = [
-  { icon: CandlestickChart, v: CATALOG.length, k: "อินดิเคเตอร์" },
-  { icon: Target, v: 3, k: "ระดับราคาทุก Setup" },
+// Product facts, not marketing metrics. The indicator count comes from the DB.
+const stats = (indicatorCount: number) => [
+  { icon: CandlestickChart, v: indicatorCount, k: "อินดิเคเตอร์ให้เลือก" },
+  { icon: Target, v: 3, k: "ระดับราคาในทุก Setup" },
   { icon: MonitorSmartphone, v: 2, k: "ช่องทาง เว็บ + Telegram" },
-  { icon: Bot, v: 0, k: "AI แก้ตัวเลข" },
 ];
 
-const INTEGRATIONS = [
-  { icon: LineChart, name: "TradingView" },
-  { icon: Wallet, name: "Exness" },
-  { icon: MonitorSmartphone, name: "MetaTrader 5" },
-  { icon: Send, name: "Telegram" },
-];
-
+/** Thai word boundaries, computed on the server so client and server render the same split. */
 const words = (text: string) => [...new Intl.Segmenter("th", { granularity: "word" }).segment(text)].map((x) => x.segment);
 
-const GUARDS = [
-  { icon: Clock3, k: "00:00–04:59", tag: "ช่วงเวลา", title: "งดเปิดออเดอร์ช่วงตลาดบาง", v: "ไม่เปิดออเดอร์ใหม่ (เวลาไทย) และยกเลิกคำสั่งที่ค้างอยู่" },
-  { icon: ShieldCheck, k: "Daily loss", tag: "ความเสี่ยงรวม", title: "ประเมินก่อนเข้าทุกครั้ง", v: "ถ้าไม่มี SL หรืออ่านข้อมูลโบรกเกอร์ไม่ได้ ระบบจะไม่เข้า" },
-  { icon: Layers, k: "3.00 USD", tag: "ระยะห่าง", title: "กันเข้าซ้อนจุดเดียว", v: "XAU ต้องห่างจากออเดอร์เดิมอย่างน้อย 3.00 ถึงจะเปิดใหม่ได้" },
-  { icon: BellRing, k: "SL ↓ เท่านั้น", tag: "ปรับ Stop", title: "ขยับเฉพาะทิศลดความเสี่ยง", v: "Setup ใหม่ปรับ SL ได้แต่ไม่แตะ TP และ Lot เดิม" },
-];
-
 export default async function HomePage() {
-  const supabase = hasBackend() ? await createClient() : null;
-  const [products, viewer] = supabase ? await Promise.all([loadCatalog(supabase), getViewer()]) : [[], null];
+  const supabase = isSupabaseConfigured() ? await createClient() : null;
+  const [indicators, products, viewer, ratings] = supabase
+    ? await Promise.all([loadIndicators(supabase), loadCatalog(supabase), getViewer(), loadRatings(supabase)])
+    : [[] as PublicIndicator[], [], null, {} as Record<string, Rating>];
   const owned = viewer && supabase ? await loadOwnership(supabase, viewer.userId) : undefined;
   const bundles = products.filter((p) => p.kind === "bundle");
+  const offers = indicatorOffers(indicators, products, ratings, owned?.access);
+
   return (
-    <MotionRoot>
-    <main className="overflow-x-clip">
+    <main id="main" tabIndex={-1} className="overflow-x-clip outline-none">
       <IntroCurtain />
-      <CursorRing />
-      {/* Hero: live simulated chart */}
-      <LiveHero lines={[words("สัญญาณทองคำ"), words("ที่ตรวจสอบได้")]}>
+
+      {/* 1 · Live chart hero */}
+      <LiveHero lines={[words("อินดิเคเตอร์ทองคำ"), words("ที่ตรวจสอบได้")]}>
         <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
-          <Stagger className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur lg:grid-cols-4">
-            {STATS.map((s) => (
-              <StaggerItem key={s.k} className="flex items-center gap-3.5 bg-black/70 px-4 py-4 sm:px-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand text-white">
-                  <s.icon className="size-5" strokeWidth={1.8} />
-                </span>
-                <div>
-                  <p className="num text-2xl font-semibold"><CountUp to={s.v} /></p>
-                  <p className="text-xs text-muted">{s.k}</p>
-                </div>
+          <Stagger as="ul" className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/15 backdrop-blur sm:grid-cols-3">
+            {stats(indicators.length).map((s) => (
+              <StaggerItem as="li" key={s.k} className="flex items-center gap-3.5 bg-black/80 px-4 py-4 sm:px-5">
+                <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand text-white"><s.icon className="size-5" strokeWidth={1.8} /></span>
+                <p>
+                  <span className="num block text-2xl font-semibold"><CountUp to={s.v} /></span>
+                  <span className="block text-sm text-muted">{s.k}</span>
+                </p>
               </StaggerItem>
             ))}
           </Stagger>
         </div>
       </LiveHero>
 
-      {/* Integrations + velocity marquee */}
-      <section className="relative overflow-hidden border-b border-line bg-panel-2">
-        <div className="mx-auto max-w-6xl px-4 pt-9 sm:px-6">
-          <p className="text-center text-[11px] font-semibold tracking-[0.18em] text-faint uppercase">ทำงานร่วมกับเครื่องมือที่คุณใช้อยู่</p>
-          <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-muted">
-            {INTEGRATIONS.map((i) => (
-              <li key={i.name} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                <i.icon className="size-5" strokeWidth={2} /> {i.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <VelocityMarquee
-          items={["จุดเข้า", "ตัดขาดทุน", "ทำกำไร", "ทองคำ", "ตรวจสอบได้", "1SHOT"]}
-          outline
-          className="mt-8 -rotate-2 bg-black py-4 text-5xl font-black tracking-tighter text-white sm:text-7xl"
-        />
-        <VelocityMarquee
-          items={["สาย SMC", "สาย ICT", "ซัพพลาย & ดีมานด์", "ออร์เดอร์บล็อก", "กวาดสภาพคล่อง", "AMD"]}
-          baseSpeed={-2}
-          className="-mt-3 mb-8 rotate-1 bg-brand py-3 text-3xl font-black tracking-tighter text-white/90 sm:text-5xl"
-        />
-      </section>
+      {/* 2 · Speed-reactive marquees (decorative) */}
+      <div className="relative overflow-hidden bg-panel-2 py-10">
+        <VelocityMarquee items={["จุดเข้า", "ตัดขาดทุน", "ทำกำไร", "ทองคำ", "ตรวจสอบได้", "1SHOT"]} outline className="-rotate-2 bg-black py-4 text-5xl font-black tracking-tighter text-white sm:text-7xl" />
+        <VelocityMarquee items={["สาย SMC", "สาย ICT", "ซัพพลาย & ดีมานด์", "ออร์เดอร์บล็อก", "กวาดสภาพคล่อง", "AMD"]} baseSpeed={-2} className="-mt-3 rotate-1 bg-brand py-3 text-3xl font-black tracking-tighter text-white sm:text-5xl" />
+      </div>
 
-      {/* Indicators */}
-      <section id="indicators" className="scroll-mt-18">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <Reveal><SectionHead
-            eyebrow="อินดิเคเตอร์"
-            title={<>อินดิเคเตอร์ 10 ตัว<br />ในที่เดียว<span className="text-accent">.</span></>}
-            aside="สิทธิ์แยกตามอินดิเคเตอร์ เลือกดูเฉพาะตัวที่คุณถือสิทธิ์ใน TradingView ทุกตัวส่งสัญญาณผ่านมาตรฐาน WF1 เดียวกัน"
-          /></Reveal>
-          <Stagger className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {CATALOG.map((ind) => (
-              <StaggerItem key={ind.code} className="h-full">
-              <SpotlightCard
-                href="/pricing"
-                className="border border-line bg-panel p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
-              >
-                <span className="num grid size-11 place-items-center rounded-xl bg-brand-dim text-sm font-bold text-accent transition-colors group-hover:bg-brand group-hover:text-white">
-                  {ind.code}
-                </span>
-                <p className="mt-4 text-sm font-semibold sm:text-base">{ind.name}</p>
-                <p className="mt-1.5 flex-1 text-xs leading-relaxed text-muted">{ind.description}</p>
-                <span className="mt-4 flex flex-wrap items-center justify-between gap-1 text-xs">
-                  <span className="font-medium text-accent">ดูแพ็กเกจ →</span>
-                  <span className="tracking-wider text-faint uppercase">{ind.family}</span>
-                </span>
-              </SpotlightCard>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
-      {/* Risk guard */}
-      <section id="guard" className="scroll-mt-18 border-t border-line bg-panel-2">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <Reveal className="flex flex-wrap items-end justify-between gap-6">
-            <div className="space-y-3">
-              <p className="eyebrow">คุมความเสี่ยง</p>
-              <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
-                กติกาความเสี่ยง<br />ที่ทำงานก่อนทุกออเดอร์<span className="text-accent">.</span>
+      {/* 3 · Shop: pick an indicator */}
+      <section id="indicators" aria-labelledby="indicators-title" className="scroll-mt-18 bg-panel-2">
+        <div className="mx-auto max-w-6xl px-4 pt-6 pb-20 sm:px-6 sm:pb-24">
+          <Reveal className="mb-10 grid gap-6 md:grid-cols-2 md:items-end">
+            <div>
+              <p className="eyebrow">เลือกอินดิเคเตอร์</p>
+              <h2 id="indicators-title" className="mt-3 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">
+                เครื่องมือที่เข้ากับ<br />สไตล์การเทรดของคุณ<span className="text-accent">.</span>
               </h2>
             </div>
-            <p className="max-w-sm text-sm leading-relaxed text-muted">
-              สำหรับบัญชี MT5 ที่เชื่อมระบบเทรดอัตโนมัติ Worker จะตรวจกติกาเหล่านี้ทุกครั้งก่อนส่งคำสั่ง ถ้าเช็กไม่ได้ครบ ระบบจะไม่เข้าออเดอร์
+            <p className="max-w-md text-base text-muted md:justify-self-end">
+              กรองตามกลยุทธ์ อ่านรายละเอียด ดูคะแนนจากผู้ใช้จริง แล้วเลือกซื้อรายตัวหรือแพ็กเกจรวม ซื้อแล้วสิทธิ์ขึ้นในบัญชีทันที
             </p>
           </Reveal>
-          <Stagger className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {GUARDS.map((g, i) => (
-              <StaggerItem key={g.k} className="h-full">
-              <article className="h-full overflow-hidden rounded-card border border-line bg-panel transition-transform duration-500 hover:-translate-y-1">
-                <div className="surface-dark relative h-40 overflow-hidden bg-ink p-5">
-                  <div className={`pointer-events-none absolute -right-10 -bottom-16 size-48 rounded-full blur-3xl ${i % 2 ? "bg-brand/45" : "bg-brand/30"}`} />
-                  <g.icon className="relative size-5 text-accent" strokeWidth={1.8} />
-                  <p className="num relative mt-9 text-2xl font-semibold">{g.k}</p>
-                </div>
-                <div className="p-5">
-                  <p className="text-[11px] text-faint">{g.tag}</p>
-                  <p className="mt-1 font-semibold">{g.title}</p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted">{g.v}</p>
-                </div>
-              </article>
-              </StaggerItem>
-            ))}
-          </Stagger>
+          <Reveal delay={0.1}><IndicatorExplorer indicators={indicators} offers={offers} /></Reveal>
         </div>
       </section>
 
-      <ScrollPipeline />
-
+      {/* 4 · Bundles */}
       {bundles.length > 0 && (
-        <section id="pricing" className="scroll-mt-18 border-t border-line bg-panel-2">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+        <section id="pricing" aria-labelledby="pricing-title" className="scroll-mt-18 bg-panel-2">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
             <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <div className="space-y-3">
-                <p className="eyebrow">แพ็กเกจ</p>
-                <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
-                  แพ็กเกจแนะนำ<span className="text-accent">.</span>
+              <div>
+                <p className="eyebrow">แพ็กเกจรวม</p>
+                <h2 id="pricing-title" className="mt-3 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">
+                  ได้ครบกว่า จ่ายน้อยกว่า<span className="text-accent">.</span>
                 </h2>
-                <p className="max-w-md text-sm leading-relaxed text-muted">จ่ายรายเดือนหรือครั้งเดียว ได้สิทธิ์ทันทีหลังชำระ หรือเปิดบัญชีผ่าน Exness IB เพื่อใช้ฟรี</p>
+                <p className="mt-3 max-w-md text-base text-muted">จ่ายรายเดือนหรือครั้งเดียว หรือเปิดบัญชีผ่าน Exness IB เพื่อใช้ฟรี</p>
               </div>
-              <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด · ซื้อรายตัว <ArrowRight className="size-4" /></ButtonLink>
+              <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink>
             </Reveal>
             <Reveal delay={0.1}><CatalogView products={bundles} access={owned?.access} subscribed={owned?.subscribed} from="/pricing" bundlesOnly /></Reveal>
           </div>
         </section>
       )}
 
-      <AboutSection />
-
-      {/* CTA */}
-      <section id="join" className="scroll-mt-18 px-4 py-16 sm:px-6 sm:py-24">
-        <Reveal className="surface-dark relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-ink">
-          <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-          <VelocityMarquee items={["เริ่มเลย", "สมัครวันนี้", "1SHOT"]} outline baseSpeed={1.5} className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-[7rem] font-black tracking-tighter text-white/[0.06] sm:text-[11rem]" />
-          <div className="relative flex flex-col gap-8 p-6 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col items-start gap-5 sm:flex-row">
-              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand text-white">
-                <Rocket className="size-6" strokeWidth={1.8} />
-              </span>
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">พร้อมรับสัญญาณแล้ว?</h2>
-                  <p className="mt-1 text-sm text-muted">สมัครฟรี แล้วทำตาม 3 ขั้นตอนนี้</p>
-                </div>
-                <ol className="flex flex-wrap gap-2 text-xs">
-                  {["สมัครสมาชิก", "ซื้อแพ็กเกจ หรือรับฟรีผ่าน Exness IB", "เชื่อม Telegram เข้าห้องสัญญาณ"].map((s, i) => (
-                    <li key={s} className="flex items-center gap-2 rounded-full border border-line-strong px-3 py-1.5 text-muted">
-                      <span className="num text-accent">{i + 1}</span>{s}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-            <Magnetic strength={0.5} className="w-full sm:w-auto"><ButtonLink href="/signup" className="h-14 w-full shrink-0 px-8 text-base sm:w-auto">
-              สมัครสมาชิก <ArrowRight className="size-4" />
-            </ButtonLink></Magnetic>
-          </div>
-        </Reveal>
-      </section>
+      {/* 5 · About + onboarding call to action */}
+      <AboutSection indicatorCount={indicators.length} actionHref={viewer ? "/dashboard" : "/signup"} actionLabel={viewer ? "ไปที่บัญชีของฉัน" : "สมัครสมาชิกฟรี"} />
     </main>
-    </MotionRoot>
-  );
-}
-
-function SectionHead({ eyebrow, title, aside }: { eyebrow: string; title: React.ReactNode; aside: string }) {
-  return (
-    <div className="grid gap-6 md:grid-cols-2 md:items-end">
-      <div className="space-y-3">
-        <p className="eyebrow">{eyebrow}</p>
-        <h2 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{title}</h2>
-      </div>
-      <p className="max-w-md text-sm leading-relaxed text-muted md:justify-self-end">{aside}</p>
-    </div>
   );
 }

@@ -2,7 +2,6 @@ import "server-only";
 import type Stripe from "stripe";
 import { sendPurchaseEmail, sendRefundEmail } from "../email/send";
 import { publicEnv } from "../env";
-import { isMockMode } from "../mock/mode";
 import { createAdminClient } from "../supabase/admin";
 import type { Order, Product, ProductPrice } from "../types";
 import { termLabel } from "./pricing";
@@ -34,7 +33,7 @@ async function ensureCustomer(admin: Admin, userId: string, email: string) {
   return customer.id;
 }
 
-/** Starts a purchase. Returns the URL to send the customer to (Stripe Checkout, or the success page in mockup mode). */
+/** Starts a purchase. Returns the Stripe Checkout URL to send the customer to. */
 export async function createCheckout(userId: string, email: string, priceId: string) {
   const admin = createAdminClient();
   const { price, product } = await loadPrice(admin, priceId);
@@ -52,8 +51,6 @@ export async function createCheckout(userId: string, email: string, priceId: str
     currency: "thb", status: "pending", kind: "checkout",
   }).select("id").single<{ id: string }>();
   if (error || !order) throw new StoreError("สร้างคำสั่งซื้อไม่สำเร็จ");
-
-  if (isMockMode()) return mockCheckout(admin, order.id, product, price);
 
   const stripe = getStripe();
   const meta = { order_id: order.id, user_id: userId, product_id: product.id, price_id: price.id };
@@ -228,10 +225,6 @@ export async function revokeOrder(orderId: string) {
 /** Ends a subscription right away (no further charges). Safe if it is already cancelled. */
 async function cancelSubscriptionNow(subscriptionId: string) {
   const admin = createAdminClient();
-  if (isMockMode()) {
-    await admin.from("subscriptions").update({ status: "canceled", cancel_at_period_end: false }).eq("id", subscriptionId);
-    return;
-  }
   const stripe = getStripe();
   const sub = await stripe.subscriptions.retrieve(subscriptionId);
   const ended = sub.status === "canceled" || sub.status === "incomplete_expired";
@@ -240,16 +233,11 @@ async function cancelSubscriptionNow(subscriptionId: string) {
 
 /**
  * Admin refund. Refunds the full payment in Stripe; the charge.refunded webhook then revokes the rights.
- * In mockup mode there is no Stripe, so the order is revoked directly.
  */
 export async function refundOrder(orderId: string) {
   const admin = createAdminClient();
   const { data: order } = await admin.from("orders").select("*").eq("id", orderId).maybeSingle<Order & { stripe_invoice_id: string | null }>();
   if (!order || order.status !== "paid") throw new StoreError("คืนเงินได้เฉพาะคำสั่งซื้อที่ชำระแล้ว");
-  if (isMockMode()) {
-    await revokeOrder(orderId);
-    return;
-  }
   const stripe = getStripe();
   let pi = order.stripe_payment_intent_id;
   if (!pi && order.stripe_invoice_id) {
@@ -267,35 +255,12 @@ export async function setCancelAtPeriodEnd(userId: string, subscriptionId: strin
   const admin = createAdminClient();
   const { data: row } = await admin.from("subscriptions").select("id, user_id").eq("id", subscriptionId).maybeSingle();
   if (!row || row.user_id !== userId) throw new StoreError("ไม่พบการสมัครนี้");
-  if (isMockMode()) {
-    await admin.from("subscriptions").update({ cancel_at_period_end: cancel }).eq("id", subscriptionId);
-    return;
-  }
   const sub = await getStripe().subscriptions.update(subscriptionId, { cancel_at_period_end: cancel });
   await syncSubscription(sub);
 }
 
-/** Mockup mode: no Stripe — the order is paid on the spot. */
-async function mockCheckout(admin: Admin, orderId: string, product: Product, price: ProductPrice) {
-  if (price.billing === "subscription") {
-    const end = new Date();
-    if (price.interval === "year") end.setFullYear(end.getFullYear() + 1); else end.setMonth(end.getMonth() + 1);
-    const { data: order } = await admin.from("orders").select("user_id").eq("id", orderId).single<{ user_id: string }>();
-    const subId = `sub_mock_${orderId.slice(0, 8)}`;
-    await admin.from("subscriptions").upsert({
-      id: subId, user_id: order!.user_id, product_id: product.id, price_id: price.id, product_name: product.name, codes: product.codes,
-      status: "active", interval: price.interval, amount_satang: price.amount_satang, current_period_end: end.toISOString(), cancel_at_period_end: false,
-    });
-    await fulfillOrder(orderId, { until: end, subscription: subId });
-  } else {
-    await fulfillOrder(orderId, { paymentIntent: `pi_mock_${orderId.slice(0, 8)}` });
-  }
-  return `/billing/success?order=${orderId}`;
-}
-
 /** Stripe-hosted page where the customer updates their card and downloads invoices. */
 export async function billingPortalUrl(userId: string) {
-  if (isMockMode()) throw new StoreError("โหมดตัวอย่าง: ไม่มีหน้าจัดการบัตรของ Stripe");
   const { data } = await createAdminClient().from("stripe_customers").select("stripe_customer_id").eq("user_id", userId).maybeSingle();
   if (!data?.stripe_customer_id) throw new StoreError("ยังไม่มีข้อมูลการชำระเงินกับ Stripe");
   const session = await getStripe().billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: `${publicEnv.siteUrl()}/billing` });

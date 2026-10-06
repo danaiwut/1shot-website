@@ -32,7 +32,7 @@ export default async function NewsPage() {
             <div className="space-y-5 px-5 py-5">
               <p className="text-[15px] leading-relaxed whitespace-pre-line">{brief.story}</p>
               <details className="group rounded-lg border border-line bg-panel-2">
-                <summary className="cursor-pointer list-none px-4 py-3 text-sm text-muted group-open:border-b group-open:border-line">ข้อเท็จจริงที่ใช้สรุป</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm text-muted group-open:border-b group-open:border-line">ข้อเท็จจริงที่ใช้สรุป</summary>
                 <p className="px-4 py-3 text-xs leading-relaxed whitespace-pre-line text-muted">{brief.facts}</p>
               </details>
             </div>
@@ -48,11 +48,11 @@ export default async function NewsPage() {
               {(news as News[]).map((n) => (
                 <li key={n.id} className="px-5 py-4">
                   <a href={n.link} target="_blank" rel="noopener noreferrer" className="group flex items-start justify-between gap-3">
-                    <span className="text-sm font-medium group-hover:text-accent">{n.title_th || n.title}</span>
+                    <span className="text-sm font-medium group-hover:text-accent group-hover:underline">{n.title_th || n.title}<span className="sr-only"> (เปิดแท็บใหม่)</span></span>
                     <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-faint" />
                   </a>
                   {n.gold_impact && <p className={`mt-1.5 text-xs leading-relaxed ${impactTone(n.gold_impact)}`}>{n.gold_impact}</p>}
-                  <p className="mt-1.5 text-[11px] text-faint">{n.source} · {fmtDateTime(n.published_at)}</p>
+                  <p className="mt-1.5 text-xs text-faint">{n.source} · {fmtDateTime(n.published_at)}</p>
                 </li>
               ))}
             </ul>

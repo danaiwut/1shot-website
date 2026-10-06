@@ -27,18 +27,22 @@ export function ProductCard({ product, access = {}, subscribed = false, from, va
     <article
       id={`product-${product.id}`}
       className={cx(
-        "relative flex flex-col overflow-hidden rounded-3xl border p-5 sm:p-6",
-        featured ? "surface-dark border-brand/40 bg-ink shadow-[0_30px_80px_-30px_rgb(178_0_22/0.7)]" : "border-line bg-panel shadow-[0_1px_2px_rgb(0_0_0/0.04)]",
+        "relative flex flex-col overflow-hidden rounded-2xl border p-5 sm:p-6",
+        featured ? "surface-dark border-brand/40 bg-ink shadow-xl" : "border-line bg-panel shadow-[0_1px_2px_rgb(0_0_0/0.04)]",
       )}
     >
-      {featured && <div className="brand-glow pointer-events-none absolute inset-0 opacity-60" />}
+      {featured && <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-brand" />}
       <div className="relative flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-wider text-accent uppercase">
+            <p className="text-xs font-semibold tracking-wider text-accent uppercase">
               {product.kind === "bundle" ? `แพ็กเกจรวม · ${product.codes.length} อินดิเคเตอร์` : "รายตัว"}
             </p>
-            <h3 className={cx("mt-1 font-bold tracking-tight", variant === "bundle" ? "text-xl sm:text-2xl" : "text-lg")}>{product.name}</h3>
+            <h3 className={cx("mt-1 font-bold tracking-tight", variant === "bundle" ? "text-xl sm:text-2xl" : "text-lg")}>
+              {product.kind === "single" && product.codes.length === 1 && !from.startsWith("/indicators/")
+                ? <Link href={`/indicators/${product.codes[0]}`} className="underline-offset-4 hover:underline">{product.name}</Link>
+                : product.name}
+            </h3>
           </div>
           {featured && <Badge tone="brand" className="bg-brand text-white">แนะนำ</Badge>}
         </div>
@@ -46,8 +50,8 @@ export function ProductCard({ product, access = {}, subscribed = false, from, va
 
         <ul className="mt-4 flex flex-wrap gap-1.5">
           {product.codes.map((c) => (
-            <li key={c} className={cx("num rounded-md border px-2 py-0.5 text-[11px] font-semibold", c in access ? "border-buy/30 bg-buy-dim text-buy" : "border-line bg-panel-2 text-muted")}>
-              {c}{c in access && " ✓"}
+            <li key={c} className={cx("num rounded-md border px-2 py-0.5 text-xs font-semibold", c in access ? "border-buy/30 bg-buy-dim text-buy" : "border-line bg-panel-2 text-muted")}>
+              {c}{c in access && <><span aria-hidden> ✓</span><span className="sr-only"> (มีสิทธิ์แล้ว)</span></>}
             </li>
           ))}
         </ul>
@@ -81,9 +85,9 @@ export function ProductCard({ product, access = {}, subscribed = false, from, va
                   {termLabel(p)}
                 </span>
                 <span className="text-right whitespace-nowrap">
-                  {p.compareSatang && <span className="num mr-1.5 text-[11px] text-faint line-through">{fmtTHB(p.compareSatang)}</span>}
+                  {p.compareSatang && <span className="num mr-1.5 text-xs text-faint line-through">{fmtTHB(p.compareSatang)}</span>}
                   <span className="num text-sm font-semibold">{fmtTHB(p.amount_satang)}</span>
-                  <span className="text-[11px] text-muted">{p.billing === "subscription" ? priceSuffix(p) : ""}</span>
+                  <span className="text-xs text-muted">{p.billing === "subscription" ? priceSuffix(p) : ""}</span>
                 </span>
               </label>
             ))}
@@ -110,7 +114,7 @@ export function ProductCard({ product, access = {}, subscribed = false, from, va
               {pending ? "กำลังไปหน้าชำระเงิน…" : price?.billing === "subscription" ? `สมัคร${termLabel(price)} ${fmtTHB(price.amount_satang)}` : `ซื้อ ${price ? fmtTHB(price.amount_satang) : ""}`}
             </button>
           )}
-          <p className="mt-2 text-center text-[11px] text-faint">
+          <p className="mt-2 text-center text-xs text-faint">
             {price?.billing === "subscription" ? "ตัดบัตรอัตโนมัติทุกงวด ยกเลิกได้ทุกเมื่อ" : "จ่ายครั้งเดียว บัตรเครดิต/เดบิต หรือ PromptPay"}
           </p>
         </form>

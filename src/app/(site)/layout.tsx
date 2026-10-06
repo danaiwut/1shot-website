@@ -1,37 +1,45 @@
 import Link from "next/link";
+import { MotionToggle } from "@/components/motion/motion-pref";
+import { ThemeToggle } from "@/components/theme";
+import { isStaff } from "@/lib/types";
 import { ArrowRight } from "lucide-react";
 import { SiteMobileMenu } from "@/components/site/mobile-menu";
 import { SiteNavLinks } from "@/components/site/nav-links";
 import { ButtonLink, Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
-import { hasBackend } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 
 const NAV = [
   { href: "/#indicators", label: "อินดิเคเตอร์" },
-  { href: "/pricing", label: "ราคา" },
-  { href: "/#guard", label: "การคุมความเสี่ยง" },
-  { href: "/#how", label: "การทำงาน" },
+  { href: "/pricing", label: "แพ็กเกจและราคา" },
+  { href: "/#how", label: "เริ่มใช้งาน" },
   { href: "/#about", label: "เกี่ยวกับเรา" },
 ];
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const viewer = hasBackend() ? await getViewer() : null;
+  const viewer = isSupabaseConfigured() ? await getViewer() : null;
+  const staff = Boolean(viewer && isStaff(viewer.profile.role));
   return (
     <div className="relative">
-      <header className="surface-dark sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-xl">
+      {/* WCAG 2.4.1 */}
+      <a href="#main" className="sr-only z-[60] rounded-lg bg-brand px-4 py-3 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
+        ข้ามไปยังเนื้อหาหลัก
+      </a>
+      <header className="sticky top-0 z-40 border-b border-line bg-panel/95 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
-          <Link href="/" aria-label="หน้าแรก"><Logo /></Link>
+          <Link href="/" aria-label="หน้าแรก"><Logo tone="auto" /></Link>
           <SiteNavLinks links={NAV} />
           <div className="flex items-center gap-2">
             {viewer ? (
-              <ButtonLink href="/dashboard">เข้าสู่แดชบอร์ด <ArrowRight className="size-4" /></ButtonLink>
+              <ButtonLink href={staff ? "/admin" : "/dashboard"}>{staff ? "ระบบหลังบ้าน" : "เข้าสู่แดชบอร์ด"} <ArrowRight className="size-4" /></ButtonLink>
             ) : (
               <>
                 <span className="hidden sm:block"><ButtonLink href="/login" variant="ghost">เข้าสู่ระบบ</ButtonLink></span>
                 <span className="hidden min-[400px]:block"><ButtonLink href="/signup">สมัครสมาชิก <ArrowRight className="size-4" /></ButtonLink></span>
               </>
             )}
-            <SiteMobileMenu links={NAV} signedIn={Boolean(viewer)} />
+            <ThemeToggle />
+            <SiteMobileMenu links={NAV} signedIn={Boolean(viewer)} staff={staff} />
           </div>
         </div>
       </header>
@@ -64,7 +72,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         </div>
         <div className="border-t border-line">
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-faint sm:px-6 md:flex-row md:items-start md:justify-between">
-            <p className="shrink-0">© {new Date().getFullYear()} 1SHOT Signals</p>
+            <div className="flex shrink-0 flex-wrap items-center gap-4">
+              <p>© {new Date().getFullYear()} 1SHOT Signals</p>
+              <MotionToggle className="text-white" />
+              <ThemeToggle label className="text-white" />
+            </div>
             <p className="max-w-2xl leading-relaxed md:text-right">
               การเทรดทองคำและ CFD มีความเสี่ยงสูง อาจสูญเสียเงินทุนทั้งหมด สัญญาณเป็นข้อมูลจากอินดิเคเตอร์ ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล
               และผลในอดีตไม่ได้รับประกันผลในอนาคต
