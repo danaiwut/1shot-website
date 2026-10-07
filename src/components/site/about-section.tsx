@@ -29,7 +29,7 @@ function TickRing({ className }: { className: string }) {
 
 export function AboutSection({ indicatorCount, actionHref = "/signup", actionLabel = "สมัครสมาชิกฟรี" }: { indicatorCount: number; actionHref?: string; actionLabel?: string }) {
   return (
-    <section id="about" className="surface-dark relative scroll-mt-18 overflow-hidden bg-ink">
+    <section id="about" className="relative scroll-mt-18 overflow-hidden bg-ink">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_70%_at_25%_50%,rgb(178_0_22/0.28),transparent_70%)]" />
       <TickRing className="top-10 right-[6%] hidden size-36 text-brand/60 lg:block" />
 

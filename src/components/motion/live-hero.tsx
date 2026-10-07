@@ -7,7 +7,7 @@ import { useReduce } from "./use-reduce";
 
 /*
  * Hero = copy on the left, a MacBook on the right playing a looped TradingView replay of the indicators
- * (public/media/hero-tradingview.mp4, already encoded at 2× speed). The site-wide pause switch (footer) stops the video too.
+ * (public/media/hero-macbook.mp4, already encoded at 2× speed). The site-wide pause switch (footer) stops the video too.
  */
 
 const WORDS = ["ทุก Setup", "ทุก Entry", "ทุก TP"];
@@ -23,7 +23,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
   }, [reduce]);
 
   return (
-    <section className="surface-dark relative -mt-18 flex min-h-[100svh] flex-col overflow-hidden bg-black pt-18">
+    <section className="relative -mt-18 flex min-h-[100svh] flex-col overflow-hidden bg-ink pt-18">
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/3 h-[480px] w-[900px] rounded-full bg-brand/25 blur-[140px]" />
       <div aria-hidden className="pointer-events-none absolute right-0 bottom-10 h-[420px] w-[700px] rounded-full bg-brand/20 blur-[160px]" />
 
@@ -52,20 +52,20 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
                   key={WORDS[i]}
-                  className="absolute left-0 block whitespace-nowrap text-[#ff2e43]"
+                  className="absolute left-0 block whitespace-nowrap text-brand dark:text-[#ff2e43]"
                   initial={{ y: "100%", rotateX: -80, opacity: 0 }}
                   animate={{ y: "0%", rotateX: 0, opacity: 1 }}
                   exit={{ y: "-100%", rotateX: 80, opacity: 0 }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {WORDS[i]}<span className="text-white">.</span>
+                  {WORDS[i]}<span className="text-fg">.</span>
                 </motion.span>
               </AnimatePresence>
             </span>
           </h1>
 
           <motion.p
-            className="mt-6 max-w-lg text-base leading-relaxed text-white/85 sm:text-lg"
+            className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }}
           >
             อินดิเคเตอร์ 1SHOT ส่ง Setup พร้อม Entry, SL และ TP ตั้งแต่วินาทีที่เกิดสัญญาณ ตรงจาก TradingView ถึงเว็บและ Telegram ตรวจย้อนได้ทุกจุด
@@ -76,7 +76,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
               <span className="relative">เลือกอินดิเคเตอร์</span>
               <ArrowRight className="relative size-5 transition-transform group-hover:translate-x-1" />
             </Link>
-            <a href="/pricing" className="inline-flex h-14 items-center gap-2 rounded-2xl border border-white/40 bg-white/5 px-7 text-base font-medium text-white backdrop-blur transition-colors hover:bg-white/10">
+            <a href="/pricing" className="inline-flex h-14 items-center gap-2 rounded-2xl border border-line-strong bg-panel/60 px-7 text-base font-medium text-fg backdrop-blur transition-colors hover:bg-panel-3">
               ดูแพ็กเกจและราคา
             </a>
           </motion.div>
@@ -119,7 +119,7 @@ function Devices({ paused }: { paused: boolean }) {
         <MacBook paused={paused} />
         <IPhone paused={paused} />
         {/* Ground shadow + brand glow */}
-        <div aria-hidden className="pointer-events-none absolute top-[66%] left-[12%] -z-10 h-[22%] w-[78%] rotate-[16deg] rounded-[50%] bg-black/90 blur-2xl" />
+        <div aria-hidden className="pointer-events-none absolute top-[66%] left-[12%] -z-10 h-[22%] w-[78%] rotate-[16deg] rounded-[50%] bg-black/35 blur-2xl dark:bg-black/90" />
         <div aria-hidden className="pointer-events-none absolute top-[20%] left-[20%] -z-20 h-[60%] w-[60%] rounded-full bg-brand/35 blur-[90px]" />
       </div>
     </figure>
@@ -188,8 +188,8 @@ function MacBook({ paused }: { paused: boolean }) {
                 <video
                   ref={video}
                   className="absolute inset-0 size-full object-cover"
-                  src="/media/hero-tradingview.mp4"
-                  poster="/media/hero-tradingview.jpg"
+                  src="/media/hero-macbook.mp4"
+                  poster="/media/hero-macbook.jpg"
                   autoPlay muted loop playsInline preload="auto"
                   aria-label="วิดีโอตัวอย่าง อินดิเคเตอร์ 1SHOT ทำงานบนกราฟทองคำใน TradingView"
                 />
@@ -205,7 +205,7 @@ function MacBook({ paused }: { paused: boolean }) {
 
 /*
  * iPhone Pro Max: titanium frame, thin bezel, Dynamic Island, side buttons on the visible right edge.
- * Stands in front of the MacBook's right corner, turned the same way, floating gently.
+ * Stands in front of the MacBook's right corner, facing the viewer, floating gently.
  */
 function IPhone({ paused }: { paused: boolean }) {
   const video = usePlayback(paused);
@@ -215,8 +215,8 @@ function IPhone({ paused }: { paused: boolean }) {
     <motion.div
       className="absolute right-[1%] bottom-[1%]"
       style={{ ...preserve, width: `${PW}em`, height: `${PH}em` }}
-      initial={{ opacity: 0, y: "5em", rotateY: -60, rotateX: 6 }}
-      animate={{ opacity: 1, y: 0, rotateY: -26, rotateX: 6 }}
+      initial={{ opacity: 0, y: "5em" }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.5, delay: 1.1, ease: EASE }}
     >
       <motion.div
@@ -225,14 +225,6 @@ function IPhone({ paused }: { paused: boolean }) {
         animate={paused ? { y: 0 } : { y: ["0em", "-0.45em", "0em"] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2.6 }}
       >
-        {/* Right edge (thickness), with the action/volume side and camera-control button */}
-        <div
-          className="absolute top-[1.4em] rounded-full bg-[linear-gradient(90deg,#6b6e75,#2e3035)]"
-          style={{ left: `${PW}em`, width: `${PT}em`, height: `${PH - 2.8}em`, transformOrigin: "left center", transform: "rotateY(90deg) translateX(-0.02em)" }}
-        >
-          <span className="absolute top-[2.4em] left-1/2 h-[1.9em] w-[0.16em] -translate-x-1/2 rounded-full bg-[#8b8e95]" />
-          <span className="absolute top-[7.6em] left-1/2 h-[1.2em] w-[0.16em] -translate-x-1/2 rounded-full bg-[#1b1c1f]" />
-        </div>
         {/* Front: titanium rim → black bezel → screen */}
         <div className="absolute inset-0 rounded-[1.35em] bg-[linear-gradient(140deg,#8d9097,#3a3c41_40%,#6f727a)] p-[0.14em] shadow-[0_2.5em_4em_-1.5em_rgb(0_0_0/0.9),0_0_3em_-1em_rgb(178_0_22/0.6)]">
           <div className="size-full rounded-[1.24em] bg-black p-[0.26em]">

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { LifeBuoy } from "lucide-react";
+import { ArrowRight, LifeBuoy } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { ButtonLink, Card } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = { title: "คู่มือการใช้งาน" };
 
@@ -36,35 +37,63 @@ const STEPS = [
 export default function GuidePage() {
   return (
     <>
-      <PageHeader title="คู่มือการใช้งาน" description="ทำตาม 5 หัวข้อนี้ ก็ใช้งาน 1SHOT ได้ครบ" />
-      <nav aria-label="สารบัญคู่มือ" className="mb-6 flex flex-wrap gap-2">
-        {STEPS.map((s, i) => (
-          <a key={s.id} href={`#${s.id}`} className="inline-flex min-h-11 items-center rounded-full border border-line-strong px-4 text-sm font-medium hover:border-fg">
-            <span className="num mr-2 text-accent">{String(i + 1).padStart(2, "0")}</span>{s.title}
-          </a>
-        ))}
-      </nav>
-      <div className="space-y-4">
-        {STEPS.map((s, i) => (
-          <Card key={s.id} id={s.id} className="scroll-mt-24 p-5 sm:p-6">
-            <h2 className="text-xl font-bold"><span className="num mr-3 text-accent">{String(i + 1).padStart(2, "0")} /</span>{s.title}</h2>
-            <ol className="mt-4 list-decimal space-y-2 pl-6 text-base">
-              {s.body.map((b) => <li key={b}>{b}</li>)}
+      <PageHeader
+        title="คู่มือการใช้งาน"
+        description="ทำตาม 5 หัวข้อนี้ ก็ใช้งาน 1SHOT ได้ครบ"
+        action={<ButtonLink href="/support" variant="outline"><LifeBuoy aria-hidden className="size-4" /> ติดต่อทีมงาน</ButtonLink>}
+      />
+      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
+        <nav aria-label="สารบัญคู่มือ" className="lg:sticky lg:top-24">
+          <Card className="gap-0 rounded-2xl p-2 shadow-xs">
+            <p aria-hidden className="px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted">สารบัญ</p>
+            <ol className="grid gap-0.5 sm:grid-cols-2 lg:grid-cols-1">
+              {STEPS.map((s, i) => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none hover:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                    <span className="num grid size-6 shrink-0 place-items-center rounded-md bg-brand-dim text-xs font-bold text-accent">{i + 1}</span>
+                    {s.title}
+                  </a>
+                </li>
+              ))}
             </ol>
-            <Link href={s.link.href} className="mt-4 inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4">{s.link.label}</Link>
           </Card>
-        ))}
-      </div>
-      <Card className="mt-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div className="flex items-start gap-3">
-          <LifeBuoy aria-hidden className="mt-0.5 size-6 shrink-0 text-accent" />
-          <div>
-            <h2 className="font-bold">ยังติดปัญหาอยู่?</h2>
-            <p className="text-muted">ติดต่อทีมงานเพื่อขอความช่วยเหลือ</p>
-          </div>
+        </nav>
+
+        <div className="space-y-6">
+          {STEPS.map((s, i) => (
+            <Card key={s.id} id={s.id} className="scroll-mt-24 gap-0 rounded-2xl py-0 shadow-xs">
+              <CardHeader className="border-b border-line py-5">
+                <CardDescription className="num text-xs font-semibold tracking-[0.14em] text-accent">ขั้นที่ {String(i + 1).padStart(2, "0")}</CardDescription>
+                <CardTitle><h2 className="text-lg leading-snug font-bold">{s.title}</h2></CardTitle>
+              </CardHeader>
+              <CardContent className="py-5">
+                <ol className="space-y-3">
+                  {s.body.map((b, j) => (
+                    <li key={b} className="flex gap-3">
+                      <span aria-hidden className="num mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-semibold text-muted">{j + 1}</span>
+                      <span className="leading-relaxed">{b}</span>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+              <CardFooter className="border-t border-line bg-panel-2/40 py-3">
+                <Link href={s.link.href} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent underline underline-offset-4">{s.link.label} <ArrowRight aria-hidden className="size-4" /></Link>
+              </CardFooter>
+            </Card>
+          ))}
+
+          <Card className="flex-row flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-t from-brand-dim/40 to-panel px-6 py-5 shadow-xs">
+            <div className="flex items-start gap-3">
+              <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-accent"><LifeBuoy className="size-5" /></span>
+              <div>
+                <h2 className="font-bold">ยังติดปัญหาอยู่?</h2>
+                <p className="text-sm text-muted">ติดต่อทีมงานเพื่อขอความช่วยเหลือ</p>
+              </div>
+            </div>
+            <ButtonLink href="/support" className="w-full sm:w-auto">ส่งคำขอรับความช่วยเหลือ</ButtonLink>
+          </Card>
         </div>
-        <ButtonLink href="/support" className="h-12 px-6">ส่งคำขอรับความช่วยเหลือ</ButtonLink>
-      </Card>
+      </div>
     </>
   );
 }

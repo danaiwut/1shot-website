@@ -1,6 +1,7 @@
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
 import { notFound } from "next/navigation";
-import { ButtonLink, Card } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { fmtTHB, orderTerm } from "@/lib/store/pricing";
@@ -19,37 +20,42 @@ export default async function SuccessPage({ searchParams }: PageProps<"/billing/
   const paid = order.status === "paid";
   const failed = order.status === "failed" || order.status === "canceled";
   const Icon = paid ? CheckCircle2 : failed ? XCircle : Clock;
+  const tone = paid ? "bg-buy-dim text-buy" : failed ? "bg-sell-dim text-sell" : "bg-brand-dim text-accent";
 
   return (
-    <div className="mx-auto max-w-lg pt-6">
+    <div className="mx-auto w-full max-w-xl pt-2 sm:pt-6">
       {!paid && !failed && <Refresher />}
-      <Card className="overflow-hidden text-center">
-        <div className={`surface-dark relative px-6 pt-10 pb-8 ${paid ? "bg-ink" : "bg-ink"}`}>
-          <div className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-          <Icon aria-hidden className={`relative mx-auto size-14 ${paid ? "text-buy" : failed ? "text-sell" : "text-accent"}`} strokeWidth={1.6} />
-          <h1 className="relative mt-4 text-2xl font-bold tracking-tight">
+      <Card className="gap-0 overflow-hidden rounded-2xl py-0 shadow-xs">
+        <CardHeader className="items-center justify-items-center gap-3 border-b border-line bg-gradient-to-b from-brand-dim/40 to-panel px-6 py-8 text-center">
+          <span aria-hidden className={`grid size-16 place-items-center rounded-full ${tone}`}>
+            <Icon className="size-8" strokeWidth={1.8} />
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight">
             {paid ? "ชำระเงินสำเร็จ" : failed ? "การชำระเงินไม่สำเร็จ" : "กำลังยืนยันการชำระเงิน…"}
           </h1>
-          <p className="relative mt-1 text-sm text-muted">
+          <CardDescription role="status" className="text-sm text-muted">
             {paid ? "สิทธิ์ของคุณพร้อมใช้งานแล้ว" : failed ? "ยังไม่มีการตัดเงิน ลองชำระใหม่ได้" : "หน้านี้จะอัปเดตเองเมื่อได้รับการยืนยันจาก Stripe"}
-          </p>
-        </div>
-        <dl className="divide-y divide-line text-left text-sm">
-          <Row k="สินค้า" v={`${order.product_name} · ${orderTerm(order)}`} />
-          <Row k="ยอดชำระ" v={<span className="num font-semibold">{fmtTHB(order.amount_satang)}</span>} />
-          <Row k="อินดิเคเตอร์" v={<span className="num">{order.codes.join(" · ")}</span>} />
-          {paid && <Row k="ใช้ได้ถึง" v={order.access_until ? fmtDate(order.access_until) : order.billing === "one_time" ? "ตลอดชีพ" : "—"} />}
-        </dl>
-        <div className="flex flex-col gap-2 border-t border-line p-4 sm:flex-row">
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-0">
+          <h2 className="sr-only">รายละเอียดคำสั่งซื้อ</h2>
+          <dl className="divide-y divide-line text-sm">
+            <Row k="สินค้า" v={`${order.product_name} · ${orderTerm(order)}`} />
+            <Row k="ยอดชำระ" v={<span className="num font-semibold">{fmtTHB(order.amount_satang)}</span>} />
+            <Row k="อินดิเคเตอร์" v={<span className="num">{order.codes.join(" · ")}</span>} />
+            {paid && <Row k="ใช้ได้ถึง" v={order.access_until ? fmtDate(order.access_until) : order.billing === "one_time" ? "ตลอดชีพ" : "—"} />}
+          </dl>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2 border-t border-line bg-panel-2/40 px-6 py-4 sm:flex-row">
           {paid ? (
             <>
-              <ButtonLink href="/signals" className="flex-1">ดูสัญญาณ</ButtonLink>
-              <ButtonLink href="/account#telegram" variant="outline" className="flex-1">เข้าห้อง Telegram</ButtonLink>
+              <ButtonLink href="/signals" className="w-full sm:flex-1"><Activity aria-hidden className="size-4" /> ดูสัญญาณ</ButtonLink>
+              <ButtonLink href="/account#telegram" variant="outline" className="w-full sm:flex-1"><Send aria-hidden className="size-4" /> เข้าห้อง Telegram</ButtonLink>
             </>
           ) : (
-            <ButtonLink href="/store" variant={failed ? "brand" : "outline"} className="flex-1">กลับไปร้านค้า</ButtonLink>
+            <ButtonLink href="/store" variant={failed ? "brand" : "outline"} className="w-full sm:flex-1">กลับไปร้านค้า</ButtonLink>
           )}
-        </div>
+        </CardFooter>
       </Card>
     </div>
   );
@@ -57,9 +63,9 @@ export default async function SuccessPage({ searchParams }: PageProps<"/billing/
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3">
+    <div className="flex items-start justify-between gap-4 px-6 py-3.5">
       <dt className="text-muted">{k}</dt>
-      <dd className="text-right">{v}</dd>
+      <dd className="text-right font-medium">{v}</dd>
     </div>
   );
 }

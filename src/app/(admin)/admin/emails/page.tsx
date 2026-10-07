@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, Empty, Notice } from "@/components/ui";
+import { Badge, Empty, Notice } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { fmtDateTime } from "@/lib/format";
+import { Panel, td, Th, theadRow } from "../_components/admin-ui";
+import { EmailPreview } from "./preview";
 
 export const metadata = { title: "อีเมลที่ส่ง" };
 
@@ -24,6 +27,8 @@ export default async function EmailsPage() {
   const rows = (data ?? []) as Row[];
   const configured = Boolean(serverEnv.resendApiKey() && serverEnv.emailFrom());
 
+  const failed = rows.filter((r) => r.status === "failed").length;
+
   return (
     <>
       <PageHeader eyebrow="ผู้ดูแลระบบ" title="อีเมลที่ส่ง" description="อีเมลแจ้งลูกค้าเมื่อซื้อสำเร็จ ต่ออายุ และคืนเงิน 100 รายการล่าสุด" />
@@ -34,36 +39,46 @@ export default async function EmailsPage() {
           </Notice>
         </div>
       )}
-      <Card className="overflow-hidden">
+      <Panel
+        title="อีเมลล่าสุด"
+        description={`${rows.length} รายการ${failed ? ` · ส่งไม่สำเร็จ ${failed}` : ""}`}
+        action={<Badge tone={configured ? "buy" : "neutral"}>{configured ? "เชื่อม Resend แล้ว" : "ยังไม่ได้ตั้งค่าการส่ง"}</Badge>}
+      >
         {rows.length ? (
-          <ul className="divide-y divide-line">
-            {rows.map((r) => (
-              <li key={r.id} className="px-4 py-3.5 sm:px-5">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{r.subject}</p>
-                    <p className="truncate text-xs text-muted">
-                      {r.user_id ? <Link href={`/admin/members/${r.user_id}`} className="hover:text-accent">{r.to_email}</Link> : r.to_email}
-                      {" · "}{fmtDateTime(r.created_at)}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <Badge>{KIND[r.kind]}</Badge>
-                    <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-                  </div>
-                </div>
-                {r.error && <p className="mt-1 text-xs text-sell">{r.error}</p>}
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-muted">ดูตัวอย่างอีเมล</summary>
-                  <iframe title={`ตัวอย่างอีเมล: ${r.subject}`} srcDoc={r.html} sandbox="" className="mt-2 h-[560px] w-full rounded-xl border border-line bg-white" />
-                </details>
-              </li>
-            ))}
-          </ul>
+          <Table className="min-w-[860px]">
+            <caption className="sr-only">อีเมลที่ส่ง {rows.length} รายการ</caption>
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>เวลา</Th>
+                <Th>ผู้รับ</Th>
+                <Th>หัวข้อ</Th>
+                <Th>ประเภท</Th>
+                <Th>สถานะ</Th>
+                <Th className="text-right"><span className="sr-only">ตัวอย่าง</span></Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.id} className="border-line align-top">
+                  <TableCell className={`${td} text-muted`}>{fmtDateTime(r.created_at)}</TableCell>
+                  <TableCell className={td}>
+                    {r.user_id ? <Link href={`/admin/members/${r.user_id}`} className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:text-accent hover:underline">{r.to_email}</Link> : r.to_email}
+                  </TableCell>
+                  <TableCell className={`${td} whitespace-normal`}>
+                    <span className="block max-w-sm font-medium">{r.subject}</span>
+                    {r.error && <span className="mt-0.5 block max-w-sm text-xs text-sell">{r.error}</span>}
+                  </TableCell>
+                  <TableCell className={td}><Badge>{KIND[r.kind]}</Badge></TableCell>
+                  <TableCell className={td}><Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge></TableCell>
+                  <TableCell className={`${td} text-right`}><EmailPreview subject={r.subject} to={r.to_email} html={r.html} /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <Empty title="ยังไม่มีอีเมล">อีเมลจะถูกส่งเมื่อมีการซื้อสำเร็จหรือคืนเงิน</Empty>
         )}
-      </Card>
+      </Panel>
     </>
   );
 }

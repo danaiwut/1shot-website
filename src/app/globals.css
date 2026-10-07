@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* shadcn/ui `dark:` follows our theme switch (dark-red is the default) and dark surfaces. */
+@custom-variant dark (&:where(html:not([data-theme="light"]) *, .surface-dark *));
 
 /*
  * Two themes, chosen by the visitor (see ThemeToggle):
@@ -199,4 +201,44 @@ html[data-theme="light"] .surface-dark .logo-for-dark { display: inline-block; }
 @media (max-width: 640px) { .terminal-preview { transform: none; } }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
+}
+/*
+ * shadcn/ui tokens, mapped onto the 1SHOT palette above so both themes and .surface-* scopes apply.
+ * (shadcn's own `muted`/`accent` names are rewritten to panel-3/fg in components/ui because
+ * text-muted / text-accent already mean our text colours.)
+ */
+@theme inline {
+  --color-background: var(--color-panel-2);
+  --color-foreground: var(--color-fg);
+  --color-card: var(--color-panel);
+  --color-card-foreground: var(--color-fg);
+  --color-popover: var(--color-panel);
+  --color-popover-foreground: var(--color-fg);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-panel-3);
+  --color-secondary-foreground: var(--color-fg);
+  --color-destructive: var(--color-brand);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-accent);
+
+  --color-sidebar: var(--color-panel);
+  --color-sidebar-foreground: var(--color-fg);
+  --color-sidebar-primary: var(--color-brand);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: var(--color-panel-3);
+  --color-sidebar-accent-foreground: var(--color-fg);
+  --color-sidebar-border: var(--color-line);
+  --color-sidebar-ring: var(--color-accent);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  /* shadcn components rely on a themed default border colour. */
+  *, ::before, ::after { border-color: var(--color-line); }
 }

@@ -2,6 +2,7 @@
 import { useActionState, useEffect, useRef, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { Button, Field, Input, Notice } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 import type { Announcement } from "@/lib/types";
 import { deleteAnnouncement, saveAnnouncement, type AnnState } from "./actions";
 
@@ -14,12 +15,12 @@ export function AnnouncementForm({ item }: { item?: Announcement }) {
       {item && <input type="hidden" name="id" value={item.id} />}
       <Field label="หัวข้อ"><Input name="title" required maxLength={160} defaultValue={item?.title} /></Field>
       <Field label="เนื้อหา">
-        <textarea name="body" rows={item ? 4 : 5} maxLength={8000} defaultValue={item?.body}
-          className="w-full rounded-lg border border-line-strong bg-panel px-3 py-2.5 text-base text-fg focus:border-brand focus:outline-none" />
+        <Textarea name="body" rows={item ? 4 : 5} maxLength={8000} defaultValue={item?.body}
+          className="field-sizing-fixed bg-panel text-sm placeholder:text-faint focus-visible:border-brand/70" />
       </Field>
-      <div className="flex flex-wrap gap-x-6 gap-y-2">
-        <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="published" defaultChecked={item?.published ?? true} className="size-5 accent-[var(--color-brand)]" /> เผยแพร่ให้สมาชิกเห็น</label>
-        <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="pinned" defaultChecked={item?.pinned ?? false} className="size-5 accent-[var(--color-brand)]" /> ปักหมุดไว้ด้านบน</label>
+      <div className="flex flex-wrap gap-x-6 gap-y-1 rounded-xl border border-line bg-panel-2 px-4 py-1">
+        <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name="published" defaultChecked={item?.published ?? true} className="size-5 accent-[var(--color-brand)]" /> เผยแพร่ให้สมาชิกเห็น</label>
+        <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name="pinned" defaultChecked={item?.pinned ?? false} className="size-5 accent-[var(--color-brand)]" /> ปักหมุดไว้ด้านบน</label>
       </div>
       {state.error && <Notice tone="error">{state.error}</Notice>}
       {state.ok && <Notice tone="success">{state.ok}</Notice>}

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/app/page-header";
-import { Card, Empty, FilterLink } from "@/components/ui";
+import { Badge, Empty, FilterLink } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { describeAudit } from "@/lib/support";
 import type { AuditEntry } from "@/lib/types";
+import { Panel, Segmented, td, Th, theadRow, Toolbar } from "../_components/admin-ui";
 
 export const metadata = { title: "ประวัติการจัดการสิทธิ์" };
 
@@ -32,30 +34,46 @@ export default async function AccessHistoryPage({ searchParams }: PageProps<"/ad
   return (
     <>
       <PageHeader eyebrow="ระบบหลังบ้าน" title="ประวัติการจัดการสิทธิ์" description="บันทึกทุกการเพิ่ม ต่ออายุ ถอนสิทธิ์ เปลี่ยนบทบาท และตรวจ IB — ทั้งจากทีมงานและจากการชำระเงิน 200 รายการล่าสุด" />
-      <div className="mb-5 flex flex-wrap gap-2">
-        {FILTERS.map((x) => <FilterLink key={x.id} href={`/admin/access-history?type=${x.id}`} on={f.id === x.id}>{x.label}</FilterLink>)}
-      </div>
-      <Card className="overflow-hidden">
+      <Panel title={f.label} description={`${rows.length} รายการ`}>
+        <Toolbar>
+          <Segmented label="กรองประวัติตามประเภท">
+            {FILTERS.map((x) => <FilterLink key={x.id} href={`/admin/access-history?type=${x.id}`} on={f.id === x.id}>{x.label}</FilterLink>)}
+          </Segmented>
+        </Toolbar>
         {rows.length ? (
-          <ol className="divide-y divide-line">
-            {rows.map((e) => {
-              const d = describeAudit(e);
-              return (
-                <li key={e.id} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-baseline sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="font-semibold">
-                      {d.title} · {e.subject_id ? <Link href={`/admin/members/${e.subject_id}`} className="underline underline-offset-4 hover:text-accent">{who(e.subject)}</Link> : "—"}
-                    </p>
-                    {d.detail && <p className="text-sm text-muted">{d.detail}</p>}
-                    <p className="text-sm text-muted">โดย {e.actor_id ? who(e.actor) : "ระบบ (การชำระเงิน / อัตโนมัติ)"}</p>
-                  </div>
-                  <time dateTime={e.created_at} className="shrink-0 text-sm text-muted">{fmtDateTime(e.created_at)}</time>
-                </li>
-              );
-            })}
-          </ol>
+          <Table className="min-w-[760px]">
+            <caption className="sr-only">ประวัติการจัดการสิทธิ์ {rows.length} รายการ</caption>
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>เวลา</Th>
+                <Th>การกระทำ</Th>
+                <Th>สมาชิก</Th>
+                <Th>โดย</Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((e) => {
+                const d = describeAudit(e);
+                return (
+                  <TableRow key={e.id} className="border-line align-top">
+                    <TableCell className={`${td} text-muted`}><time dateTime={e.created_at}>{fmtDateTime(e.created_at)}</time></TableCell>
+                    <TableCell className={`${td} whitespace-normal`}>
+                      <span className="font-medium">{d.title}</span>
+                      {d.detail && <span className="block max-w-md text-xs text-muted">{d.detail}</span>}
+                    </TableCell>
+                    <TableCell className={td}>
+                      {e.subject_id ? <Link href={`/admin/members/${e.subject_id}`} className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:text-accent hover:underline">{who(e.subject)}</Link> : <span className="text-faint">—</span>}
+                    </TableCell>
+                    <TableCell className={td}>
+                      {e.actor_id ? who(e.actor) : <Badge tone="info">ระบบ (การชำระเงิน / อัตโนมัติ)</Badge>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         ) : <Empty title="ยังไม่มีประวัติในหมวดนี้" />}
-      </Card>
+      </Panel>
     </>
   );
 }

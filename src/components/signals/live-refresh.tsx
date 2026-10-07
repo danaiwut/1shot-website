@@ -26,13 +26,13 @@ export function LiveRefresh({ filter }: { filter?: string }) {
     };
   }, [router, filter, paused]);
   return (
-    <span className="inline-flex items-center gap-2 text-xs text-muted">
+    <span className="inline-flex items-center gap-2.5 text-xs text-muted">
       <span aria-hidden className={`size-2 rounded-full ${live ? "bg-buy animate-pulse-dot" : "bg-faint"}`} />
-      {paused ? "หยุดอัปเดตชั่วคราว" : live ? "อัปเดตสด" : "กำลังเชื่อมต่อ…"}
+      <span role="status" className="font-medium">{paused ? "หยุดอัปเดตชั่วคราว" : live ? "อัปเดตสด" : "กำลังเชื่อมต่อ…"}</span>
       <button
         type="button"
         onClick={() => setPaused((p) => !p)}
-        className="rounded-md border border-line-strong px-2 py-1 font-medium text-fg hover:border-fg"
+        className="inline-flex min-h-11 items-center rounded-xl border border-line-strong bg-panel px-3.5 text-sm font-medium shadow-xs text-fg outline-none hover:border-fg focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         {paused ? "อัปเดตต่อ" : "หยุดอัปเดต"}
       </button>

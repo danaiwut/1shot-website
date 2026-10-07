@@ -2,11 +2,15 @@
 import { useActionState, useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { Badge, Button, cx, Field, Input, Notice, Select } from "@/components/ui";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { fmtTHB, priceSuffix, termLabel } from "@/lib/store/pricing";
 import type { Product, ProductPrice } from "@/lib/types";
 import { addPrice, createProduct, deletePrice, deleteProduct, setPriceActive, updateProduct, type ProductState } from "./actions";
 
 type Indicator = { code: string; name: string };
+
+const area = "field-sizing-fixed bg-panel text-sm placeholder:text-faint focus-visible:border-brand/70";
 
 export function ProductForm({ product, indicators }: { product?: Product; indicators: Indicator[] }) {
   const [state, action, pending] = useActionState<ProductState, FormData>(product ? updateProduct : createProduct, {});
@@ -15,7 +19,7 @@ export function ProductForm({ product, indicators }: { product?: Product; indica
   const toggle = (c: string) => setCodes((cur) => (kind === "single" ? [c] : cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
 
   return (
-    <form action={action} className="@container space-y-5 p-4 sm:p-5">
+    <form action={action} className="@container space-y-5 p-4 sm:p-6">
       {product && <input type="hidden" name="id" value={product.id} />}
       <div className="grid gap-4 @md:grid-cols-[1fr_12rem]">
         <Field label="ชื่อสินค้า" required><Input name="name" defaultValue={product?.name} required maxLength={120} placeholder="เช่น ICT Pack" /></Field>
@@ -26,16 +30,17 @@ export function ProductForm({ product, indicators }: { product?: Product; indica
           </Select>
         </Field>
       </div>
-      <Field label="คำอธิบาย"><textarea name="description" defaultValue={product?.description} maxLength={600} rows={2} className="w-full rounded-lg border border-line-strong bg-panel px-3 py-2 text-sm focus:border-brand/70 focus:outline-none" /></Field>
+      <Field label="คำอธิบาย"><Textarea name="description" defaultValue={product?.description} maxLength={600} rows={2} className={area} /></Field>
 
       <fieldset>
-        <legend className="mb-1.5 text-[13px] font-medium">อินดิเคเตอร์ที่ได้ {kind === "single" ? "(เลือก 1 ตัว)" : `(${codes.length} ตัว)`}</legend>
-        <div className="flex flex-wrap gap-1.5">
+        <legend className="mb-2 text-sm font-medium">อินดิเคเตอร์ที่ได้ {kind === "single" ? "(เลือก 1 ตัว)" : `(${codes.length} ตัว)`}</legend>
+        <div className="flex flex-wrap gap-2">
           {indicators.map((i) => {
             const on = codes.includes(i.code);
             return (
-              <label key={i.code} title={i.name} className={cx("num cursor-pointer rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors", on ? "border-brand bg-brand text-white" : "border-line bg-panel text-muted hover:border-line-strong")}>
+              <label key={i.code} title={i.name} className={cx("num inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3.5 text-sm font-semibold shadow-xs transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50", on ? "border-brand bg-brand text-white" : "border-line-strong bg-panel text-muted hover:border-fg hover:text-fg")}>
                 <input type="checkbox" name="codes" value={i.code} checked={on} onChange={() => toggle(i.code)} className="sr-only" />
+                {on && <svg aria-hidden viewBox="0 0 12 12" className="size-3"><path d="M2.5 6.2 5 8.5l4.5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 {i.code}
               </label>
             );
@@ -44,10 +49,10 @@ export function ProductForm({ product, indicators }: { product?: Product; indica
       </fieldset>
 
       <Field label="จุดเด่น" hint="บรรทัดละ 1 ข้อ แสดงเป็นเช็กลิสต์บนการ์ดสินค้า">
-        <textarea name="features" defaultValue={product?.features.join("\n")} rows={3} className="w-full rounded-lg border border-line-strong bg-panel px-3 py-2 text-sm focus:border-brand/70 focus:outline-none" />
+        <Textarea name="features" defaultValue={product?.features.join("\n")} rows={3} className={area} />
       </Field>
 
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-3 rounded-xl border border-line bg-panel-2 p-4">
         <Field label="ลำดับ"><Input name="sort" type="number" defaultValue={product?.sort ?? 100} className="w-24" /></Field>
         <Check name="active" label="เปิดขาย" defaultChecked={product?.active ?? true} />
         <Check name="featured" label="แนะนำ (การ์ดเด่น)" defaultChecked={product?.featured ?? false} />
@@ -55,6 +60,7 @@ export function ProductForm({ product, indicators }: { product?: Product; indica
 
       {state.error && <Notice tone="error">{state.error}</Notice>}
       {state.ok && <Notice tone="success">{state.ok}</Notice>}
+      <Separator className="bg-line" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button type="submit" disabled={pending}>{pending ? "กำลังบันทึก…" : product ? "บันทึก" : "สร้างสินค้า"}</Button>
         {product && <DeleteProduct id={product.id} />}
@@ -65,8 +71,8 @@ export function ProductForm({ product, indicators }: { product?: Product; indica
 
 function Check({ name, label, defaultChecked }: { name: string; label: string; defaultChecked: boolean }) {
   return (
-    <label className="flex h-11 cursor-pointer items-center gap-2 text-sm">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="size-4 accent-[var(--color-brand)]" />
+    <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="size-5 accent-[var(--color-brand)]" />
       {label}
     </label>
   );
@@ -76,28 +82,29 @@ function DeleteProduct({ id }: { id: string }) {
   const [busy, start] = useTransition();
   return (
     <Button type="button" variant="danger" disabled={busy} onClick={() => confirm("ลบสินค้านี้? ประวัติคำสั่งซื้อเดิมยังอยู่") && start(() => deleteProduct(id))}>
-      <Trash2 className="size-4" /> ลบสินค้า
+      <Trash2 aria-hidden className="size-4" /> ลบสินค้า
     </Button>
   );
 }
 
 export function PriceList({ productId, prices }: { productId: string; prices: ProductPrice[] }) {
   const [busy, start] = useTransition();
-  if (!prices.length) return <p className="px-5 py-6 text-center text-sm text-muted">ยังไม่มีราคา เพิ่มด้านล่างเพื่อเปิดขาย</p>;
+  if (!prices.length) return <p className="px-4 py-8 text-center text-sm text-muted sm:px-6">ยังไม่มีราคา เพิ่มด้านล่างเพื่อเปิดขาย</p>;
   return (
     <ul className="divide-y divide-line">
       {prices.map((p) => (
-        <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+        <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
           <div className={cx(!p.active && "text-muted")}>
-            <p className="text-sm font-medium">{!p.active && <Badge className="mr-1.5">ปิดขาย</Badge>}{termLabel(p)} <span className="text-xs text-muted">· {p.billing === "subscription" ? "ตัดบัตรอัตโนมัติ" : "จ่ายครั้งเดียว"}</span></p>
-            <p className="num text-sm font-semibold">{fmtTHB(p.amount_satang)} <span className="text-xs font-normal text-muted">{priceSuffix(p)}</span></p>
+            <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium">{termLabel(p)} <Badge tone={p.active ? "buy" : "neutral"}>{p.active ? "เปิดขาย" : "ปิดขาย"}</Badge></p>
+            <p className="text-xs text-muted">{p.billing === "subscription" ? "ตัดบัตรอัตโนมัติ" : "จ่ายครั้งเดียว"}</p>
+            <p className="num mt-0.5 text-base font-semibold">{fmtTHB(p.amount_satang)} <span className="text-xs font-normal text-muted">{priceSuffix(p)}</span></p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-11 px-3 text-sm" aria-label={`${p.active ? "ปิดขาย" : "เปิดขาย"} ${termLabel(p)} ${fmtTHB(p.amount_satang)}`} disabled={busy} onClick={() => start(() => setPriceActive(p.id, productId, !p.active))}>
+            <Button variant="outline" aria-label={`${p.active ? "ปิดขาย" : "เปิดขาย"} ${termLabel(p)} ${fmtTHB(p.amount_satang)}`} disabled={busy} onClick={() => start(() => setPriceActive(p.id, productId, !p.active))}>
               {p.active ? "ปิดขาย" : "เปิดขาย"}
             </Button>
-            <Button variant="danger" className="h-11 px-2.5" aria-label={`ลบราคา ${termLabel(p)} ${fmtTHB(p.amount_satang)}`} disabled={busy} onClick={() => confirm("ลบราคานี้?") && start(() => deletePrice(p.id, productId))}>
-              <Trash2 className="size-3.5" />
+            <Button variant="danger" className="w-11 px-0" aria-label={`ลบราคา ${termLabel(p)} ${fmtTHB(p.amount_satang)}`} disabled={busy} onClick={() => confirm("ลบราคานี้?") && start(() => deletePrice(p.id, productId))}>
+              <Trash2 aria-hidden className="size-4" />
             </Button>
           </div>
         </li>
@@ -111,9 +118,9 @@ export function AddPriceForm({ productId }: { productId: string }) {
   const [billing, setBilling] = useState<"subscription" | "one_time">("subscription");
   const [duration, setDuration] = useState("30");
   return (
-    <form action={action} className="@container space-y-4 border-t border-line p-4 sm:p-5">
+    <form action={action} className="@container space-y-4 border-t border-line bg-panel-2/40 p-4 sm:p-6">
       <input type="hidden" name="product_id" value={productId} />
-      <p className="text-sm font-semibold">เพิ่มราคา</p>
+      <h3 className="text-sm font-semibold">เพิ่มราคา</h3>
       <div className="grid gap-3 @lg:grid-cols-3">
         <Field label="รูปแบบ">
           <Select name="billing" value={billing} onChange={(e) => setBilling(e.target.value as "subscription" | "one_time")}>

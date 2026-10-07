@@ -2,38 +2,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { cloneElement, isValidElement, useId, type ComponentProps, type ReactElement, type ReactNode } from "react";
 
-const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
-/** Full width unless the caller sets its own base width (no tailwind-merge, so w-full would otherwise win). */
-const fullUnless = (className?: string) => !/(^|\s)w-/.test(className ?? "") && "w-full";
+import { cn } from "@/lib/utils";
+import { Button as UIButton, buttonVariants } from "./button";
+import { Card as UICard } from "./card";
+import { Input as UIInput } from "./input";
+
+/*
+ * App-wide primitives with a stable API, rendered with shadcn/ui (components/ui/*).
+ * Colours come from the 1SHOT theme tokens, so dark-red / light-red both apply.
+ */
+const cx = (...c: (string | false | null | undefined)[]) => cn(...c);
 export { cx };
 
 type Variant = "brand" | "ghost" | "outline" | "danger";
-const variants: Record<Variant, string> = {
-  brand: "bg-brand text-white hover:bg-brand-strong shadow-sm",
-  ghost: "text-fg hover:bg-panel-3",
-  outline: "border border-line-strong text-fg hover:border-fg",
-  danger: "border border-sell/40 text-sell hover:bg-sell-dim",
-};
-const base = "inline-flex items-center justify-center gap-2 rounded-xl px-4 h-11 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+const toShadcn = { brand: "default", ghost: "ghost", outline: "outline", danger: "destructive" } as const;
 
 export function Button({ variant = "brand", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
-  return <button className={cx(base, variants[variant], className)} {...props} />;
+  return <UIButton variant={toShadcn[variant]} className={className} {...props} />;
 }
 
 export function ButtonLink({ variant = "brand", className, ...props }: ComponentProps<typeof Link> & { variant?: Variant }) {
-  return <Link className={cx(base, variants[variant], className)} {...props} />;
+  return <Link className={cn(buttonVariants({ variant: toShadcn[variant] }), className)} {...props} />;
 }
 
 export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cx("rounded-card border border-line bg-panel shadow-[0_1px_2px_rgb(0_0_0/0.04)]", className)} {...props} />;
+  return <UICard className={cn("gap-0 rounded-2xl py-0 shadow-sm", className)} {...props} />;
 }
 
 export function CardHeader({ title, action, hint }: { title: ReactNode; action?: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
-      <div>
-        <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
-        {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
+    <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
+      <div className="min-w-0">
+        <h2 className="text-base leading-snug font-semibold tracking-tight">{title}</h2>
+        {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
       </div>
       {action}
     </div>
@@ -43,14 +44,14 @@ export function CardHeader({ title, action, hint }: { title: ReactNode; action?:
 type Tone = "neutral" | "brand" | "buy" | "sell" | "info";
 const tones: Record<Tone, string> = {
   neutral: "bg-panel-3 text-muted border-line",
-  brand: "bg-brand-dim text-accent border-brand/25",
-  buy: "bg-buy-dim text-buy border-buy/25",
-  sell: "bg-sell-dim text-sell border-sell/25",
+  brand: "bg-brand-dim text-accent border-brand/30",
+  buy: "bg-buy-dim text-buy border-buy/30",
+  sell: "bg-sell-dim text-sell border-sell/30",
   info: "bg-info-dim text-info border-info/25",
 };
 
 export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: Tone }) {
-  return <span className={cx("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium leading-5", tones[tone], className)} {...props} />;
+  return <span data-slot="badge" className={cn("inline-flex w-fit shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs leading-5 font-medium whitespace-nowrap [&>svg]:size-3", tones[tone], className)} {...props} />;
 }
 
 /** Wraps one control in its label; the hint or error is tied to it with aria-describedby (WCAG 1.3.1 / 3.3.1). */
@@ -61,24 +62,26 @@ export function Field({ label, hint, error, required, children }: { label: strin
     ? cloneElement(children as ReactElement<Record<string, unknown>>, { "aria-describedby": `${id}-note`, ...(error && { "aria-invalid": true }) })
     : children;
   return (
-    <label className="block space-y-1.5">
-      <span className="text-[13px] font-medium text-fg/90">
+    <label className="grid gap-2">
+      <span className="text-sm leading-none font-medium">
         {label}
         {required && <><span aria-hidden className="ml-0.5 text-accent">*</span><span className="sr-only"> (จำเป็น)</span></>}
       </span>
       {control}
-      {note && <span id={`${id}-note`} className={cx("block text-xs", error ? "text-sell" : "text-muted")}>{note}</span>}
+      {note && <span id={`${id}-note`} className={cn("block text-sm", error ? "text-sell" : "text-muted")}>{note}</span>}
     </label>
   );
 }
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
+  return <UIInput className={cn("text-sm placeholder:text-faint focus-visible:border-brand/70", className)} {...props} />;
+}
+
+export function Select({ className, ...props }: ComponentProps<"select">) {
   return (
-    <input
-      className={cx(
-        "h-11 rounded-lg border border-line-strong bg-panel px-3 text-sm text-fg placeholder:text-faint",
-        fullUnless(className),
-        "transition-colors focus:border-brand/70 focus:outline-none focus:ring-2 focus:ring-brand/15 aria-invalid:border-sell",
+    <select
+      className={cn(
+        "h-11 w-full rounded-lg border border-input bg-panel px-3 text-sm text-fg shadow-xs outline-none focus-visible:border-brand/70 focus-visible:ring-[3px] focus-visible:ring-ring/50",
         className,
       )}
       {...props}
@@ -86,41 +89,46 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
   );
 }
 
-export function Select({ className, ...props }: ComponentProps<"select">) {
-  return (
-    <select
-      className={cx("h-11 rounded-lg border border-line-strong bg-panel px-3 text-sm text-fg focus:border-brand/70 focus:outline-none focus:ring-2 focus:ring-brand/15", fullUnless(className), className)}
-      {...props}
-    />
-  );
-}
+const noticeIcon = {
+  info: <svg aria-hidden viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" strokeLinecap="round" /></svg>,
+  error: <svg aria-hidden viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" strokeLinecap="round" /></svg>,
+  success: <svg aria-hidden viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+};
 
+/** shadcn-style alert. */
 export function Notice({ tone = "info", children }: { tone?: "info" | "error" | "success"; children: ReactNode }) {
-  const t = { info: "border-info/30 bg-info-dim text-info", error: "border-sell/30 bg-sell-dim text-sell", success: "border-buy/30 bg-buy-dim text-buy" }[tone];
-  return <div role={tone === "error" ? "alert" : "status"} className={cx("rounded-lg border px-3.5 py-2.5 text-sm", t)}>{children}</div>;
+  const t = { info: "border-line bg-panel text-fg", error: "border-sell/40 bg-sell-dim text-sell", success: "border-buy/40 bg-buy-dim text-buy" }[tone];
+  return (
+    <div role={tone === "error" ? "alert" : "status"} className={cn("flex w-full gap-2.5 rounded-xl border px-4 py-3 text-sm", t)}>
+      {noticeIcon[tone]}
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
 }
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
-      <div aria-hidden className="size-10 rounded-full border border-dashed border-line-strong" />
-      <p className="text-sm font-medium">{title}</p>
-      {children && <div className="max-w-sm text-xs text-muted">{children}</div>}
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+      <div aria-hidden className="grid size-12 place-items-center rounded-xl border border-line bg-panel-2 text-muted shadow-xs">
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 7h18M5 7l1.5 12a2 2 0 0 0 2 1.8h7a2 2 0 0 0 2-1.8L19 7M9 7V5a3 3 0 0 1 6 0v2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </div>
+      <p className="text-sm font-semibold">{title}</p>
+      {children && <div className="max-w-sm text-sm text-muted">{children}</div>}
     </div>
   );
 }
 
 /**
- * A filter link. The selected one is announced with aria-current and also differs in weight and
- * a check mark, not only in colour (WCAG 1.4.1 / 4.1.2).
+ * A filter link styled like a shadcn tab. The selected one is announced with aria-current and also differs in
+ * weight and a check mark, not only in colour (WCAG 1.4.1 / 4.1.2).
  */
 export function FilterLink({ on, className, children, ...props }: ComponentProps<typeof Link> & { on: boolean }) {
   return (
     <Link
       aria-current={on ? "true" : undefined}
-      className={cx(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-colors",
-        on ? "border-fg bg-fg font-semibold text-ink" : "border-line-strong bg-panel font-medium text-muted hover:border-fg hover:text-fg",
+      className={cn(
+        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3.5 text-sm transition-colors",
+        on ? "border-line bg-panel font-semibold text-fg shadow-sm" : "border-transparent font-medium text-muted hover:bg-panel hover:text-fg",
         className,
       )}
       {...props}

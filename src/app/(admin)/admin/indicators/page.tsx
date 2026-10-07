@@ -1,7 +1,9 @@
+import { ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { loadIndicators } from "@/lib/indicators";
+import { Panel } from "../_components/admin-ui";
 import { IndicatorForm } from "./indicator-form";
 
 export const metadata = { title: "อินดิเคเตอร์และห้อง" };
@@ -13,6 +15,8 @@ export default async function IndicatorsAdminPage() {
     supabase.from("indicators").select("code, telegram_room_id"),
   ]);
   const room = (code: string) => ((rooms ?? []) as { code: string; telegram_room_id: string | null }[]).find((r) => r.code === code)?.telegram_room_id ?? null;
+  const missingImage = indicators.filter((i) => !i.image_url).length;
+  const missingRoom = indicators.filter((i) => !i.is_reference && !room(i.code)).length;
 
   return (
     <>
@@ -21,26 +25,39 @@ export default async function IndicatorsAdminPage() {
         title="อินดิเคเตอร์และห้อง Telegram"
         description="แก้ชื่อ คำอธิบาย จุดเด่น และรูปที่แสดงบนหน้าเว็บ รวมถึงผูกห้อง Telegram ของแต่ละอินดิเคเตอร์ การเปลี่ยนแปลงขึ้นบนหน้าเว็บทันที"
       />
-      <ul className="space-y-3">
-        {indicators.map((i) => (
-          <li key={i.code}>
-            <Card className="overflow-hidden">
-              <details>
-                <summary className="flex min-h-16 cursor-pointer flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-                  <span className="num grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-sm font-bold text-accent">{i.code}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{i.name}</span>
-                    <span className="block text-sm text-muted">{i.family} · {i.modes.join(" / ") || "ข้อมูลอ้างอิง"}</span>
-                  </span>
-                  {!i.image_url && <Badge>ยังไม่มีรูป</Badge>}
-                  {!i.is_reference && !room(i.code) && <Badge tone="sell">ยังไม่ผูกห้อง</Badge>}
-                </summary>
-                <div className="border-t border-line p-4 sm:p-5"><IndicatorForm indicator={i} room={room(i.code)} /></div>
-              </details>
-            </Card>
-          </li>
-        ))}
-      </ul>
+      <Panel
+        title="อินดิเคเตอร์ทั้งหมด"
+        description={`${indicators.length} ตัว · ยังไม่มีรูป ${missingImage} · ยังไม่ผูกห้อง ${missingRoom}`}
+      >
+        <ul className="divide-y divide-line">
+          {indicators.map((i) => {
+            const noRoom = !i.is_reference && !room(i.code);
+            return (
+              <li key={i.code}>
+                <details className="group">
+                  <summary className="flex min-h-16 cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-panel-2 sm:px-6 [&::-webkit-details-marker]:hidden">
+                    <span className="num grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-sm font-bold text-accent">{i.code}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold">{i.name}</span>
+                      <span className="block text-sm text-muted">{i.family} · {i.modes.join(" / ") || "ข้อมูลอ้างอิง"}</span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {i.is_reference ? <Badge>อ้างอิง</Badge> : !noRoom && <Badge tone="buy">ผูกห้องแล้ว</Badge>}
+                      {!i.image_url && <Badge>ยังไม่มีรูป</Badge>}
+                      {noRoom && <Badge tone="sell">ยังไม่ผูกห้อง</Badge>}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-muted">
+                      <span className="group-open:hidden">แก้ไข</span><span className="hidden group-open:inline">ปิด</span>
+                      <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180" />
+                    </span>
+                  </summary>
+                  <div className="border-t border-line bg-panel-2/40 p-4 sm:p-6"><IndicatorForm indicator={i} room={room(i.code)} /></div>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
     </>
   );
 }

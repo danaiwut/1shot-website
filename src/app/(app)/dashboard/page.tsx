@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { Activity, ArrowRight, Check, CircleAlert, CircleCheck, Gift, Newspaper, Send, ShoppingBag } from "lucide-react";
+import { Activity, ArrowRight, CalendarClock, Check, CircleCheck, Gift, Layers, Newspaper, Send, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { SetupRow } from "@/components/signals/setup-row";
-import { Badge, ButtonLink, Card, CardHeader, cx, Empty, Notice } from "@/components/ui";
+import { StatCard } from "@/components/app/stat-card";
+import { Badge, ButtonLink, cx, Empty, Notice } from "@/components/ui";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate, isOpenStatus } from "@/lib/format";
 import type { IndicatorRight, Setup } from "@/lib/types";
@@ -52,136 +55,108 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const doneCount = steps.filter((s) => s.done).length;
   const next = steps.find((s) => !s.done);
 
+  const tg = linkRes.data;
+  const pct = (r: Right) => (r.expires_at ? Math.min(100, Math.round((daysLeft(r.expires_at) / 30) * 100)) : 100);
+
   return (
     <>
-      <PageHeader title={`สวัสดีคุณ${name}`} description="หน้านี้สรุปว่าบัญชีของคุณพร้อมใช้หรือยัง และต้องทำอะไรต่อ" />
+      <PageHeader
+        title={`สวัสดีคุณ${name}`}
+        description="สรุปสิทธิ์ใช้งาน สัญญาณล่าสุด และสิ่งที่ต้องทำต่อของบัญชีคุณ"
+        action={active.length ? (
+          <>
+            <ButtonLink href="/store" variant="outline">ซื้อเพิ่ม / ต่ออายุ</ButtonLink>
+            <ButtonLink href="/signals"><Activity aria-hidden className="size-4" /> ดูสัญญาณ</ButtonLink>
+          </>
+        ) : (
+          <>
+            <ButtonLink href="/account" variant="outline"><Gift aria-hidden className="size-4" /> ใช้ฟรีผ่าน IB</ButtonLink>
+            <ButtonLink href="/store"><ShoppingBag aria-hidden className="size-4" /> เลือกซื้ออินดิเคเตอร์</ButtonLink>
+          </>
+        )}
+      />
       {password === "updated" && <div className="mb-6"><Notice tone="success">ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว</Notice></div>}
-
-      {/* 1 · Status: one sentence + one obvious action */}
-      <section aria-labelledby="status-title" className="surface-dark relative mb-8 overflow-hidden rounded-3xl bg-ink p-6 sm:p-8">
-        <div aria-hidden className="brand-glow pointer-events-none absolute inset-0 opacity-70" />
-        <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div className="flex items-start gap-4">
-            <span aria-hidden className={cx("grid size-14 shrink-0 place-items-center rounded-2xl", active.length ? "bg-buy text-black" : "bg-brand text-white")}>
-              {active.length ? <CircleCheck className="size-7" /> : <CircleAlert className="size-7" />}
-            </span>
-            <div>
-              <p className="text-sm text-muted">สถานะบัญชี</p>
-              <h2 id="status-title" className="mt-0.5 text-2xl font-bold sm:text-3xl">
-                {active.length ? `ใช้งานได้ ${active.length} อินดิเคเตอร์` : "ยังไม่มีสิทธิ์ใช้งาน"}
-              </h2>
-              <p className="mt-2 max-w-xl text-base text-muted">
-                {active.length
-                  ? nextExpiry
-                    ? `สิทธิ์ที่จะหมดก่อนคือ ${nextExpiry.code} ในอีก ${daysLeft(nextExpiry.expires_at!)} วัน (${fmtDate(nextExpiry.expires_at!)})`
-                    : "สิทธิ์ทั้งหมดของคุณใช้ได้ตลอดชีพ"
-                  : "เลือกซื้ออินดิเคเตอร์เพื่อเริ่มรับสัญญาณทันที หรือขอใช้ฟรีผ่าน Exness IB"}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {active.length ? (
-              <>
-                <ButtonLink href="/signals" className="h-12 px-6 text-base"><Activity aria-hidden className="size-5" /> ดูสัญญาณ</ButtonLink>
-                <ButtonLink href="/store" variant="outline" className="h-12 px-6 text-base">ซื้อเพิ่ม / ต่ออายุ</ButtonLink>
-              </>
-            ) : (
-              <>
-                <ButtonLink href="/store" className="h-12 px-6 text-base"><ShoppingBag aria-hidden className="size-5" /> เลือกซื้ออินดิเคเตอร์</ButtonLink>
-                <ButtonLink href="/account" variant="outline" className="h-12 px-6 text-base"><Gift aria-hidden className="size-5" /> ใช้ฟรีผ่าน IB</ButtonLink>
-              </>
-            )}
-          </div>
-        </div>
-        {expiring.length > 0 && (
-          <p className="relative mt-6 rounded-xl border border-white/30 bg-black/40 px-4 py-3 text-sm">
+      {expiring.length > 0 && (
+        <div className="mb-6">
+          <Notice tone="error">
             <b>ใกล้หมดอายุภายใน 7 วัน:</b> {expiring.map((r) => r.code).join(", ")} ·{" "}
             <Link href="/store" className="font-semibold underline underline-offset-4">ต่ออายุตอนนี้</Link>
-          </p>
-        )}
-      </section>
-
-      {/* 2 · Next steps, only while something is left to do */}
-      {next && (
-        <section aria-labelledby="steps-title" className="mb-8">
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="steps-title" className="text-xl font-bold">สิ่งที่ต้องทำต่อ</h2>
-            <p className="text-sm text-muted">เสร็จแล้ว {doneCount} จาก {steps.length} ขั้นตอน</p>
-          </div>
-          <ol className="grid gap-3 md:grid-cols-3">
-            {steps.map((s, i) => {
-              const current = s === next;
-              return (
-                <li key={s.label} className={cx("flex flex-col rounded-2xl border p-5", current ? "border-brand bg-panel shadow-[0_0_0_3px_rgb(178_0_22/0.12)]" : "border-line bg-panel")}>
-                  <div className="flex items-center gap-3">
-                    {s.done ? (
-                      <span aria-hidden className="grid size-8 place-items-center rounded-full bg-buy text-white"><Check className="size-4" strokeWidth={3} /></span>
-                    ) : (
-                      <span aria-hidden className={cx("num grid size-8 place-items-center rounded-full text-sm font-bold", current ? "bg-brand text-white" : "border-2 border-line-strong")}>{i + 1}</span>
-                    )}
-                    <h3 className="font-semibold">
-                      <span className="sr-only">{s.done ? "เสร็จแล้ว: " : current ? "ขั้นตอนถัดไป: " : "ยังไม่ได้ทำ: "}</span>
-                      {s.label}
-                    </h3>
-                  </div>
-                  <p className="mt-2 flex-1 text-sm text-muted">{s.why}</p>
-                  {s.note && <p className="mt-2 text-sm font-medium text-accent">{s.note}</p>}
-                  {s.done ? (
-                    <p className="mt-4 text-sm font-medium text-buy">เรียบร้อยแล้ว</p>
-                  ) : (
-                    <ButtonLink href={s.href} variant={current ? "brand" : "outline"} className="mt-4 w-full">{s.cta} <ArrowRight aria-hidden className="size-4" /></ButtonLink>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+          </Notice>
+        </div>
       )}
 
-      {/* 3 · What I own */}
-      <section aria-labelledby="rights-title" className="mb-8">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="rights-title" className="text-xl font-bold">อินดิเคเตอร์ของฉัน</h2>
-          <Link href="/billing" className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">ประวัติการซื้อและใบเสร็จ</Link>
-        </div>
-        {rights.length ? (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {rights.map((r) => {
-              const ok = isActive(r);
-              const soon = ok && expiring.includes(r);
-              const left = r.expires_at ? daysLeft(r.expires_at) : null;
-              return (
-                <li key={r.code} className={cx("rounded-2xl border bg-panel p-5", soon ? "border-brand" : "border-line")}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="num grid size-11 shrink-0 place-items-center rounded-xl bg-brand-dim text-sm font-bold text-accent">{r.code}</span>
-                      <p className="min-w-0 font-semibold">{r.indicators?.name ?? r.code}</p>
-                    </div>
-                    <Badge tone={!ok ? "neutral" : soon ? "brand" : "buy"}>{!ok ? "หมดอายุ" : soon ? "ใกล้หมด" : "ใช้งานได้"}</Badge>
-                  </div>
-                  <p className="mt-4 text-sm text-muted">
-                    {r.expires_at ? (ok ? <>เหลืออีก <b className="text-fg">{left} วัน</b> · ถึง {fmtDate(r.expires_at)}</> : <>หมดอายุเมื่อ {fmtDate(r.expires_at)}</>) : <b className="text-fg">ใช้ได้ตลอดชีพ</b>}
-                  </p>
-                  {r.expires_at && (!ok || soon) && (
-                    <ButtonLink href={`/indicators/${r.code}`} variant={ok ? "outline" : "brand"} className="mt-4 w-full">ต่ออายุ {r.code}</ButtonLink>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <Card><Empty title="ยังไม่มีอินดิเคเตอร์">เมื่อซื้อหรือได้รับสิทธิ์ผ่าน IB อินดิเคเตอร์จะแสดงที่นี่ พร้อมวันหมดอายุ</Empty></Card>
-        )}
+      {/* KPIs */}
+      <section aria-label="สรุปบัญชี" className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard
+          icon={Layers} label="สิทธิ์ที่ใช้งานได้" value={`${active.length}`}
+          badge={<Badge tone={active.length ? "buy" : "neutral"}>{active.length ? "พร้อมใช้" : "ยังไม่มี"}</Badge>}
+          foot={rights.length > active.length ? `หมดอายุแล้ว ${rights.length - active.length} ตัว` : "อินดิเคเตอร์ที่เปิดใช้อยู่"}
+        />
+        <StatCard
+          icon={CalendarClock} label="หมดอายุถัดไป" tone={expiring.length ? "alert" : "default"}
+          value={nextExpiry ? `${daysLeft(nextExpiry.expires_at!)} วัน` : active.length ? "ตลอดชีพ" : "—"}
+          badge={nextExpiry ? <Badge tone={expiring.length ? "brand" : "neutral"}>{nextExpiry.code}</Badge> : undefined}
+          foot={nextExpiry ? `ถึง ${fmtDate(nextExpiry.expires_at!)}` : "ไม่มีสิทธิ์ที่ใกล้หมดอายุ"}
+        />
+        <StatCard
+          icon={Activity} label="Setup ที่เปิดอยู่" value={`${open.length}`}
+          foot={setups.length ? `จาก ${setups.length} สัญญาณล่าสุด` : "ยังไม่มีสัญญาณ"}
+        />
+        <StatCard
+          icon={Send} label="Telegram" value={tg ? "เชื่อมแล้ว" : "ยังไม่เชื่อม"}
+          badge={<Badge tone={tg ? "buy" : "neutral"}>{tg ? "ออนไลน์" : "ปิด"}</Badge>}
+          foot={tg ? (tg.tg_username ? `@${tg.tg_username}` : tg.tg_name ?? "Telegram") : <Link href="/account#telegram" className="font-medium text-accent underline underline-offset-4">เชื่อมเพื่อรับลิงก์ห้อง</Link>}
+        />
       </section>
 
-      {/* 4 · What's new */}
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <Card className="overflow-hidden">
-          <CardHeader
-            title="สัญญาณล่าสุด"
-            hint={open.length ? `เปิดอยู่ ${open.length} รายการ` : "ยังไม่มี Setup ที่เปิดอยู่"}
-            action={<ButtonLink href="/signals" variant="ghost" className="h-11 px-3 text-sm">ดูทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink>}
-          />
+      {/* Onboarding, only while something is left to do */}
+      {next && (
+        <Card className="mb-6 rounded-2xl shadow-xs">
+          <CardHeader>
+            <CardTitle className="text-lg">เริ่มใช้งานให้ครบ</CardTitle>
+            <CardDescription className="text-muted">เสร็จแล้ว {doneCount} จาก {steps.length} ขั้นตอน</CardDescription>
+            <CardAction className="hidden w-40 self-center sm:block"><Progress value={(doneCount / steps.length) * 100} aria-label={`ความคืบหน้า ${doneCount} จาก ${steps.length}`} className="h-2 bg-panel-3 [&>div]:bg-brand" /></CardAction>
+          </CardHeader>
+          <CardContent>
+            <ol className="grid gap-3 md:grid-cols-3">
+              {steps.map((s, i) => {
+                const current = s === next;
+                return (
+                  <li key={s.label} className={cx("flex flex-col rounded-xl border p-4", current ? "border-brand bg-brand-dim/40" : "border-line bg-panel-2")}>
+                    <div className="flex items-center gap-3">
+                      {s.done ? (
+                        <span aria-hidden className="grid size-7 place-items-center rounded-full bg-buy text-white"><Check className="size-4" strokeWidth={3} /></span>
+                      ) : (
+                        <span aria-hidden className={cx("num grid size-7 place-items-center rounded-full text-sm font-bold", current ? "bg-brand text-white" : "border-2 border-line-strong")}>{i + 1}</span>
+                      )}
+                      <h3 className="font-semibold">
+                        <span className="sr-only">{s.done ? "เสร็จแล้ว: " : current ? "ขั้นตอนถัดไป: " : "ยังไม่ได้ทำ: "}</span>
+                        {s.label}
+                      </h3>
+                    </div>
+                    <p className="mt-2 flex-1 text-sm text-muted">{s.why}</p>
+                    {s.note && <p className="mt-2 text-sm font-medium text-accent">{s.note}</p>}
+                    {s.done ? (
+                      <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-buy"><CircleCheck aria-hidden className="size-4" /> เรียบร้อยแล้ว</p>
+                    ) : (
+                      <ButtonLink href={s.href} variant={current ? "brand" : "outline"} className="mt-3 w-full">{s.cta} <ArrowRight aria-hidden className="size-4" /></ButtonLink>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        {/* Latest signals */}
+        <Card className="gap-0 overflow-hidden rounded-2xl py-0 shadow-xs">
+          <CardHeader className="border-b border-line py-5">
+            <CardTitle className="text-lg">สัญญาณล่าสุด</CardTitle>
+            <CardDescription className="text-muted">{open.length ? `เปิดอยู่ ${open.length} รายการ` : "ยังไม่มี Setup ที่เปิดอยู่"}</CardDescription>
+            <CardAction><ButtonLink href="/signals" variant="ghost">ดูทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink></CardAction>
+          </CardHeader>
           {setups.length ? (
             <ul className="divide-y divide-line">{setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}</ul>
           ) : (
@@ -190,28 +165,53 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </Card>
 
         <div className="space-y-6">
-          <Card className="p-5">
-            <div className="flex items-start gap-3">
-              <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-dim text-accent"><Send className="size-5" /></span>
-              <div>
-                <h2 className="font-semibold">ห้องสัญญาณ Telegram</h2>
-                <p className="mt-1 text-sm text-muted">
-                  {linkRes.data ? `เชื่อมกับ ${linkRes.data.tg_username ? `@${linkRes.data.tg_username}` : linkRes.data.tg_name ?? "Telegram"} แล้ว ขอลิงก์เข้าห้องได้ที่หน้าบัญชี` : "ยังไม่ได้เชื่อม เชื่อมก่อนเพื่อขอลิงก์เข้าห้องสัญญาณ"}
-                </p>
-                <Link href="/account#telegram" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">
-                  {linkRes.data ? "ขอลิงก์เข้าห้อง" : "เชื่อม Telegram"}
-                </Link>
-              </div>
-            </div>
+          {/* My indicators */}
+          <Card className="gap-0 rounded-2xl py-0 shadow-xs">
+            <CardHeader className="border-b border-line py-5">
+              <CardTitle className="text-lg">อินดิเคเตอร์ของฉัน</CardTitle>
+              <CardDescription className="text-muted">{rights.length ? `${active.length} ใช้งานได้ · ${rights.length - active.length} หมดอายุ` : "ยังไม่มีสิทธิ์"}</CardDescription>
+              <CardAction><ButtonLink href="/billing" variant="ghost">ใบเสร็จ</ButtonLink></CardAction>
+            </CardHeader>
+            {rights.length ? (
+              <ul className="divide-y divide-line">
+                {rights.map((r) => {
+                  const ok = isActive(r);
+                  const soon = ok && expiring.includes(r);
+                  return (
+                    <li key={r.code} className="flex items-center gap-3 px-6 py-4">
+                      <span className="num grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-sm font-bold text-accent">{r.code}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate font-medium">{r.indicators?.name ?? r.code}</p>
+                          <Badge tone={!ok ? "neutral" : soon ? "brand" : "buy"}>{!ok ? "หมดอายุ" : soon ? "ใกล้หมด" : "ใช้งานได้"}</Badge>
+                        </div>
+                        <p className="mt-1 text-sm text-muted">
+                          {r.expires_at ? (ok ? `เหลือ ${daysLeft(r.expires_at)} วัน · ถึง ${fmtDate(r.expires_at)}` : `หมดอายุ ${fmtDate(r.expires_at)}`) : "ใช้ได้ตลอดชีพ"}
+                        </p>
+                        {ok && r.expires_at && <Progress value={pct(r)} aria-hidden className={cx("mt-2 h-1.5 bg-panel-3", soon ? "[&>div]:bg-brand" : "[&>div]:bg-buy")} />}
+                        {r.expires_at && (!ok || soon) && (
+                          <Link href={`/indicators/${r.code}`} className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">ต่ออายุ {r.code}</Link>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <Empty title="ยังไม่มีอินดิเคเตอร์">เมื่อซื้อหรือได้รับสิทธิ์ผ่าน IB อินดิเคเตอร์จะแสดงที่นี่ พร้อมวันหมดอายุ</Empty>
+            )}
           </Card>
 
           {briefRes.data && (
-            <Card>
-              <CardHeader title="สรุปตลาดเช้านี้" hint={fmtDate(briefRes.data.brief_date)} />
-              <p className="line-clamp-6 px-5 pt-4 text-sm whitespace-pre-line text-muted">{briefRes.data.story}</p>
-              <Link href="/news" className="mx-5 mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent underline underline-offset-4">
-                <Newspaper aria-hidden className="size-4" /> อ่านสรุปเต็มและข่าว
-              </Link>
+            <Card className="rounded-2xl shadow-xs">
+              <CardHeader>
+                <CardTitle className="text-lg">สรุปตลาดเช้านี้</CardTitle>
+                <CardDescription className="text-muted">{fmtDate(briefRes.data.brief_date)}</CardDescription>
+              </CardHeader>
+              <CardContent><p className="line-clamp-6 text-sm whitespace-pre-line text-muted">{briefRes.data.story}</p></CardContent>
+              <CardFooter>
+                <Link href="/news" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent underline underline-offset-4"><Newspaper aria-hidden className="size-4" /> อ่านสรุปเต็มและข่าว</Link>
+              </CardFooter>
             </Card>
           )}
         </div>

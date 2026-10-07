@@ -1,16 +1,17 @@
 "use client";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
-import { Button, Field, Notice, Select } from "@/components/ui";
+import { Button, cx, Field, Notice, Select } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 import { openRequest, replyRequest, type SupportState } from "./actions";
 
-const textarea = "w-full rounded-lg border border-line-strong bg-panel px-3 py-2.5 text-base text-fg placeholder:text-faint focus:border-brand focus:outline-none";
+const textarea = "min-h-28 bg-panel text-fg placeholder:text-faint focus-visible:border-brand/70 dark:bg-panel";
 
 export function NewRequestForm({ indicators, defaultKind, defaultCode }: { indicators: { code: string; name: string }[]; defaultKind?: string; defaultCode?: string }) {
   const [state, action, pending] = useActionState<SupportState, FormData>(openRequest, {});
   const [kind, setKind] = useState(defaultKind ?? "rights");
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form action={action} className="grid gap-5" noValidate>
       <Field label="ประเภทคำขอ">
         <Select name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="rights">สิทธิ์ 1Shot Indicators (ขอสิทธิ์ / ต่ออายุ / สิทธิ์ไม่ขึ้น)</option>
@@ -27,11 +28,13 @@ export function NewRequestForm({ indicators, defaultKind, defaultCode }: { indic
         </Field>
       )}
       <Field label="รายละเอียด" hint="บอกสิ่งที่ต้องการให้ทีมงานช่วยตรวจสอบ เช่น ชื่อผู้ใช้ TradingView หรือวันที่ชำระเงิน" error={state.error}>
-        <textarea name="message" required minLength={5} maxLength={4000} rows={5} className={textarea} aria-invalid={Boolean(state.error)} />
+        <Textarea name="message" required minLength={5} maxLength={4000} rows={5} className={textarea} aria-invalid={Boolean(state.error)} />
       </Field>
-      <Button type="submit" disabled={pending} className="h-12 w-full px-6 text-base sm:w-auto">
-        <Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งคำขอ"}
-      </Button>
+      <div className="flex justify-end border-t border-line pt-5">
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+          <Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งคำขอ"}
+        </Button>
+      </div>
     </form>
   );
 }
@@ -44,13 +47,15 @@ export function ReplyForm({ requestId, action = replyRequest, label = "ตอบ
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state.ok) ref.current?.reset(); }, [state]);
   return (
-    <form ref={ref} action={run} className="space-y-3">
+    <form ref={ref} action={run} className="grid gap-3">
       <input type="hidden" name="request_id" value={requestId} />
       <Field label={label} error={state.error}>
-        <textarea name="body" required maxLength={4000} rows={3} className={textarea} aria-invalid={Boolean(state.error)} />
+        <Textarea name="body" required maxLength={4000} rows={3} className={cx(textarea, "min-h-20")} aria-invalid={Boolean(state.error)} />
       </Field>
       {state.ok && <Notice tone="success">{state.ok}</Notice>}
-      <Button type="submit" disabled={pending}><Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งข้อความ"}</Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto"><Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งข้อความ"}</Button>
+      </div>
     </form>
   );
 }

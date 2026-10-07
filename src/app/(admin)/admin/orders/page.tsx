@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { CreditCard, ExternalLink, Repeat, Users, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, CardHeader, Empty, FilterLink } from "@/components/ui";
+import { StatCard } from "@/components/app/stat-card";
+import { Badge, Empty, FilterLink } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
 import type { Order, OrderStatus, Subscription } from "@/lib/types";
+import { Panel, Segmented, td, Th, theadRow, Toolbar } from "../_components/admin-ui";
 import { RefundButton } from "./refund-button";
 
 export const metadata = { title: "คำสั่งซื้อ" };
@@ -37,94 +40,126 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
   const sum = (rows: { amount_satang: number }[]) => rows.reduce((s, o) => s + o.amount_satang, 0);
   const stripeBase = `https://dashboard.stripe.com${/^(sk|rk)_test_/.test(serverEnv.stripeSecretKey()) ? "/test" : ""}`;
 
+  const list30 = paidRows.filter((o) => (o.paid_at ?? "") >= since30);
+  const rows = (orders ?? []) as WithUser<Order>[];
+  const stripeLink = "inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:bg-panel-3 hover:text-fg";
+
   return (
     <>
       <PageHeader eyebrow="ผู้ดูแลระบบ" title="คำสั่งซื้อ" description="คืนเงินจากที่นี่หรือจากหน้า Stripe ก็ได้ ระบบจะถอนสิทธิ์ที่ได้จากคำสั่งซื้อนั้นให้อัตโนมัติ" />
 
-      <div className="mb-6 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-        <Stat label="รายได้ 30 วัน" value={fmtTHB(sum(paidRows.filter((o) => (o.paid_at ?? "") >= since30)))} />
-        <Stat label="รายได้ทั้งหมด" value={fmtTHB(sum(paidRows))} />
-        <Stat label="สมัครรายงวดที่ใช้งาน" value={String(activeSubs.length)} />
-        <Stat label="รายได้ประจำต่อเดือน" value={fmtTHB(mrr)} />
-      </div>
+      <section aria-label="สรุปยอดขาย" className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard icon={CreditCard} label="รายได้ 30 วัน" value={fmtTHB(sum(list30))} foot={`${list30.length} คำสั่งซื้อที่ชำระแล้ว`} />
+        <StatCard icon={Wallet} label="รายได้ทั้งหมด" value={fmtTHB(sum(paidRows))} foot={`${paidRows.length} คำสั่งซื้อที่ชำระแล้ว`} />
+        <StatCard icon={Users} label="สมัครรายงวดที่ใช้งาน" value={String(activeSubs.length)} foot={`จาก ${subscriptions.length} การสมัครล่าสุด`} />
+        <StatCard icon={Repeat} label="รายได้ประจำต่อเดือน" value={fmtTHB(mrr)} foot="รายปีคิดเฉลี่ยต่อเดือน" />
+      </section>
 
-      <nav aria-label="กรองคำสั่งซื้อตามสถานะ" className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
-        {FILTERS.map((f) => (
-          <FilterLink key={f.id} href={f.id === "all" ? "/admin/orders" : `/admin/orders?status=${f.id}`} on={status === f.id}>{f.label}</FilterLink>
-        ))}
-      </nav>
-
-      <Card className="mb-6 overflow-hidden">
-        {orders?.length ? (
-          <ul className="divide-y divide-line">
-            {(orders as WithUser<Order>[]).map((o) => {
-              const st = ORDER_STATUS[o.status];
-              return (
-                <li key={o.id} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 px-4 py-3.5 md:grid-cols-[1.3fr_1.2fr_auto_auto] sm:px-5">
-                  <div className="min-w-0">
-                    <Link href={`/admin/members/${o.user_id}`} className="block truncate text-sm font-medium hover:text-accent">
-                      {o.profiles?.display_name || o.profiles?.email || "—"}
-                    </Link>
-                    <p className="truncate text-xs text-muted">{o.profiles?.email}</p>
-                  </div>
-                  <p className="num text-right text-sm font-semibold md:order-3">{fmtTHB(o.amount_satang)}</p>
-                  <div className="min-w-0 md:order-2">
-                    <p className="truncate text-sm">{o.product_name} <span className="text-muted">· {orderTerm(o)}</span></p>
-                    <p className="text-xs text-faint">{fmtDateTime(o.created_at)}{o.kind === "renewal" && " · ต่ออายุ"}</p>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 md:order-4">
-                    <Badge tone={st.tone}>{st.label}</Badge>
-                    {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
-                    {o.stripe_payment_intent_id && (
-                      <a href={`${stripeBase}/payments/${o.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" className="grid size-8 place-items-center rounded-md text-muted hover:bg-panel-3 hover:text-fg" aria-label={`เปิดคำสั่งซื้อ ${o.product_name} ใน Stripe`}>
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+      <Panel className="mb-6" title="รายการคำสั่งซื้อ" description={`${rows.length} รายการ${rows.length === 200 ? " (แสดงสูงสุด 200)" : ""}`}>
+        <Toolbar>
+          <Segmented label="กรองคำสั่งซื้อตามสถานะ">
+            {FILTERS.map((f) => (
+              <FilterLink key={f.id} href={f.id === "all" ? "/admin/orders" : `/admin/orders?status=${f.id}`} on={status === f.id}>{f.label}</FilterLink>
+            ))}
+          </Segmented>
+        </Toolbar>
+        {rows.length ? (
+          <Table className="min-w-[860px]">
+            <caption className="sr-only">คำสั่งซื้อ {rows.length} รายการ</caption>
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>ลูกค้า</Th>
+                <Th>สินค้า</Th>
+                <Th>วันที่</Th>
+                <Th className="text-right">ยอด</Th>
+                <Th>สถานะ</Th>
+                <Th className="text-right"><span className="sr-only">การจัดการ</span></Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((o) => {
+                const st = ORDER_STATUS[o.status];
+                return (
+                  <TableRow key={o.id} className="border-line">
+                    <TableCell className={td}>
+                      <Link href={`/admin/members/${o.user_id}`} className="inline-flex min-h-11 flex-col justify-center font-medium hover:text-accent hover:underline">
+                        {o.profiles?.display_name || o.profiles?.email || "—"}
+                        <span className="text-xs font-normal text-muted">{o.profiles?.email}</span>
+                      </Link>
+                    </TableCell>
+                    <TableCell className={td}>
+                      {o.product_name}
+                      <span className="block text-xs text-muted">{orderTerm(o)}{o.kind === "renewal" && " · ต่ออายุ"}</span>
+                    </TableCell>
+                    <TableCell className={`${td} text-muted`}>{fmtDateTime(o.created_at)}</TableCell>
+                    <TableCell className={`${td} num text-right font-semibold`}>{fmtTHB(o.amount_satang)}</TableCell>
+                    <TableCell className={td}><Badge tone={st.tone}>{st.label}</Badge></TableCell>
+                    <TableCell className={td}>
+                      <div className="flex items-center justify-end gap-1">
+                        {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
+                        {o.stripe_payment_intent_id && (
+                          <a href={`${stripeBase}/payments/${o.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" className={stripeLink} aria-label={`เปิดคำสั่งซื้อ ${o.product_name} ใน Stripe (เปิดแท็บใหม่)`}>
+                            <ExternalLink aria-hidden className="size-4" />
+                          </a>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         ) : (
           <Empty title="ไม่มีคำสั่งซื้อ" />
         )}
-      </Card>
+      </Panel>
 
-      <Card className="overflow-hidden">
-        <CardHeader title="การสมัครแบบรายงวด" hint={`${activeSubs.length} รายการที่ใช้งานอยู่`} />
+      <Panel title="การสมัครแบบรายงวด" description={`${activeSubs.length} รายการที่ใช้งานอยู่`}>
         {subscriptions.length ? (
-          <ul className="divide-y divide-line">
-            {subscriptions.map((s) => {
-              const st = SUB_STATUS[s.status] ?? { label: s.status, tone: "neutral" as const };
-              return (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
-                  <div className="min-w-0">
-                    <Link href={`/admin/members/${s.user_id}`} className="text-sm font-medium hover:text-accent">{s.profiles?.display_name || s.profiles?.email || "—"}</Link>
-                    <p className="text-xs text-muted">{s.product_name} · <span className="num">{fmtTHB(s.amount_satang)}/{s.interval === "year" ? "ปี" : "เดือน"}</span></p>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted">
-                    {s.current_period_end && s.status !== "canceled" && <span>{s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} {fmtDate(s.current_period_end)}</span>}
-                    <Badge tone={st.tone}>{st.label}</Badge>
-                    {s.cancel_at_period_end && <Badge>ไม่ต่ออายุ</Badge>}
-                    <a href={`${stripeBase}/subscriptions/${s.id}`} target="_blank" rel="noopener noreferrer" className="grid size-8 place-items-center rounded-md text-muted hover:bg-panel-3 hover:text-fg" aria-label={`เปิดการสมัคร ${s.product_name} ใน Stripe`}><ExternalLink className="size-3.5" /></a>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <Table className="min-w-[760px]">
+            <caption className="sr-only">การสมัครแบบรายงวด</caption>
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>ลูกค้า</Th>
+                <Th>แพ็กเกจ</Th>
+                <Th>รอบถัดไป</Th>
+                <Th>สถานะ</Th>
+                <Th className="text-right"><span className="sr-only">Stripe</span></Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptions.map((s) => {
+                const st = SUB_STATUS[s.status] ?? { label: s.status, tone: "neutral" as const };
+                return (
+                  <TableRow key={s.id} className="border-line">
+                    <TableCell className={td}>
+                      <Link href={`/admin/members/${s.user_id}`} className="inline-flex min-h-11 items-center font-medium hover:text-accent hover:underline">{s.profiles?.display_name || s.profiles?.email || "—"}</Link>
+                    </TableCell>
+                    <TableCell className={td}>
+                      {s.product_name}
+                      <span className="num block text-xs text-muted">{fmtTHB(s.amount_satang)}/{s.interval === "year" ? "ปี" : "เดือน"}</span>
+                    </TableCell>
+                    <TableCell className={`${td} text-muted`}>
+                      {s.current_period_end && s.status !== "canceled" ? `${s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} ${fmtDate(s.current_period_end)}` : <span className="text-faint">—</span>}
+                    </TableCell>
+                    <TableCell className={td}>
+                      <span className="flex flex-wrap gap-1.5">
+                        <Badge tone={st.tone}>{st.label}</Badge>
+                        {s.cancel_at_period_end && <Badge>ไม่ต่ออายุ</Badge>}
+                      </span>
+                    </TableCell>
+                    <TableCell className={`${td} text-right`}>
+                      <a href={`${stripeBase}/subscriptions/${s.id}`} target="_blank" rel="noopener noreferrer" className={stripeLink} aria-label={`เปิดการสมัคร ${s.product_name} ใน Stripe (เปิดแท็บใหม่)`}><ExternalLink aria-hidden className="size-4" /></a>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         ) : (
           <Empty title="ยังไม่มีการสมัครแบบรายงวด" />
         )}
-      </Card>
+      </Panel>
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="p-3.5 sm:p-5">
-      <p className="text-xs text-muted sm:text-xs">{label}</p>
-      <p className="num mt-1.5 text-xl font-semibold sm:text-2xl">{value}</p>
-    </Card>
   );
 }

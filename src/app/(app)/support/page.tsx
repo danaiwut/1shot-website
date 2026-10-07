@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { ArrowRight, LifeBuoy } from "lucide-react";
+import { ArrowRight, BookOpen, Clock, Inbox, LifeBuoy, MessageSquareReply } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, CardHeader, Empty } from "@/components/ui";
+import { StatCard } from "@/components/app/stat-card";
+import { Badge, ButtonLink, Empty } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { requestSubject, SUPPORT_STATUS } from "@/lib/support";
 import type { SupportRequest } from "@/lib/types";
+import { Section } from "../_components/section";
 import { NewRequestForm } from "./forms";
 
 export const metadata = { title: "คำขอและความช่วยเหลือ" };
@@ -18,48 +20,69 @@ export default async function SupportPage({ searchParams }: PageProps<"/support"
     supabase.from("indicators").select("code, name").eq("is_reference", false).order("sort"),
   ]);
   const list = (requests ?? []) as SupportRequest[];
+  const waiting = list.filter((r) => r.status === "open").length;
+  const answered = list.filter((r) => r.status === "answered").length;
 
   return (
     <>
-      <PageHeader title="คำขอและความช่วยเหลือ" description="ขอสิทธิ์ ต่ออายุ แจ้งปัญหาห้องสมาชิก หรือสอบถามทีมงาน แล้วติดตามคำตอบได้ที่นี่" />
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-        <Card className="p-5 sm:p-6">
-          <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><LifeBuoy aria-hidden className="size-5 text-accent" /> ส่งคำขอใหม่</h2>
-          <p className="mb-5 text-sm text-muted">ทีมงานจะตอบกลับในหน้านี้ และคุณจะเห็นสถานะเปลี่ยนเป็น “ทีมงานตอบแล้ว”</p>
-          <NewRequestForm
-            indicators={(indicators ?? []) as { code: string; name: string }[]}
-            defaultKind={typeof sp.kind === "string" ? sp.kind : undefined}
-            defaultCode={typeof sp.code === "string" ? sp.code : undefined}
-          />
-        </Card>
+      <PageHeader
+        title="คำขอและความช่วยเหลือ"
+        description="ขอสิทธิ์ ต่ออายุ แจ้งปัญหาห้องสมาชิก หรือสอบถามทีมงาน แล้วติดตามคำตอบได้ที่นี่"
+        action={<ButtonLink href="/guide" variant="outline"><BookOpen aria-hidden className="size-4" /> คู่มือการใช้งาน</ButtonLink>}
+      />
 
-        <Card className="overflow-hidden self-start">
-          <CardHeader title="คำขอของฉัน" hint={list.length ? `${list.length} เรื่อง` : undefined} />
+      {list.length > 0 && (
+        <section aria-label="สรุปคำขอ" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          <StatCard icon={Inbox} label="คำขอทั้งหมด" value={`${list.length}`} foot="50 เรื่องล่าสุด" />
+          <StatCard icon={Clock} label="รอทีมงานตอบ" value={`${waiting}`} foot="ทีมงานจะตอบในหน้าคำขอ" />
+          <StatCard
+            icon={MessageSquareReply} label="ทีมงานตอบแล้ว" value={`${answered}`} tone={answered ? "alert" : "default"}
+            badge={answered ? <Badge tone="buy">อ่านคำตอบ</Badge> : undefined} foot="เปิดอ่านและตอบกลับได้"
+          />
+        </section>
+      )}
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <Section
+          title={<span className="flex items-center gap-2"><LifeBuoy aria-hidden className="size-5 text-accent" /> ส่งคำขอใหม่</span>}
+          description="ทีมงานจะตอบกลับในหน้านี้ และสถานะจะเปลี่ยนเป็น “ทีมงานตอบแล้ว”"
+          className="self-start"
+        >
+          <div className="px-6 py-6">
+            <NewRequestForm
+              indicators={(indicators ?? []) as { code: string; name: string }[]}
+              defaultKind={typeof sp.kind === "string" ? sp.kind : undefined}
+              defaultCode={typeof sp.code === "string" ? sp.code : undefined}
+            />
+          </div>
+        </Section>
+
+        <Section title="คำขอของฉัน" description={list.length ? `${list.length} เรื่อง เรียงตามการอัปเดตล่าสุด` : "ยังไม่มีคำขอ"} className="self-start">
           {list.length ? (
             <ul className="divide-y divide-line">
               {list.map((r) => {
                 const st = SUPPORT_STATUS[r.status];
                 return (
                   <li key={r.id}>
-                    <Link href={`/support/${r.id}`} className="flex min-h-16 items-center justify-between gap-3 px-5 py-4 hover:bg-panel-2">
-                      <span className="min-w-0">
-                        <span className="block font-semibold">{requestSubject(r.kind, r.indicator_code)}</span>
-                        <span className="block truncate text-sm text-muted">{r.message}</span>
-                        <span className="block text-xs text-faint">ส่งเมื่อ {fmtDateTime(r.created_at)}</span>
+                    <Link href={`/support/${r.id}`} className="group flex min-h-16 items-center gap-3 px-6 py-4 outline-none transition-colors hover:bg-panel-2 focus-visible:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50">
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold">{requestSubject(r.kind, r.indicator_code)}</span>
+                          <Badge tone={st.tone}>{st.label}</Badge>
+                        </span>
+                        <span className="mt-1 block truncate text-sm text-muted">{r.message}</span>
+                        <span className="mt-0.5 block text-xs text-muted">ส่งเมื่อ {fmtDateTime(r.created_at)}</span>
                       </span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        <Badge tone={st.tone}>{st.label}</Badge>
-                        <ArrowRight aria-hidden className="size-4 text-faint" />
-                      </span>
+                      <ArrowRight aria-hidden className="size-4 shrink-0 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
                     </Link>
                   </li>
                 );
               })}
             </ul>
           ) : (
-            <Empty title="ยังไม่มีคำขอ">ส่งคำขอแรกจากฟอร์มด้านซ้าย</Empty>
+            <Empty title="ยังไม่มีคำขอ">ส่งคำขอแรกจากฟอร์ม “ส่งคำขอใหม่”</Empty>
           )}
-        </Card>
+        </Section>
       </div>
     </>
   );

@@ -18,9 +18,9 @@ export function RefundButton({ orderId, label }: { orderId: string; label: strin
           const r = await refund(orderId);
           if (r.error) setError(r.error);
         })}
-        className="inline-flex items-center gap-1 rounded-md border border-sell/30 px-2.5 py-1.5 text-xs font-medium text-sell hover:bg-sell-dim disabled:opacity-50"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-sell/40 px-3 text-sm font-medium text-sell transition-colors hover:bg-sell-dim disabled:opacity-50"
       >
-        <Undo2 aria-hidden className="size-3" /> {busy ? "กำลังคืนเงิน…" : "คืนเงิน"}
+        <Undo2 aria-hidden className="size-4" /> {busy ? "กำลังคืนเงิน…" : "คืนเงิน"}
       </button>
       {error && <span role="alert" className="mt-1 max-w-48 text-right text-xs text-sell">{error}</span>}
     </span>

@@ -2,10 +2,11 @@
 import { useActionState, useState } from "react";
 import { ImageUp } from "lucide-react";
 import { Button, Field, Input, Notice } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 import type { PublicIndicator } from "@/lib/indicators";
 import { saveIndicator, type AdminState } from "../actions";
 
-const textarea = "w-full rounded-lg border border-line-strong bg-panel px-3 py-2.5 text-base text-fg focus:border-brand focus:outline-none";
+const area = "field-sizing-fixed bg-panel text-sm placeholder:text-faint focus-visible:border-brand/70";
 
 export function IndicatorForm({ indicator: i, room }: { indicator: PublicIndicator; room: string | null }) {
   const [state, action, pending] = useActionState<AdminState, FormData>(saveIndicator, {});
@@ -13,15 +14,15 @@ export function IndicatorForm({ indicator: i, room }: { indicator: PublicIndicat
   const shown = preview ?? i.image_url;
 
   return (
-    <form action={action} className="grid gap-5 lg:grid-cols-[1fr_280px]">
+    <form action={action} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
       <input type="hidden" name="code" value={i.code} />
       <div className="space-y-4">
         <Field label="ชื่อที่แสดง" required><Input name="name" required maxLength={80} defaultValue={i.name} /></Field>
         <Field label="คำอธิบายสั้น" hint="แสดงบนการ์ดและหัวหน้ารายละเอียด">
-          <textarea name="description" rows={2} maxLength={300} defaultValue={i.description} className={textarea} />
+          <Textarea name="description" rows={2} maxLength={300} defaultValue={i.description} className={area} />
         </Field>
         <Field label="จุดเด่น" hint="บรรทัดละ 1 ข้อ ไม่เกิน 8 ข้อ">
-          <textarea name="points" rows={4} maxLength={3000} defaultValue={i.points.join("\n")} className={textarea} />
+          <Textarea name="points" rows={4} maxLength={3000} defaultValue={i.points.join("\n")} className={area} />
         </Field>
         {!i.is_reference && (
           <Field label="Chat ID ห้อง Telegram" hint="บอทต้องเป็นแอดมินในห้องและมีสิทธิ์เชิญสมาชิก">
@@ -30,9 +31,9 @@ export function IndicatorForm({ indicator: i, room }: { indicator: PublicIndicat
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 rounded-xl border border-line bg-card p-4">
         <p className="text-sm font-medium">รูปบนกราฟ TradingView</p>
-        <div className="grid aspect-video place-items-center overflow-hidden rounded-xl border border-line bg-panel-3">
+        <div className="grid aspect-video place-items-center overflow-hidden rounded-lg border border-line bg-panel-3">
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element -- local preview or Supabase Storage URL
             <img src={shown} alt={`รูปปัจจุบันของ ${i.name}`} className="size-full object-cover" />
@@ -40,7 +41,7 @@ export function IndicatorForm({ indicator: i, room }: { indicator: PublicIndicat
             <span className="text-sm text-muted">ยังไม่มีรูป</span>
           )}
         </div>
-        <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line-strong px-3 text-sm font-medium hover:border-fg">
+        <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line-strong bg-panel px-3 text-sm font-medium shadow-xs transition-colors hover:border-fg hover:bg-panel-3 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">
           <ImageUp aria-hidden className="size-4" /> {i.image_url ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
           <input
             type="file" name="image" accept="image/png,image/jpeg,image/webp" className="sr-only"
@@ -53,7 +54,7 @@ export function IndicatorForm({ indicator: i, room }: { indicator: PublicIndicat
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
+      <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:flex-wrap sm:items-center lg:col-span-2">
         <Button type="submit" disabled={pending}>{pending ? "กำลังบันทึก…" : `บันทึก ${i.code}`}</Button>
         {state.error && <Notice tone="error">{state.error}</Notice>}
         {state.ok && <Notice tone="success">{state.ok}</Notice>}

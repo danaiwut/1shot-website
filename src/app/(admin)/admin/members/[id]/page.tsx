@@ -1,13 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { BadgeCheck, Layers, Send, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, CardHeader } from "@/components/ui";
+import { Badge, cx, Empty } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm } from "@/lib/store/pricing";
 import type { Indicator, IndicatorRight, Order, Profile, Subscription } from "@/lib/types";
 import { RefundButton } from "../../orders/refund-button";
+import { BackLink, InfoRow, Panel, td, TextLink, Th, theadRow } from "../../_components/admin-ui";
 import { GrantForm, IbToggle, RevokeButton, RoleSelect, UnlinkButton } from "./controls";
 
 export const metadata = { title: "ข้อมูลสมาชิก" };
@@ -29,120 +30,136 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
   const byCode = new Map(((rights ?? []) as IndicatorRight[]).map((r) => [r.code, r]));
   const now = new Date();
 
+  const activeRights = [...byCode.values()].filter((r) => !r.expires_at || new Date(r.expires_at) > now);
+  const spent = purchases.filter((o) => o.status === "paid").reduce((t, o) => t + o.amount_satang, 0);
+  // At-a-glance status: the four things support asks about first. Not-OK items get an accent border and a text label.
+  const glance = [
+    { k: "สิทธิ์ที่ใช้ได้", v: activeRights.length ? activeRights.map((r) => r.code).join(" · ") : "ไม่มี", ok: activeRights.length > 0, icon: Layers },
+    { k: "Exness IB", v: !member.exness_account ? "ไม่ได้กรอก" : member.ib_verified ? "ตรวจผ่านแล้ว" : "รอตรวจ", ok: member.ib_verified, icon: BadgeCheck },
+    { k: "Telegram", v: link ? (link.tg_username ? `@${link.tg_username}` : "เชื่อมแล้ว") : "ยังไม่เชื่อม", ok: Boolean(link), icon: Send },
+    { k: "ยอดซื้อรวม", v: spent ? fmtTHB(spent) : "ยังไม่เคยซื้อ", ok: spent > 0, icon: Wallet },
+  ];
+  const label = member.display_name || member.email;
+
   return (
     <>
-      <Link href="/admin/members" className="mb-5 inline-flex underline-offset-4 hover:underline items-center gap-1.5 text-sm text-muted hover:text-fg"><ArrowLeft className="size-4" /> สมาชิกทั้งหมด</Link>
-      <PageHeader eyebrow="ข้อมูลสมาชิก" title={member.display_name || member.email} description={`${member.email} · สมัคร ${fmtDate(member.created_at)}`} />
+      <BackLink href="/admin/members">สมาชิกทั้งหมด</BackLink>
+      <PageHeader
+        eyebrow="ข้อมูลสมาชิก"
+        title={<span className="flex min-w-0 items-center gap-3">
+          <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-dim text-lg font-bold text-accent uppercase">{label.slice(0, 1)}</span>
+          <span className="min-w-0 break-words">{label}</span>
+          {member.role !== "member" && <Badge tone="brand" className="text-sm">{ROLE_LABEL[member.role]}</Badge>}
+        </span>}
+        description={`${member.email} · สมัคร ${fmtDate(member.created_at)}`}
+      />
 
-      {/* At-a-glance status: the four things support asks about first. */}
-      <dl className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {(() => {
-          const activeRights = [...byCode.values()].filter((r) => !r.expires_at || new Date(r.expires_at) > now);
-          const spent = purchases.filter((o) => o.status === "paid").reduce((t, o) => t + o.amount_satang, 0);
-          const items = [
-            { k: "สิทธิ์ที่ใช้ได้", v: activeRights.length ? activeRights.map((r) => r.code).join(" · ") : "ไม่มี", ok: activeRights.length > 0 },
-            { k: "Exness IB", v: !member.exness_account ? "ไม่ได้กรอก" : member.ib_verified ? "ตรวจผ่านแล้ว" : "รอตรวจ", ok: member.ib_verified },
-            { k: "Telegram", v: link ? (link.tg_username ? `@${link.tg_username}` : "เชื่อมแล้ว") : "ยังไม่เชื่อม", ok: Boolean(link) },
-            { k: "ยอดซื้อรวม", v: spent ? fmtTHB(spent) : "ยังไม่เคยซื้อ", ok: spent > 0 },
-          ];
-          return items.map((i) => (
-            <div key={i.k} className={`rounded-2xl border bg-panel p-4 ${i.ok ? "border-line" : "border-brand/50"}`}>
-              <dt className="text-sm text-muted">{i.k}</dt>
-              <dd className={`num mt-1 text-lg font-semibold ${i.ok ? "" : "text-accent"}`}>{i.v}</dd>
-            </div>
-          ));
-        })()}
+      <dl className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {glance.map(({ k, v, ok, icon: Icon }) => (
+          <div key={k} className={cx("rounded-2xl border bg-gradient-to-t from-brand-dim/40 to-panel p-5 shadow-xs", ok ? "border-line" : "border-brand/50")}>
+            <dt className="flex items-center justify-between gap-2 text-sm text-muted">
+              <span className="flex items-center gap-2"><Icon aria-hidden className="size-4 text-accent" />{k}</span>
+              <Badge tone={ok ? "buy" : "brand"}>{ok ? "เรียบร้อย" : "ต้องดู"}</Badge>
+            </dt>
+            <dd className={cx("num mt-2 text-xl font-bold break-words", !ok && "text-accent")}>{v}</dd>
+          </div>
+        ))}
       </dl>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title="บัญชี" />
-            <dl className="divide-y divide-line text-sm">
-              <Row k="TradingView" v={<span className="num">{member.tradingview_username ?? "—"}</span>} />
-              <Row k="Exness" v={<span className="num">{member.exness_account ?? "—"}</span>} />
-              <Row k="ตรวจ IB" v={<IbToggle userId={member.id} verified={member.ib_verified} disabled={!member.exness_account} />} />
-              <Row k="บทบาท" v={me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="brand">{ROLE_LABEL[member.role]}</Badge>} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <Panel title="สิทธิ์อินดิเคเตอร์" description="ไม่ได้ซิงก์กับ TradingView อัตโนมัติ ต้องให้สิทธิ์ใน TradingView ให้ตรงกันด้วย">
+            <ul className="divide-y divide-line">
+              {((indicators ?? []) as Indicator[]).map((ind) => {
+                const r = byCode.get(ind.code);
+                const active = r && (!r.expires_at || new Date(r.expires_at) > now);
+                return (
+                  <li key={ind.code} className="flex flex-col gap-3 px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="num grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-sm font-bold text-accent">{ind.code}</span>
+                      <div className="min-w-0">
+                        <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                          {ind.name}
+                          <Badge tone={!r ? "neutral" : active ? "buy" : "sell"}>{!r ? "ไม่มีสิทธิ์" : active ? "ใช้งานได้" : "หมดอายุ"}</Badge>
+                        </p>
+                        <p className="text-xs text-muted">
+                          {r ? (r.expires_at ? `${active ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ") : "ไม่มีสิทธิ์"}
+                          {r?.note ? ` · ${r.note}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <GrantForm userId={member.id} code={ind.code} current={r?.expires_at ?? null} has={Boolean(r)} />
+                      {r && <RevokeButton userId={member.id} code={ind.code} />}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </Panel>
+
+          <Panel
+            title="การซื้อ"
+            description={liveSubs.length ? `สมัครรายงวดอยู่ ${liveSubs.map((x) => x.product_name).join(", ")}` : "20 คำสั่งซื้อล่าสุด"}
+            action={<TextLink href="/admin/orders">คำสั่งซื้อทั้งหมด</TextLink>}
+          >
+            {purchases.length ? (
+              <Table className="min-w-[560px]">
+                <caption className="sr-only">ประวัติการซื้อของสมาชิก</caption>
+                <TableHeader>
+                  <TableRow className={theadRow}>
+                    <Th>สินค้า</Th>
+                    <Th>วันที่</Th>
+                    <Th className="text-right">ยอด</Th>
+                    <Th>สถานะ</Th>
+                    <Th><span className="sr-only">การจัดการ</span></Th>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {purchases.map((o) => (
+                    <TableRow key={o.id} className="border-line">
+                      <TableCell className={td}>{o.product_name} <span className="block text-xs text-muted">{orderTerm(o)}</span></TableCell>
+                      <TableCell className={`${td} text-muted`}>{fmtDate(o.created_at)}</TableCell>
+                      <TableCell className={`${td} num text-right font-semibold`}>{fmtTHB(o.amount_satang)}</TableCell>
+                      <TableCell className={td}><Badge tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</Badge></TableCell>
+                      <TableCell className={`${td} text-right`}>{o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <Empty title="ยังไม่เคยซื้อ" />
+            )}
+          </Panel>
+        </div>
+
+        <div className="min-w-0 space-y-6">
+          <Panel title="บัญชี">
+            <dl className="divide-y divide-line">
+              <InfoRow k="อีเมล"><span className="break-all">{member.email}</span></InfoRow>
+              <InfoRow k="TradingView"><span className="num">{member.tradingview_username ?? "—"}</span></InfoRow>
+              <InfoRow k="Exness"><span className="num">{member.exness_account ?? "—"}</span></InfoRow>
+              <InfoRow k="ตรวจ IB"><IbToggle userId={member.id} verified={member.ib_verified} disabled={!member.exness_account} /></InfoRow>
+              <InfoRow k="บทบาท">{me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : <Badge tone="brand">{ROLE_LABEL[member.role]}</Badge>}</InfoRow>
             </dl>
-          </Card>
-          <Card>
-            <CardHeader title="Telegram" />
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm sm:px-5">
+          </Panel>
+          <Panel title="Telegram" description={link ? "เชื่อมบัญชีแล้ว" : "ยังไม่เชื่อม"}>
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm sm:px-6">
               {link ? (
                 <>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium">{link.tg_name || "—"}</p>
                     <p className="num text-xs text-muted">{link.tg_username ? `@${link.tg_username} · ` : ""}ID {link.tg_uid}</p>
                   </div>
                   <UnlinkButton userId={member.id} />
                 </>
               ) : (
-                <span className="text-muted">ยังไม่เชื่อม</span>
+                <span className="text-muted">สมาชิกยังไม่ได้เชื่อม Telegram</span>
               )}
             </div>
-          </Card>
-          <Card>
-            <CardHeader
-              title="การซื้อ"
-              hint={liveSubs.length ? `สมัครรายงวดอยู่ ${liveSubs.map((x) => x.product_name).join(", ")}` : undefined}
-              action={<Link href="/admin/orders" className="text-xs text-accent underline underline-offset-4">คำสั่งซื้อทั้งหมด</Link>}
-            />
-            {purchases.length ? (
-              <ul className="divide-y divide-line text-sm">
-                {purchases.map((o) => (
-                  <li key={o.id} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
-                    <div className="min-w-0">
-                      <p className="truncate">{o.product_name} <span className="text-muted">· {orderTerm(o)}</span></p>
-                      <p className="text-xs text-faint">{fmtDate(o.created_at)}</p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="num text-xs font-semibold">{fmtTHB(o.amount_satang)}</span>
-                      <Badge tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</Badge>
-                      {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-5 py-4 text-sm text-muted">ยังไม่เคยซื้อ</p>
-            )}
-          </Card>
+          </Panel>
         </div>
-
-        <Card>
-          <CardHeader title="สิทธิ์อินดิเคเตอร์" hint="ไม่ได้ซิงก์กับ TradingView อัตโนมัติ ต้องให้สิทธิ์ใน TradingView ให้ตรงกันด้วย" />
-          <ul className="divide-y divide-line">
-            {((indicators ?? []) as Indicator[]).map((ind) => {
-              const r = byCode.get(ind.code);
-              const active = r && (!r.expires_at || new Date(r.expires_at) > now);
-              return (
-                <li key={ind.code} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
-                  <div className="min-w-40">
-                    <p className="text-sm"><span className="num mr-2 text-accent">{ind.code}</span>{ind.name}</p>
-                    <p className="text-xs text-muted">
-                      {r ? (r.expires_at ? `${active ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ") : "ไม่มีสิทธิ์"}
-                      {r?.note ? ` · ${r.note}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <GrantForm userId={member.id} code={ind.code} current={r?.expires_at ?? null} has={Boolean(r)} />
-                    {r && <RevokeButton userId={member.id} code={ind.code} />}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
       </div>
     </>
-  );
-}
-
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
-      <dt className="text-muted">{k}</dt>
-      <dd>{v}</dd>
-    </div>
   );
 }

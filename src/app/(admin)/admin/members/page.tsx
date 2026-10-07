@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { ArrowUpRight, Search, Users, ShieldCheck, Clock, Radio } from "lucide-react";
+import { Clock, Radio, Search, ShieldCheck, Users } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Button, Card, Empty, Input, FilterLink, Notice } from "@/components/ui";
+import { StatCard } from "@/components/app/stat-card";
+import { Badge, Button, cx, Empty, FilterLink, Input, Notice } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import { fmtTHB } from "@/lib/store/pricing";
 import type { Profile } from "@/lib/types";
+import { Panel, Segmented, td, Th, theadRow, Toolbar } from "../_components/admin-ui";
 
 export const metadata = { title: "สมาชิก" };
 
@@ -53,108 +56,110 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
   const rows = loaded.filter(selected.test);
   const filterHref = (status: string) => `/admin/members?${new URLSearchParams({ q, status })}`;
 
+  const stats = [
+    { label: "ลูกค้าที่โหลด", value: loaded.length, icon: Users, status: "all" },
+    { label: "มีสิทธิ์ใช้งาน", value: loaded.filter(hasAccess).length, icon: ShieldCheck, status: "active" },
+    { label: "รอตรวจสอบ IB", value: loaded.filter(filters[1].test).length, icon: Clock, status: "pending" },
+    { label: "ใกล้หมดอายุ 7 วัน", value: loaded.filter(expiringSoon).length, icon: Radio, status: "expiring" },
+  ];
+
   return (
     <>
       <PageHeader eyebrow="ระบบหลังบ้าน · ลูกค้า" title="ข้อมูลลูกค้า" description="ตรวจสอบบัญชี สิทธิ์ Indicator และการเชื่อมต่อของลูกค้าในที่เดียว" />
-      {error && <div className="mb-5"><Notice tone="error">โหลดข้อมูลลูกค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</Notice></div>}
-      <div className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {[
-          { label: "ลูกค้าที่โหลด", value: loaded.length, icon: Users, status: "all" },
-          { label: "มีสิทธิ์ใช้งาน", value: loaded.filter(hasAccess).length, icon: ShieldCheck, status: "active" },
-          { label: "รอตรวจสอบ IB", value: loaded.filter(filters[1].test).length, icon: Clock, status: "pending" },
-          { label: "ใกล้หมดอายุ 7 วัน", value: loaded.filter(expiringSoon).length, icon: Radio, status: "expiring" },
-        ].map((stat) => <Link key={stat.label} href={filterHref(stat.status)} className="rounded-card border border-line bg-panel p-4 transition-colors hover:border-brand/40 sm:p-5"><div className="flex items-center justify-between gap-2 text-xs text-muted">{stat.label}<stat.icon className="size-4 text-accent" /></div><p className="num mt-3 text-3xl font-semibold">{error ? "—" : stat.value}</p><p className="mt-2 text-xs text-faint">จากผลค้นหาล่าสุด สูงสุด 200 คน</p></Link>)}
-      </div>
-      <form role="search" className="mb-4 flex gap-2">
-        <input type="hidden" name="status" value={selected.key} />
-        <label htmlFor="member-q" className="sr-only">ค้นหาสมาชิก</label>
-        <span className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
-          <Input id="member-q" type="search" name="q" defaultValue={q} placeholder="ค้นหาชื่อ, อีเมล, TradingView หรือเลขบัญชี Exness" className="pl-9" />
-        </span>
-        <Button type="submit" variant="outline">ค้นหา</Button>
-      </form>
-      <div className="mb-5 flex flex-wrap gap-2">{filters.map((f) => <FilterLink key={f.key} href={filterHref(f.key)} on={selected.key === f.key}>{f.label} <span className="num">({loaded.filter(f.test).length})</span></FilterLink>)}</div>
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4"><h2 className="text-sm font-semibold">{selected.label} <span className="ml-2 text-xs font-normal text-muted">{rows.length} คน</span></h2><p className="text-xs text-muted">คลิกชื่อลูกค้าเพื่อดูรายละเอียดและจัดการสิทธิ์</p></div>
+      {error && <div className="mb-6"><Notice tone="error">โหลดข้อมูลลูกค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</Notice></div>}
+
+      <section aria-label="สรุปลูกค้า" className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <Link key={stat.label} href={filterHref(stat.status)} className="group block rounded-2xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>[data-slot=card]]:transition-colors hover:[&>[data-slot=card]]:border-brand/40">
+            <StatCard
+              icon={stat.icon} label={stat.label} value={error ? "—" : stat.value} className="h-full"
+              tone={stat.status === "pending" && stat.value > 0 ? "alert" : "default"}
+              badge={selected.key === stat.status ? <Badge tone="brand">กำลังดู</Badge> : undefined}
+              foot="จากผลค้นหาล่าสุด สูงสุด 200 คน"
+            />
+          </Link>
+        ))}
+      </section>
+
+      <Panel
+        title={<>{selected.label} <span className="num ml-1 text-sm font-normal text-muted">{rows.length} คน</span></>}
+        description="คลิกชื่อลูกค้าเพื่อดูรายละเอียดและจัดการสิทธิ์"
+      >
+        <Toolbar>
+          <Segmented label="กรองลูกค้า">
+            {filters.map((f) => <FilterLink key={f.key} href={filterHref(f.key)} on={selected.key === f.key}>{f.label} <span className="num">({loaded.filter(f.test).length})</span></FilterLink>)}
+          </Segmented>
+          <form role="search" className="flex w-full gap-2 lg:w-auto lg:min-w-80">
+            <input type="hidden" name="status" value={selected.key} />
+            <label htmlFor="member-q" className="sr-only">ค้นหาสมาชิก</label>
+            <span className="relative flex-1">
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
+              <Input id="member-q" type="search" name="q" defaultValue={q} placeholder="ชื่อ, อีเมล, TradingView หรือ Exness" className="pl-9" />
+            </span>
+            <Button type="submit" variant="outline">ค้นหา</Button>
+          </form>
+        </Toolbar>
         {rows.length ? (
-          <>
-          <ul className="divide-y divide-line xl:hidden">
-            {rows.map((r) => {
-              const active = r.indicator_rights.filter((x) => !x.expires_at || new Date(x.expires_at) > now);
-              return (
-                <li key={r.id}>
-                  <Link href={`/admin/members/${r.id}`} className="flex items-start gap-3 px-4 py-3.5 active:bg-panel-2">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-dim text-sm font-semibold text-accent uppercase">
-                      {(r.display_name || r.email).slice(0, 1)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold">{r.display_name || r.email.split("@")[0]}</span>
-                        {r.role !== "member" && <Badge tone="brand">{ROLE_LABEL[r.role]}</Badge>}
-                      </p>
-                      <p className="truncate text-xs text-muted">{r.email}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "brand"}>{r.ib_verified ? "IB ผ่านแล้ว" : "รอตรวจ IB"}</Badge>}
-                        {r.telegram_links && <Badge>Telegram</Badge>}
-                        {active.length > 0 && <Badge className="num">{active.map((x) => x.code).join(" · ")}</Badge>}
-                        {expiringSoon(r) && <Badge tone="brand">ใกล้หมดอายุ</Badge>}
-                        {spend.get(r.id) ? <Badge tone="buy" className="num">{fmtTHB(spend.get(r.id)!)}</Badge> : null}
-                      </div>
-                    </div>
-                    <span className="shrink-0 text-xs text-faint">{fmtDate(r.created_at)}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-          <table className="hidden w-full text-sm xl:table">
+          <Table className="min-w-[920px]">
             <caption className="sr-only">รายชื่อสมาชิก {rows.length} คน</caption>
-            <thead className="border-b border-line bg-panel-2 text-left text-xs tracking-wide text-muted uppercase">
-              <tr>
-                <th scope="col" className="px-5 py-3 font-medium">สมาชิก</th>
-                <th scope="col" className="px-3 py-3 font-medium">TradingView</th>
-                <th scope="col" className="px-3 py-3 font-medium">Exness / IB</th>
-                <th scope="col" className="px-3 py-3 font-medium">Telegram</th>
-                <th scope="col" className="px-3 py-3 font-medium">สิทธิ์ · หมดอายุถัดไป</th>
-                <th scope="col" className="px-3 py-3 text-right font-medium">ยอดซื้อรวม</th>
-                <th scope="col" className="px-5 py-3 font-medium">สมัครเมื่อ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>สมาชิก</Th>
+                <Th>TradingView</Th>
+                <Th>Exness / IB</Th>
+                <Th>Telegram</Th>
+                <Th>สิทธิ์ · หมดอายุถัดไป</Th>
+                <Th className="text-right">ยอดซื้อรวม</Th>
+                <Th>สมัครเมื่อ</Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((r) => {
                 const active = r.indicator_rights.filter((x) => !x.expires_at || new Date(x.expires_at) > now);
+                const next = nextExpiry(r);
                 return (
-                  <tr key={r.id} className="hover:bg-panel-2">
-                    <td className="px-5 py-3">
-                      <Link href={`/admin/members/${r.id}`} className="block">
-                        <span className="inline-flex items-center gap-2 font-medium hover:text-accent">{r.display_name || r.email.split("@")[0]}<ArrowUpRight className="size-3 text-faint" /></span>
-                        {r.role !== "member" && <Badge tone="brand" className="ml-2">{ROLE_LABEL[r.role]}</Badge>}
-                        <span className="block text-xs text-muted">{r.email}</span>
+                  <TableRow key={r.id} className="border-line">
+                    <TableCell className={td}>
+                      <Link href={`/admin/members/${r.id}`} className="group flex min-h-11 items-center gap-3">
+                        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-dim text-sm font-semibold text-accent uppercase">
+                          {(r.display_name || r.email).slice(0, 1)}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2 font-medium group-hover:text-accent group-hover:underline">
+                            {r.display_name || r.email.split("@")[0]}
+                            {r.role !== "member" && <Badge tone="brand">{ROLE_LABEL[r.role]}</Badge>}
+                          </span>
+                          <span className="block text-xs text-muted">{r.email}</span>
+                        </span>
                       </Link>
-                    </td>
-                    <td className="num px-3 py-3 text-xs">{r.tradingview_username ?? <span className="text-faint">—</span>}</td>
-                    <td className="px-3 py-3">
-                      <span className="num text-xs">{r.exness_account ?? "—"}</span>
-                      {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "brand"} className="ml-2">{r.ib_verified ? "IB ผ่าน" : "รอตรวจ"}</Badge>}
-                    </td>
-                    <td className="px-3 py-3 text-xs">{r.telegram_links ? `@${r.telegram_links.tg_username || "linked"}` : <span className="text-faint">—</span>}</td>
-                    <td className="px-3 py-3 text-xs">
-                      <span className="num">{active.map((x) => x.code).join(" · ") || <span className="text-faint">ไม่มีสิทธิ์</span>}</span>
-                      {nextExpiry(r) && <span className={`block ${expiringSoon(r) ? "font-semibold text-accent" : "text-muted"}`}>ถึง {fmtDate(nextExpiry(r)!)}</span>}
-                    </td>
-                    <td className="num px-3 py-3 text-right text-xs font-semibold">{spend.get(r.id) ? fmtTHB(spend.get(r.id)!) : <span className="font-normal text-faint">—</span>}</td>
-                    <td className="px-5 py-3 text-xs text-muted">{fmtDate(r.created_at)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className={`${td} num`}>{r.tradingview_username ?? <span className="text-faint">—</span>}</TableCell>
+                    <TableCell className={td}>
+                      <span className="flex items-center gap-2">
+                        <span className="num">{r.exness_account ?? <span className="text-faint">—</span>}</span>
+                        {r.exness_account && <Badge tone={r.ib_verified ? "buy" : "brand"}>{r.ib_verified ? "IB ผ่าน" : "รอตรวจ"}</Badge>}
+                      </span>
+                    </TableCell>
+                    <TableCell className={td}>{r.telegram_links ? `@${r.telegram_links.tg_username || "linked"}` : <span className="text-faint">—</span>}</TableCell>
+                    <TableCell className={td}>
+                      {active.length ? (
+                        <span className="flex flex-wrap gap-1">{active.map((x) => <Badge key={x.code} className="num">{x.code}</Badge>)}</span>
+                      ) : <span className="text-faint">ไม่มีสิทธิ์</span>}
+                      {next && <span className={cx("mt-1 block text-xs", expiringSoon(r) ? "font-semibold text-accent" : "text-muted")}>ถึง {fmtDate(next)}{expiringSoon(r) && " · ใกล้หมดอายุ"}</span>}
+                    </TableCell>
+                    <TableCell className={`${td} num text-right font-semibold`}>{spend.get(r.id) ? fmtTHB(spend.get(r.id)!) : <span className="font-normal text-faint">—</span>}</TableCell>
+                    <TableCell className={`${td} text-muted`}>{fmtDate(r.created_at)}</TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-          </>
+            </TableBody>
+          </Table>
         ) : (
-          <Empty title={error ? "ข้อมูลยังไม่พร้อมแสดง" : "ไม่พบลูกค้าที่ตรงกับเงื่อนไข"}><Link href="/admin/members" className="text-accent underline">ล้างการค้นหาและตัวกรอง</Link></Empty>
+          <Empty title={error ? "ข้อมูลยังไม่พร้อมแสดง" : "ไม่พบลูกค้าที่ตรงกับเงื่อนไข"}>
+            <Link href="/admin/members" className="inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4">ล้างการค้นหาและตัวกรอง</Link>
+          </Empty>
         )}
-      </Card>
+      </Panel>
     </>
   );
 }

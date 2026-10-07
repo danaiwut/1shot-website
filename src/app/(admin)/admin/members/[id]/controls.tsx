@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState, useTransition } from "react";
-import { Button, Select } from "@/components/ui";
+import { Button, cx, Input, Select } from "@/components/ui";
 import type { Role } from "@/lib/types";
 import { grantRight, revokeRight, setIbVerified, setRole, unlinkTelegram } from "../../actions";
 
@@ -17,7 +17,7 @@ function useAction() {
 export function IbToggle({ userId, verified, disabled }: { userId: string; verified: boolean; disabled?: boolean }) {
   const { busy, error, run } = useAction();
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex flex-wrap items-center justify-end gap-2">
       {error && <span role="alert" className="text-xs text-sell">{error}</span>}
       <button
         type="button"
@@ -26,9 +26,12 @@ export function IbToggle({ userId, verified, disabled }: { userId: string; verif
         aria-label="ผ่านการตรวจ IB"
         disabled={busy || disabled}
         onClick={() => run(() => setIbVerified(userId, !verified))}
-        className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${verified ? "bg-buy" : "bg-line-strong"}`}
+        className="group inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40"
       >
-        <span aria-hidden className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${verified ? "left-[22px]" : "left-0.5"}`} />
+        <span aria-hidden className={cx("text-xs", verified ? "text-buy" : "text-muted")}>{verified ? "ผ่านแล้ว" : "ยังไม่ผ่าน"}</span>
+        <span aria-hidden className={cx("relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors", verified ? "bg-buy" : "bg-line-strong")}>
+          <span className={cx("absolute top-0.5 size-[18px] rounded-full bg-white shadow-sm transition-all", verified ? "left-[22px]" : "left-0.5")} />
+        </span>
       </button>
     </span>
   );
@@ -37,9 +40,9 @@ export function IbToggle({ userId, verified, disabled }: { userId: string; verif
 export function RoleSelect({ userId, role }: { userId: string; role: Role }) {
   const { busy, error, run } = useAction();
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex flex-wrap items-center justify-end gap-2">
       {error && <span role="alert" className="text-xs text-sell">{error}</span>}
-      <Select aria-label="บทบาท" className="h-11 w-32 text-sm" defaultValue={role} disabled={busy} onChange={(e) => run(() => setRole(userId, e.target.value as Role))}>
+      <Select aria-label="บทบาท" className="w-36" defaultValue={role} disabled={busy} onChange={(e) => run(() => setRole(userId, e.target.value as Role))}>
         <option value="member">สมาชิก</option>
         <option value="admin">แอดมิน</option>
         <option value="owner">เจ้าของ</option>
@@ -58,15 +61,15 @@ export function GrantForm({ userId, code, current, has }: { userId: string; code
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="user_id" value={userId} />
       <input type="hidden" name="code" value={code} />
-      <Select name="duration" aria-label={`ระยะเวลาสิทธิ์ ${code}`} className="h-11 w-28 text-sm" value={duration} onChange={(e) => setDuration(e.target.value as "lifetime" | "date")}>
+      <Select name="duration" aria-label={`ระยะเวลาสิทธิ์ ${code}`} className="w-32" value={duration} onChange={(e) => setDuration(e.target.value as "lifetime" | "date")}>
         <option value="date">ถึงวันที่</option>
         <option value="lifetime">ตลอดชีพ</option>
       </Select>
       {duration === "date" && (
-        <input name="expires_on" type="date" aria-label={`วันหมดอายุ ${code}`} defaultValue={defaultDate} className="h-11 rounded-lg border border-line-strong bg-panel px-2 text-sm text-fg" />
+        <Input name="expires_on" type="date" aria-label={`วันหมดอายุ ${code}`} defaultValue={defaultDate} className="w-40" />
       )}
-      <Button type="submit" variant={has ? "outline" : "brand"} className="h-11 px-3 text-sm" disabled={pending} aria-label={`${has ? "อัปเดต" : "ให้สิทธิ์"} ${code}`}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
-      {state.error && <span role="alert" className="w-full text-right text-xs text-sell">{state.error}</span>}
+      <Button type="submit" variant={has ? "outline" : "brand"} disabled={pending} aria-label={`${has ? "อัปเดต" : "ให้สิทธิ์"} ${code}`}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
+      {state.error && <span role="alert" className="w-full text-xs text-sell xl:text-right">{state.error}</span>}
     </form>
   );
 }
@@ -76,7 +79,6 @@ export function RevokeButton({ userId, code }: { userId: string; code: string })
   return (
     <Button
       variant="danger"
-      className="h-11 px-3 text-sm"
       aria-label={`ยกเลิกสิทธิ์ ${code}`}
       disabled={busy}
       onClick={() => confirm(`ยกเลิกสิทธิ์ ${code}?`) && run(() => revokeRight(userId, code))}
@@ -89,7 +91,7 @@ export function RevokeButton({ userId, code }: { userId: string; code: string })
 export function UnlinkButton({ userId }: { userId: string }) {
   const { busy, run } = useAction();
   return (
-    <Button variant="danger" className="h-11 px-3 text-sm" disabled={busy} onClick={() => confirm("ยกเลิกการเชื่อม Telegram?") && run(() => unlinkTelegram(userId))}>
+    <Button variant="danger" disabled={busy} onClick={() => confirm("ยกเลิกการเชื่อม Telegram?") && run(() => unlinkTelegram(userId))}>
       ยกเลิกการเชื่อม
     </Button>
   );

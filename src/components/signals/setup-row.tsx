@@ -7,8 +7,8 @@ import { SideBadge, StatusBadge } from "./badges";
 export function SetupRow({ s }: { s: Setup }) {
   const r = rMultiple(s.entry, s.sl, s.tp);
   return (
-    <Link href={`/signals/${encodeURIComponent(s.setup_key)}`} className="@container block transition-colors hover:bg-panel-2">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-2.5 px-4 py-3.5 sm:px-5 @2xl:grid-cols-[auto_minmax(0,1.4fr)_repeat(3,minmax(0,0.75fr))_3.5rem_6rem] @2xl:gap-x-4">
+    <Link href={`/signals/${encodeURIComponent(s.setup_key)}`} className="@container block outline-none transition-colors hover:bg-panel-2 focus-visible:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-2.5 px-4 py-4 sm:px-6 @2xl:grid-cols-[auto_minmax(0,1.4fr)_repeat(3,minmax(0,0.75fr))_3.5rem_6rem] @2xl:gap-x-4">
         <span className="num grid size-10 place-items-center rounded-xl bg-brand-dim text-xs font-bold text-accent">{s.code}</span>
         <div className="min-w-0">
           <p className="flex items-center gap-2">

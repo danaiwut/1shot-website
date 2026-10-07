@@ -2,12 +2,13 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, CalendarClock, CreditCard, LifeBuoy, Webhook } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, Empty } from "@/components/ui";
+import { Badge, ButtonLink, cx, Empty } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { fmtTHB } from "@/lib/store/pricing";
 import { requestSubject } from "@/lib/support";
 import type { SupportKind } from "@/lib/types";
+import { Panel } from "../_components/admin-ui";
 
 export const metadata = { title: "ศูนย์งาน" };
 
@@ -59,35 +60,51 @@ export default async function WorkCenterPage() {
   return (
     <>
       <PageHeader eyebrow="ระบบหลังบ้าน" title="ศูนย์งาน" description={total ? `มีงานรอดำเนินการ ${total} รายการ เรียงตามความเร่งด่วน` : "ไม่มีงานค้าง ทุกอย่างเรียบร้อย"} />
-      <nav aria-label="สรุปงาน" className="mb-6 flex flex-wrap gap-2">
-        {sections.map((s) => (
-          <a key={s.id} href={`#${s.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line-strong px-3 text-sm hover:border-fg">
-            {s.title} <Badge tone={s.items.length ? "brand" : "neutral"}><span className="num">{s.items.length}</span></Badge>
+
+      <nav aria-label="สรุปงาน" className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {sections.map(({ id, icon: Icon, title, items }) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className={cx(
+              "flex min-h-11 flex-col gap-2 rounded-2xl border bg-card p-4 shadow-xs transition-colors hover:border-brand/40",
+              items.length ? "border-brand/40" : "border-line",
+            )}
+          >
+            <span className="flex items-center justify-between gap-2 text-sm text-muted">
+              <span className="flex items-center gap-2"><Icon aria-hidden className="size-4 text-accent" /> {title}</span>
+            </span>
+            <span className="flex items-center justify-between gap-2">
+              <span className="num text-2xl font-bold tabular-nums">{items.length}</span>
+              <Badge tone={items.length ? "brand" : "neutral"}>{items.length ? "รอดำเนินการ" : "เรียบร้อย"}</Badge>
+            </span>
           </a>
         ))}
       </nav>
+
       <div className="space-y-6">
         {sections.map(({ id, icon: Icon, title, hint, href, items }) => (
-          <Card key={id} id={id} className="scroll-mt-24 overflow-hidden">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
-              <div className="flex gap-3">
-                <Icon aria-hidden className="mt-1 size-5 shrink-0 text-accent" />
-                <div><h2 className="font-bold">{title} <span className="num text-muted">({items.length})</span></h2><p className="text-sm text-muted">{hint}</p></div>
-              </div>
-              <Link href={href} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium underline underline-offset-4 hover:text-accent">ดูทั้งหมด <ArrowRight aria-hidden className="size-4" /></Link>
-            </div>
+          <Panel
+            key={id}
+            id={id}
+            className="scroll-mt-24"
+            title={<span className="flex items-center gap-2"><Icon aria-hidden className="size-5 shrink-0 text-accent" />{title} <span className="num font-normal text-muted">({items.length})</span></span>}
+            description={hint}
+            action={<ButtonLink href={href} variant="ghost">ดูทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink>}
+          >
             {items.length ? (
               <ul className="divide-y divide-line">
                 {items.map((i) => (
                   <li key={i.key}>
-                    <Link href={i.href} className="flex min-h-11 flex-col gap-0.5 px-5 py-3 hover:bg-panel-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="font-medium">{i.title}</span><span className="text-sm text-muted">{i.meta}</span>
+                    <Link href={i.href} className="flex min-h-11 flex-col gap-0.5 px-4 py-3 transition-colors hover:bg-panel-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                      <span className="min-w-0 font-medium">{i.title}</span>
+                      <span className="flex shrink-0 items-center gap-2 text-sm text-muted">{i.meta}<ArrowRight aria-hidden className="hidden size-4 text-faint sm:block" /></span>
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : <Empty title="ไม่มีงานค้างในหมวดนี้" />}
-          </Card>
+          </Panel>
         ))}
       </div>
     </>

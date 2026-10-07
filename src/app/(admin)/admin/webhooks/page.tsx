@@ -1,8 +1,11 @@
+import { ChevronRight, KeyRound } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Card, CardHeader, Empty } from "@/components/ui";
+import { Badge, Empty } from "@/components/ui";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { fmtDateTime } from "@/lib/format";
+import { Panel, td, Th, theadRow } from "../_components/admin-ui";
 
 export const metadata = { title: "บันทึก Webhook" };
 
@@ -14,40 +17,58 @@ export default async function WebhooksPage() {
   const secret = serverEnv.webhookSecret();
   const masked = secret ? `${secret.slice(0, 4)}••••${secret.slice(-2)}` : "(ยังไม่ได้ตั้ง TRADINGVIEW_WEBHOOK_SECRET)";
 
+  const receipts = (data ?? []) as Receipt[];
+  const rejected = receipts.filter((r) => !r.ok).length;
+  const inserted = receipts.reduce((n, r) => n + (r.ok ? r.inserted : 0), 0);
+
   return (
     <>
       <PageHeader eyebrow="ผู้ดูแลระบบ" title="บันทึก Webhook" description="Alert จาก TradingView 100 รายการล่าสุด" />
-      <Card className="mb-6 p-5">
-        <p className="text-xs text-muted">URL สำหรับตั้งใน TradingView Alert → Webhook URL</p>
-        <code className="num mt-2 block overflow-x-auto rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-xs whitespace-nowrap">{publicEnv.siteUrl()}/api/webhook/tradingview/{masked}</code>
-        <p className="mt-2 text-xs text-faint">ใช้ค่า secret จริงจากตัวแปรสภาพแวดล้อม เก็บ URL นี้เป็นความลับ ใครได้ไปก็ส่งสัญญาณปลอมเข้าระบบได้</p>
-      </Card>
-      <Card>
-        <CardHeader title="รายการล่าสุด" />
-        {data?.length ? (
-          <ul className="divide-y divide-line">
-            {(data as Receipt[]).map((r) => (
-              <li key={r.id} className="px-4 py-3 sm:px-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex min-w-0 flex-wrap items-center gap-2">
+
+      <Panel className="mb-6" title="Webhook URL" description="URL สำหรับตั้งใน TradingView Alert → Webhook URL" action={<Badge tone={secret ? "buy" : "sell"}>{secret ? "ตั้ง secret แล้ว" : "ยังไม่ได้ตั้ง secret"}</Badge>}>
+        <div className="space-y-2 p-4 sm:p-6">
+          <code className="num block overflow-x-auto rounded-lg border border-line bg-panel-2 px-3 py-3 text-xs whitespace-nowrap">{publicEnv.siteUrl()}/api/webhook/tradingview/{masked}</code>
+          <p className="flex items-start gap-2 text-sm text-muted"><KeyRound aria-hidden className="mt-0.5 size-4 shrink-0 text-accent" />ใช้ค่า secret จริงจากตัวแปรสภาพแวดล้อม เก็บ URL นี้เป็นความลับ ใครได้ไปก็ส่งสัญญาณปลอมเข้าระบบได้</p>
+        </div>
+      </Panel>
+
+      <Panel title="รายการล่าสุด" description={`${receipts.length} รายการ · บันทึกสัญญาณ ${inserted} · ปฏิเสธ ${rejected}`}>
+        {receipts.length ? (
+          <Table className="min-w-[680px]">
+            <caption className="sr-only">Alert จาก TradingView {receipts.length} รายการล่าสุด</caption>
+            <TableHeader>
+              <TableRow className={theadRow}>
+                <Th>เวลา</Th>
+                <Th>ผลลัพธ์</Th>
+                <Th>รายละเอียด</Th>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {receipts.map((r) => (
+                <TableRow key={r.id} className="border-line align-top">
+                  <TableCell className={`${td} text-muted`}><time dateTime={r.received_at}>{fmtDateTime(r.received_at)}</time></TableCell>
+                  <TableCell className={td}>
                     <Badge tone={r.ok ? (r.inserted ? "buy" : "neutral") : "sell"}>{r.ok ? (r.inserted ? `บันทึก ${r.inserted}` : "ซ้ำ") : "ปฏิเสธ"}</Badge>
-                    {r.error && <span className="text-xs text-sell">{r.error}</span>}
-                  </span>
-                  <time className="text-xs text-faint">{fmtDateTime(r.received_at)}</time>
-                </div>
-                {r.excerpt && (
-                  <details className="mt-2">
-                    <summary className="cursor-pointer text-xs text-muted">ดูข้อความ</summary>
-                    <pre className="num mt-2 max-h-48 overflow-auto rounded-lg border border-line bg-panel-2 p-3 text-xs whitespace-pre-wrap text-muted">{r.excerpt}</pre>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ul>
+                  </TableCell>
+                  <TableCell className={`${td} w-full whitespace-normal`}>
+                    {r.error && <p className="text-sm text-sell">{r.error}</p>}
+                    {r.excerpt ? (
+                      <details className="group">
+                        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-medium text-muted hover:text-fg [&::-webkit-details-marker]:hidden">
+                          <ChevronRight aria-hidden className="size-4 transition-transform group-open:rotate-90" /> ดูข้อความ
+                        </summary>
+                        <pre className="num mt-1 max-h-48 max-w-xl overflow-auto rounded-lg border border-line bg-panel-2 p-3 text-xs whitespace-pre-wrap text-muted">{r.excerpt}</pre>
+                      </details>
+                    ) : !r.error && <span className="text-faint">—</span>}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <Empty title="ยังไม่มี Alert เข้ามา" />
         )}
-      </Card>
+      </Panel>
     </>
   );
 }
