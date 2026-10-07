@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { useReduce } from "./use-reduce";
 
 /*
@@ -10,17 +10,8 @@ import { useReduce } from "./use-reduce";
  * (public/media/hero-macbook.mp4, already encoded at 2× speed). The site-wide pause switch (footer) stops the video too.
  */
 
-const WORDS = ["ทุก Setup", "ทุก Entry", "ทุก TP"];
-
-export function LiveHero({ lines, children }: { lines: string[][]; children?: React.ReactNode }) {
+export function LiveHero({ lines, redLine, description, children }: { lines: string[][]; redLine: string; description: string; children?: React.ReactNode }) {
   const reduce = useReduce();
-  const [i, setI] = useState(WORDS.length - 1);
-
-  useEffect(() => {
-    if (reduce) return;
-    const t = setInterval(() => setI((n) => (n + 1) % WORDS.length), 2200);
-    return () => clearInterval(t);
-  }, [reduce]);
 
   return (
     <section className="relative -mt-18 flex min-h-[100svh] flex-col overflow-hidden bg-ink pt-18">
@@ -31,7 +22,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
         <div>
           <h1 className="text-[2.4rem] leading-[1.08] font-black tracking-tight sm:text-6xl lg:text-[3.6rem] xl:text-[4rem]">
             {/* Screen readers get one stable sentence; the animated copy below is visual only. */}
-            <span className="sr-only">{lines.map((ws) => ws.join("")).join(" ")} ทุกจุด</span>
+            <span className="sr-only">{lines.map((ws) => ws.join("")).join(" ")} {redLine}</span>
             {lines.map((ws, l) => (
               <span key={l} aria-hidden className="block">
                 {ws.map((w, j) => (
@@ -47,20 +38,8 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
                 ))}
               </span>
             ))}
-            {/* Slot-machine word, solid red (#ff2e43 = 5.7:1 on black, AAA for large text) */}
-            <span aria-hidden className="relative -mt-[0.3em] block h-[1.3em] overflow-hidden pt-[0.3em]">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={WORDS[i]}
-                  className="absolute left-0 block whitespace-nowrap text-brand dark:text-[#ff2e43]"
-                  initial={{ y: "100%", rotateX: -80, opacity: 0 }}
-                  animate={{ y: "0%", rotateX: 0, opacity: 1 }}
-                  exit={{ y: "-100%", rotateX: 80, opacity: 0 }}
-                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  {WORDS[i]}<span className="text-fg">.</span>
-                </motion.span>
-              </AnimatePresence>
+            <span aria-hidden className="-mt-[0.05em] block pt-[0.05em] text-[0.55em] leading-tight tracking-[0.03em] text-brand dark:text-[#ff2e43]">
+              {redLine}
             </span>
           </h1>
 
@@ -68,7 +47,7 @@ export function LiveHero({ lines, children }: { lines: string[][]; children?: Re
             className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }}
           >
-            อินดิเคเตอร์ 1SHOT ส่ง Setup พร้อม Entry, SL และ TP ตั้งแต่วินาทีที่เกิดสัญญาณ ตรงจาก TradingView ถึงเว็บและ Telegram ตรวจย้อนได้ทุกจุด
+            {description}
           </motion.p>
           <motion.div className="mt-8 flex flex-wrap gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8 }}>
             <Link href="#indicators" className="group relative inline-flex h-14 items-center gap-2 overflow-hidden rounded-2xl bg-brand px-7 text-base font-semibold text-white shadow-[0_20px_60px_-15px_rgb(178_0_22/0.9)]">

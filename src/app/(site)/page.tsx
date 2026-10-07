@@ -40,7 +40,15 @@ export default async function HomePage() {
       <IntroCurtain />
 
       {/* 1 · Live chart hero */}
-      <LiveHero lines={[words("อินดิเคเตอร์ทองคำ"), words("ที่ตรวจสอบได้")]}>
+      <LiveHero
+        lines={[
+          words("ทุก Setup ต้องมีเหตุผล"),
+          words("เทรดด้วยโครงสร้าง"),
+          words("ไม่ใช่ความรู้สึก"),
+        ]}
+        redLine="EVERY SETUP. VERIFIED."
+        description="ระบบวิเคราะห์จาก 1SHOT ที่ออกแบบทุก Setup ให้มีแผนชัดเจน ตั้งแต่ Entry, Stop Loss, Take Profit ไปจนถึง Risk Management พร้อมข้อมูลสำหรับติดตามและทบทวนการเทรดอย่างเป็นระบบ"
+      >
         <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
           <Stagger as="ul" className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line backdrop-blur lg:grid-cols-4">
             {stats(indicators.length).map((s) => (
