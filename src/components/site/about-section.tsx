@@ -1,84 +1,100 @@
 import Image from "next/image";
-import { ArrowRight, BadgeCheck } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
+import { ArrowRight, CandlestickChart, MonitorSmartphone, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
-const CREDENTIALS = [
-  {
-    src: "/images/about/funded-accounts.jpg",
-    alt: "บัญชี Funded ของ JR 1SHOT",
-    className: "top-[8%] right-[4%] w-[52%] rotate-[2deg]",
-  },
-  {
-    src: "/images/about/funding-pips-ranking.jpg",
-    alt: "อันดับผลงาน Funding Pips ของ JR 1SHOT",
-    className: "right-[24%] bottom-[8%] w-[45%] -rotate-[3deg]",
-  },
-  {
-    src: "/images/about/funded-trader-certificate.jpg",
-    alt: "ใบรับรอง Topstep Funded Trader ของ JR 1SHOT",
-    className: "right-[-5%] bottom-[-2%] w-[32%] rotate-[5deg]",
-  },
-];
+/*
+ * About band: black-and-white portrait over a slanted
+ * brand-red block with an oversized "ABOUT" watermark, then the story, three product facts and one action.
+ * Follows the selected theme (dark-red / light-red) like the rest of the page.
+ */
 
-export function AboutSection({ actionHref = "/signup", actionLabel = "สมัครสมาชิกฟรี" }: { actionHref?: string; actionLabel?: string }) {
+const PHOTO = { src: "/images/about.jpg", alt: "ผู้ก่อตั้ง 1SHOT" };
+
+export function AboutSection({ indicatorCount = 10, actionHref = "/signup", actionLabel = "สมัครสมาชิกฟรี" }: {
+  indicatorCount?: number; actionHref?: string; actionLabel?: string;
+}) {
+  const facts = [
+    { icon: CandlestickChart, v: `${indicatorCount}+`, k: "อินดิเคเตอร์", d: "บน TradingView" },
+    { icon: ShieldCheck, v: "WF1", k: "มาตรฐานสัญญาณ", d: "ตรวจทุกฟิลด์ก่อนรับ" },
+    { icon: MonitorSmartphone, v: "2", k: "ช่องทาง", d: "เว็บ + Telegram" },
+  ];
+
   return (
-    <section id="about" className="scroll-mt-18 overflow-hidden bg-[#080809] px-4 py-16 sm:px-6 sm:py-24">
-      <div className="relative mx-auto min-h-[680px] max-w-6xl overflow-hidden rounded-[30px] border border-white/10 bg-[#101012] shadow-[0_36px_120px_-48px_rgb(178_0_22/0.9)] sm:min-h-[620px]">
-        <div aria-hidden className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(75%_100%_at_75%_45%,rgb(178_0_22/0.2),transparent_72%)]" />
-          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.08)_1px,transparent_1px)] [background-size:40px_40px]" />
-          <div className="absolute inset-y-0 right-0 hidden w-[68%] lg:block">
-            {CREDENTIALS.map((image) => (
-              <div key={image.src} className={`absolute overflow-hidden rounded-2xl border border-white/15 bg-black/60 shadow-2xl ${image.className}`}>
-                <div className="relative aspect-[16/10]">
-                  <Image src={image.src} alt="" fill sizes="(min-width: 1024px) 42vw, 1px" className="object-cover" />
-                </div>
-              </div>
+    <section id="about" aria-labelledby="about-title" className="scroll-mt-18 bg-panel">
+      <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
+        {/* Portrait */}
+        <div className="relative mx-auto w-full max-w-md">
+          <p aria-hidden className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 text-[7.5rem] leading-none font-black tracking-tighter whitespace-nowrap text-fg/[0.06] select-none sm:text-[9.5rem]">
+            ABOUT
+          </p>
+          <div aria-hidden className="absolute inset-x-[2%] top-[14%] -bottom-[3%] -skew-x-[10deg] bg-brand" />
+          <div aria-hidden className="absolute -bottom-3 -left-3 h-1/3 w-1/2 -skew-x-[10deg] bg-black/85 dark:bg-white/15" />
+          <div className="relative mx-[16%] aspect-[3/4] overflow-hidden shadow-[0_30px_80px_-30px_rgb(0_0_0/0.55)]">
+            <Image
+              src={PHOTO.src}
+              alt={PHOTO.alt}
+              fill
+              sizes="(min-width: 1024px) 24rem, 75vw"
+              className="object-cover object-[50%_18%] contrast-[1.08] grayscale"
+            />
+          </div>
+          {/* Badge */}
+          <div className="absolute top-[18%] -right-1 grid size-28 place-items-center rounded-full border-2 border-fg/80 bg-panel text-center shadow-lg sm:size-32">
+            <p>
+              <span className="num block text-3xl leading-none font-black text-fg sm:text-4xl">{indicatorCount}+</span>
+              <span className="mt-1 block text-xs leading-tight font-semibold text-fg">ระบบเทรด<br />สำหรับทองคำ</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Story */}
+        <div>
+          <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">เกี่ยวกับ 1SHOT</p>
+          <h2 id="about-title" className="mt-4 text-4xl leading-[1.1] font-black tracking-tight text-fg sm:text-5xl">
+            เปลี่ยนกราฟทองคำ<br />ให้เป็นแผนเทรด<br />ที่ตรวจสอบได้<span className="text-brand dark:text-[#ff2e43]">.</span>
+          </h2>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted">
+            1SHOT พัฒนาอินดิเคเตอร์สำหรับ XAUUSD บน TradingView ตั้งแต่ SMC, ICT จนถึง Supply &amp; Demand
+            ทุกสัญญาณส่งผ่านมาตรฐาน WF1 เดียวกัน พร้อม Entry, SL และ TP ตั้งแต่วินาทีที่เกิด Setup
+            เพื่อให้คุณวางแผนก่อนเข้าและย้อนตรวจผลได้ด้วยตัวเอง
+          </p>
+
+          <ul className="mt-8 grid gap-5 sm:grid-cols-3">
+            {facts.map((f) => (
+              <li key={f.k} className="flex items-start gap-3">
+                <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-accent text-accent">
+                  <f.icon className="size-5" strokeWidth={1.8} />
+                </span>
+                <p>
+                  <span className="num block text-2xl leading-none font-black text-fg">{f.v}</span>
+                  <span className="mt-1 block text-sm leading-snug font-semibold text-fg">{f.k}</span>
+                  <span className="block text-sm leading-snug text-muted">{f.d}</span>
+                </p>
+              </li>
             ))}
-          </div>
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#101012_0%,#101012_42%,rgb(16_16_18/0.88)_58%,rgb(16_16_18/0.28)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#101012] to-transparent" />
+          </ul>
+
+          <Link
+            href={actionHref}
+            className="mt-9 inline-flex h-12 items-center gap-2 rounded-lg bg-fg px-6 text-sm font-semibold tracking-wide text-ink transition-colors hover:bg-brand hover:text-white"
+          >
+            {actionLabel} <ArrowRight aria-hidden className="size-4" />
+          </Link>
         </div>
+      </div>
 
-        <div className="relative flex min-h-[680px] flex-col justify-between p-6 sm:min-h-[620px] sm:p-10 lg:p-14">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 text-xs font-semibold tracking-[0.2em] text-accent uppercase">
-              <span className="h-px w-10 bg-brand" />
-              About the founder
-            </div>
-
-            <h2 className="mt-8 text-5xl leading-none font-black tracking-tight text-white sm:text-7xl">JR 1SHOT</h2>
-            <p className="mt-4 max-w-xl text-sm font-semibold tracking-[0.06em] text-white/65 sm:text-base">
-              Founder · Former Fund Trader · Creator &amp; Developer of 1SHOT Indicators
-            </p>
-
-            <div className="mt-8 max-w-2xl space-y-5 text-base leading-8 text-white/72 sm:text-lg">
-              <p>
-                1SHOT ก่อตั้งและพัฒนาโดย JR 1SHOT อดีตนักเทรดกองทุน และเป็นผู้สร้าง Indicator ทุกระบบของ 1SHOT ด้วยตัวเอง
-              </p>
-              <p>
-                จากประสบการณ์ในตลาดจริง ถูกนำมาพัฒนาเป็นเครื่องมือสำหรับการวิเคราะห์ Market Structure, Liquidity, SMC, ICT, Supply &amp; Demand และ Reversal เพื่อให้แต่ละ Setup มีเหตุผล มีแผน และสามารถนำไปใช้กับการเทรดจริงได้อย่างเป็นระบบ
-              </p>
-            </div>
-          </div>
-
-          <div id="how" className="mt-12 flex flex-col gap-5 border-t border-white/12 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-3 text-sm text-white/60">
-              <BadgeCheck className="size-5 shrink-0 text-accent" />
-              ประสบการณ์จริง สู่ระบบวิเคราะห์ที่ตรวจสอบและทบทวนได้
-            </p>
-            <ButtonLink href={actionHref} className="h-12 w-full shrink-0 px-7 sm:w-auto">
-              {actionLabel} <ArrowRight className="size-4" />
-            </ButtonLink>
-          </div>
-        </div>
-
-        <div className="grid gap-3 border-t border-white/10 bg-black/40 p-4 lg:hidden sm:grid-cols-3 sm:p-6">
-          {CREDENTIALS.map((image) => (
-            <div key={image.src} className="relative aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-black">
-              <Image src={image.src} alt={image.alt} fill sizes="(min-width: 640px) 30vw, 90vw" className="object-cover" />
-            </div>
-          ))}
+      {/* Target of the "เริ่มใช้งาน" nav link */}
+      <div id="how" className="scroll-mt-18 border-t border-line">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <h3 className="text-lg font-bold text-fg">เริ่มใช้งานได้ใน 3 ขั้นตอน</h3>
+          <ol className="mt-5 grid gap-4 sm:grid-cols-3">
+            {["สมัครสมาชิกและใส่ชื่อผู้ใช้ TradingView", "เลือกแพ็กเกจ หรือรับสิทธิ์ผ่าน Exness IB", "เชื่อม Telegram เพื่อรับสัญญาณ"].map((step, i) => (
+              <li key={step} className="flex items-center gap-3">
+                <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-fg text-sm font-bold text-ink">{i + 1}</span>
+                <span className="text-sm font-medium text-fg">{step}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>
