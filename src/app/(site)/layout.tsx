@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { MotionToggle } from "@/components/motion/motion-pref";
 import { ThemeToggle } from "@/components/theme";
 import { isStaff } from "@/lib/types";
 import { ArrowRight } from "lucide-react";
@@ -44,10 +43,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         </div>
       </header>
       {children}
-      <footer className="surface-dark bg-ink">
+      <footer className="border-t border-line bg-ink">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 text-sm sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div className="col-span-2 space-y-4 md:col-span-1">
-            <Logo />
+            <Logo tone="auto" />
             <p className="max-w-xs text-xs leading-relaxed text-muted">
               สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อม Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด
             </p>
@@ -74,8 +73,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-faint sm:px-6 md:flex-row md:items-start md:justify-between">
             <div className="flex shrink-0 flex-wrap items-center gap-4">
               <p>© {new Date().getFullYear()} 1SHOT Signals</p>
-              <MotionToggle className="text-white" />
-              <ThemeToggle label className="text-white" />
             </div>
             <p className="max-w-2xl leading-relaxed md:text-right">
               การเทรดทองคำและ CFD มีความเสี่ยงสูง อาจสูญเสียเงินทุนทั้งหมด สัญญาณเป็นข้อมูลจากอินดิเคเตอร์ ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล
