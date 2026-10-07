@@ -95,7 +95,7 @@ export default async function HomePage() {
       )}
 
       {/* 5 · About + onboarding call to action */}
-      <AboutSection indicatorCount={indicators.length || undefined} actionHref={viewer ? "/dashboard" : "/signup"} actionLabel={viewer ? "ไปที่บัญชีของฉัน" : "สมัครสมาชิกฟรี"} />
+      <AboutSection actionHref={viewer ? "/dashboard" : "/signup"} actionLabel={viewer ? "ไปที่บัญชีของฉัน" : "สมัครสมาชิกฟรี"} />
     </main>
   );
 }
