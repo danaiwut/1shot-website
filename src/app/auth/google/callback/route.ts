@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   if (!flow || !code || searchParams.get("error") || searchParams.get("state") !== flow.state) return fail();
 
-  const idToken = await exchangeGoogleCode(code, flow.verifier);
+  const idToken = await exchangeGoogleCode(code, flow.verifier, flow.redirectUri);
   if (!idToken) return fail();
 
   const supabase = await createClient();

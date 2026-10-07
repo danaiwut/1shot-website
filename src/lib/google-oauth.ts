@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { publicEnv, serverEnv } from "./env";
+import { serverEnv } from "./env";
 
 /*
  * Google sign-in without the Supabase-hosted redirect: Google returns to our own domain
@@ -14,20 +14,22 @@ import { publicEnv, serverEnv } from "./env";
 
 export const GOOGLE_COOKIE = "g_oauth";
 export const GOOGLE_COOKIE_MAX_AGE = 600;
-export const googleRedirectUri = () => `${publicEnv.siteUrl()}/auth/google/callback`;
 export const googleConfigured = () => Boolean(serverEnv.googleClientId() && serverEnv.googleClientSecret());
 
-export type GoogleFlow = { state: string; nonce: string; verifier: string; next?: string };
+/** redirectUri is fixed when the flow starts so the token exchange sends exactly the same value. */
+export type GoogleFlow = { state: string; nonce: string; verifier: string; redirectUri: string; next?: string };
 
 const b64url = (buf: Buffer) => buf.toString("base64url");
 const sha256 = (v: string) => createHash("sha256").update(v).digest();
 
-export function startGoogleFlow(next?: string): { url: string; flow: GoogleFlow } {
-  const flow: GoogleFlow = { state: b64url(randomBytes(24)), nonce: b64url(randomBytes(24)), verifier: b64url(randomBytes(48)), next };
+/** `origin` is the site the user is on (e.g. https://1shot.example), so Google returns to the same host. */
+export function startGoogleFlow(origin: string, next?: string): { url: string; flow: GoogleFlow } {
+  const redirectUri = `${origin}/auth/google/callback`;
+  const flow: GoogleFlow = { state: b64url(randomBytes(24)), nonce: b64url(randomBytes(24)), verifier: b64url(randomBytes(48)), redirectUri, next };
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search = new URLSearchParams({
     client_id: serverEnv.googleClientId(),
-    redirect_uri: googleRedirectUri(),
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: "openid email profile",
     state: flow.state,
@@ -40,7 +42,7 @@ export function startGoogleFlow(next?: string): { url: string; flow: GoogleFlow 
 }
 
 /** Exchange the authorization code for Google's ID token (JWT). */
-export async function exchangeGoogleCode(code: string, verifier: string): Promise<string | null> {
+export async function exchangeGoogleCode(code: string, verifier: string, redirectUri: string): Promise<string | null> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -48,7 +50,7 @@ export async function exchangeGoogleCode(code: string, verifier: string): Promis
       code,
       client_id: serverEnv.googleClientId(),
       client_secret: serverEnv.googleClientSecret(),
-      redirect_uri: googleRedirectUri(),
+      redirect_uri: redirectUri,
       grant_type: "authorization_code",
       code_verifier: verifier,
     }),

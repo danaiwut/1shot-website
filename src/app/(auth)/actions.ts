@@ -1,5 +1,5 @@
 "use server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { RESET_COOKIE } from "@/lib/auth-reset";
@@ -134,9 +134,14 @@ function passwordError(e: { code?: string; status?: number }) {
 export async function signInWithGoogle(_: AuthState, form: FormData): Promise<AuthState> {
   if (!googleConfigured()) return { error: "ยังไม่ได้ตั้งค่าการเข้าสู่ระบบด้วย Google กรุณาใช้อีเมลแทน" };
   const next = form.get("next");
-  const { url, flow } = startGoogleFlow(typeof next === "string" && next ? safeNext(next) : undefined);
+  // Return to the host the user is actually on (production domain, preview URL or localhost).
+  // Google only accepts redirect URIs registered on the OAuth client, so a forged Host header goes nowhere.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const origin = host ? `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}` : publicEnv.siteUrl();
+  const { url, flow } = startGoogleFlow(origin, typeof next === "string" && next ? safeNext(next) : undefined);
   (await cookies()).set(GOOGLE_COOKIE, JSON.stringify(flow), {
-    httpOnly: true, secure: publicEnv.siteUrl().startsWith("https://"), sameSite: "lax", path: "/auth/google", maxAge: GOOGLE_COOKIE_MAX_AGE,
+    httpOnly: true, secure: origin.startsWith("https://"), sameSite: "lax", path: "/auth/google", maxAge: GOOGLE_COOKIE_MAX_AGE,
   });
   redirect(url);
 }
