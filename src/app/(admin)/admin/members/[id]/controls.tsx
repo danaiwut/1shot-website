@@ -18,7 +18,7 @@ export function IbToggle({ userId, verified, disabled }: { userId: string; verif
   const { busy, error, run } = useAction();
   return (
     <span className="flex flex-wrap items-center justify-end gap-2">
-      {error && <span role="alert" className="text-xs text-sell">{error}</span>}
+      {error && <span role="alert" className="text-sm text-sell">{error}</span>}
       <button
         type="button"
         role="switch"
@@ -30,7 +30,7 @@ export function IbToggle({ userId, verified, disabled }: { userId: string; verif
       >
         <span aria-hidden className={cx("text-xs", verified ? "text-buy" : "text-muted")}>{verified ? "ผ่านแล้ว" : "ยังไม่ผ่าน"}</span>
         <span aria-hidden className={cx("relative h-6 w-11 shrink-0 rounded-full border border-transparent transition-colors", verified ? "bg-buy" : "bg-line-strong")}>
-          <span className={cx("absolute top-0.5 size-[18px] rounded-full bg-white shadow-sm transition-all", verified ? "left-[22px]" : "left-0.5")} />
+          <span className={cx("absolute top-0.5 size-[18px] rounded-full bg-white transition-all", verified ? "left-[22px]" : "left-0.5")} />
         </span>
       </button>
     </span>
@@ -41,7 +41,7 @@ export function RoleSelect({ userId, role }: { userId: string; role: Role }) {
   const { busy, error, run } = useAction();
   return (
     <span className="flex flex-wrap items-center justify-end gap-2">
-      {error && <span role="alert" className="text-xs text-sell">{error}</span>}
+      {error && <span role="alert" className="text-sm text-sell">{error}</span>}
       <Select aria-label="บทบาท" className="w-36" defaultValue={role} disabled={busy} onChange={(e) => run(() => setRole(userId, e.target.value as Role))}>
         <option value="member">สมาชิก</option>
         <option value="admin">แอดมิน</option>
@@ -68,8 +68,8 @@ export function GrantForm({ userId, code, current, has }: { userId: string; code
       {duration === "date" && (
         <Input name="expires_on" type="date" aria-label={`วันหมดอายุ ${code}`} defaultValue={defaultDate} className="w-40" />
       )}
-      <Button type="submit" variant={has ? "outline" : "brand"} disabled={pending} aria-label={`${has ? "อัปเดต" : "ให้สิทธิ์"} ${code}`}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
-      {state.error && <span role="alert" className="w-full text-xs text-sell xl:text-right">{state.error}</span>}
+      <Button type="submit" variant="outline" disabled={pending} aria-label={`${has ? "อัปเดต" : "ให้สิทธิ์"} ${code}`}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
+      {state.error && <span role="alert" className="w-full text-sm text-sell xl:text-right">{state.error}</span>}
     </form>
   );
 }
@@ -78,7 +78,8 @@ export function RevokeButton({ userId, code }: { userId: string; code: string })
   const { busy, run } = useAction();
   return (
     <Button
-      variant="danger"
+      variant="ghost"
+      className="text-sell hover:text-sell"
       aria-label={`ยกเลิกสิทธิ์ ${code}`}
       disabled={busy}
       onClick={() => confirm(`ยกเลิกสิทธิ์ ${code}?`) && run(() => revokeRight(userId, code))}
@@ -91,7 +92,7 @@ export function RevokeButton({ userId, code }: { userId: string; code: string })
 export function UnlinkButton({ userId }: { userId: string }) {
   const { busy, run } = useAction();
   return (
-    <Button variant="danger" disabled={busy} onClick={() => confirm("ยกเลิกการเชื่อม Telegram?") && run(() => unlinkTelegram(userId))}>
+    <Button variant="ghost" className="text-sell hover:text-sell" disabled={busy} onClick={() => confirm("ยกเลิกการเชื่อม Telegram?") && run(() => unlinkTelegram(userId))}>
       ยกเลิกการเชื่อม
     </Button>
   );

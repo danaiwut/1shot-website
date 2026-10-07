@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Activity, ArrowRight, CalendarClock, Check, CircleCheck, Gift, Layers, Newspaper, Send, ShoppingBag } from "lucide-react";
+import { Check } from "lucide-react";
+import { EmptyLine, Row, Rows, Section, StatRow, Status, TextLink } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
 import { SetupRow } from "@/components/signals/setup-row";
-import { StatCard } from "@/components/app/stat-card";
-import { Badge, ButtonLink, cx, Empty, Notice } from "@/components/ui";
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { ButtonLink, cx, Notice } from "@/components/ui";
+import { TradingViewDialog } from "./tradingview-dialog";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate, isOpenStatus } from "@/lib/format";
 import type { IndicatorRight, Setup } from "@/lib/types";
@@ -44,7 +43,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const daysLeft = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - now) / DAY));
 
   const steps = [
-    { done: Boolean(profile.tradingview_username), label: "ใส่ชื่อผู้ใช้ TradingView", why: "เราใช้ชื่อนี้เปิดสิทธิ์อินดิเคเตอร์ให้คุณใน TradingView", href: "/account", cta: "ไปกรอกชื่อ" },
+    { done: Boolean(profile.tradingview_username), label: "ใส่ชื่อผู้ใช้ TradingView", why: "เราใช้ชื่อนี้เปิดสิทธิ์อินดิเคเตอร์ให้คุณใน TradingView", href: "/account", cta: "กรอกชื่อ" },
     {
       done: active.length > 0, label: "เปิดสิทธิ์ใช้งาน", why: "ซื้อแพ็กเกจ หรือกรอกเลขบัญชี Exness ภายใต้ IB เพื่อขอใช้ฟรี",
       href: "/store", cta: "เลือกแพ็กเกจ",
@@ -56,165 +55,114 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const next = steps.find((s) => !s.done);
 
   const tg = linkRes.data;
-  const pct = (r: Right) => (r.expires_at ? Math.min(100, Math.round((daysLeft(r.expires_at) / 30) * 100)) : 100);
+  const summary = active.length
+    ? nextExpiry
+      ? `ใช้งานได้ ${active.length} อินดิเคเตอร์ · ${nextExpiry.code} หมดอายุในอีก ${daysLeft(nextExpiry.expires_at!)} วัน`
+      : `ใช้งานได้ ${active.length} อินดิเคเตอร์ · ใช้ได้ตลอดชีพ`
+    : "ยังไม่มีสิทธิ์ใช้งาน ทำตามขั้นตอนด้านล่างเพื่อเริ่มรับสัญญาณ";
 
   return (
     <>
       <PageHeader
-        title={`สวัสดีคุณ${name}`}
-        description="สรุปสิทธิ์ใช้งาน สัญญาณล่าสุด และสิ่งที่ต้องทำต่อของบัญชีคุณ"
-        action={active.length ? (
-          <>
-            <ButtonLink href="/store" variant="outline">ซื้อเพิ่ม / ต่ออายุ</ButtonLink>
-            <ButtonLink href="/signals"><Activity aria-hidden className="size-4" /> ดูสัญญาณ</ButtonLink>
-          </>
-        ) : (
-          <>
-            <ButtonLink href="/account" variant="outline"><Gift aria-hidden className="size-4" /> ใช้ฟรีผ่าน IB</ButtonLink>
-            <ButtonLink href="/store"><ShoppingBag aria-hidden className="size-4" /> เลือกซื้ออินดิเคเตอร์</ButtonLink>
-          </>
-        )}
+        title={`สวัสดี ${name}`}
+        description={summary}
+        action={active.length ? <ButtonLink href="/signals">ดูสัญญาณ</ButtonLink> : <ButtonLink href="/store">เลือกซื้ออินดิเคเตอร์</ButtonLink>}
       />
-      {password === "updated" && <div className="mb-6"><Notice tone="success">ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว</Notice></div>}
-      {expiring.length > 0 && (
-        <div className="mb-6">
+
+      <div className="space-y-10">
+        {password === "updated" && <Notice tone="success">ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว</Notice>}
+        {expiring.length > 0 && (
           <Notice tone="error">
-            <b>ใกล้หมดอายุภายใน 7 วัน:</b> {expiring.map((r) => r.code).join(", ")} ·{" "}
-            <Link href="/store" className="font-semibold underline underline-offset-4">ต่ออายุตอนนี้</Link>
+            ใกล้หมดอายุภายใน 7 วัน: <b>{expiring.map((r) => r.code).join(", ")}</b> ·{" "}
+            <Link href="/store" className="font-semibold underline underline-offset-4">ต่ออายุ</Link>
           </Notice>
-        </div>
-      )}
+        )}
 
-      {/* KPIs */}
-      <section aria-label="สรุปบัญชี" className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <StatCard
-          icon={Layers} label="สิทธิ์ที่ใช้งานได้" value={`${active.length}`}
-          badge={<Badge tone={active.length ? "buy" : "neutral"}>{active.length ? "พร้อมใช้" : "ยังไม่มี"}</Badge>}
-          foot={rights.length > active.length ? `หมดอายุแล้ว ${rights.length - active.length} ตัว` : "อินดิเคเตอร์ที่เปิดใช้อยู่"}
-        />
-        <StatCard
-          icon={CalendarClock} label="หมดอายุถัดไป" tone={expiring.length ? "alert" : "default"}
-          value={nextExpiry ? `${daysLeft(nextExpiry.expires_at!)} วัน` : active.length ? "ตลอดชีพ" : "—"}
-          badge={nextExpiry ? <Badge tone={expiring.length ? "brand" : "neutral"}>{nextExpiry.code}</Badge> : undefined}
-          foot={nextExpiry ? `ถึง ${fmtDate(nextExpiry.expires_at!)}` : "ไม่มีสิทธิ์ที่ใกล้หมดอายุ"}
-        />
-        <StatCard
-          icon={Activity} label="Setup ที่เปิดอยู่" value={`${open.length}`}
-          foot={setups.length ? `จาก ${setups.length} สัญญาณล่าสุด` : "ยังไม่มีสัญญาณ"}
-        />
-        <StatCard
-          icon={Send} label="Telegram" value={tg ? "เชื่อมแล้ว" : "ยังไม่เชื่อม"}
-          badge={<Badge tone={tg ? "buy" : "neutral"}>{tg ? "ออนไลน์" : "ปิด"}</Badge>}
-          foot={tg ? (tg.tg_username ? `@${tg.tg_username}` : tg.tg_name ?? "Telegram") : <Link href="/account#telegram" className="font-medium text-accent underline underline-offset-4">เชื่อมเพื่อรับลิงก์ห้อง</Link>}
-        />
-      </section>
+        {active.length > 0 && (
+          <StatRow
+            items={[
+              { label: "สิทธิ์ที่ใช้งานได้", value: active.length, hint: rights.length > active.length ? `หมดอายุแล้ว ${rights.length - active.length}` : undefined },
+              { label: "หมดอายุถัดไป", value: nextExpiry ? `${daysLeft(nextExpiry.expires_at!)} วัน` : "ตลอดชีพ", hint: nextExpiry ? `${nextExpiry.code} · ${fmtDate(nextExpiry.expires_at!)}` : undefined },
+              { label: "Setup ที่เปิดอยู่", value: open.length },
+              { label: "Telegram", value: tg ? "เชื่อมแล้ว" : "ยังไม่เชื่อม", hint: tg?.tg_username ? `@${tg.tg_username}` : undefined },
+            ]}
+          />
+        )}
 
-      {/* Onboarding, only while something is left to do */}
-      {next && (
-        <Card className="mb-6 rounded-2xl shadow-xs">
-          <CardHeader>
-            <CardTitle className="text-lg">เริ่มใช้งานให้ครบ</CardTitle>
-            <CardDescription className="text-muted">เสร็จแล้ว {doneCount} จาก {steps.length} ขั้นตอน</CardDescription>
-            <CardAction className="hidden w-40 self-center sm:block"><Progress value={(doneCount / steps.length) * 100} aria-label={`ความคืบหน้า ${doneCount} จาก ${steps.length}`} className="h-2 bg-panel-3 [&>div]:bg-brand" /></CardAction>
-          </CardHeader>
-          <CardContent>
-            <ol className="grid gap-3 md:grid-cols-3">
+        {next && (
+          <Section title="เริ่มใช้งาน" description={`เสร็จแล้ว ${doneCount} จาก ${steps.length} ขั้นตอน`}>
+            <ol className="divide-y divide-line">
               {steps.map((s, i) => {
                 const current = s === next;
                 return (
-                  <li key={s.label} className={cx("flex flex-col rounded-xl border p-4", current ? "border-brand bg-brand-dim/40" : "border-line bg-panel-2")}>
-                    <div className="flex items-center gap-3">
-                      {s.done ? (
-                        <span aria-hidden className="grid size-7 place-items-center rounded-full bg-buy text-white"><Check className="size-4" strokeWidth={3} /></span>
-                      ) : (
-                        <span aria-hidden className={cx("num grid size-7 place-items-center rounded-full text-sm font-bold", current ? "bg-brand text-white" : "border-2 border-line-strong")}>{i + 1}</span>
+                  <li key={s.label} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4 sm:px-5">
+                    <span
+                      aria-hidden
+                      className={cx(
+                        "num grid size-7 shrink-0 place-items-center rounded-full text-sm font-semibold",
+                        s.done ? "bg-buy-dim text-buy" : current ? "bg-brand text-white" : "border border-line-strong text-muted",
                       )}
-                      <h3 className="font-semibold">
-                        <span className="sr-only">{s.done ? "เสร็จแล้ว: " : current ? "ขั้นตอนถัดไป: " : "ยังไม่ได้ทำ: "}</span>
-                        {s.label}
-                      </h3>
+                    >
+                      {s.done ? <Check className="size-4" strokeWidth={3} /> : i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={cx("text-sm", current ? "font-semibold" : "font-medium", s.done && "text-muted line-through decoration-line-strong")}>
+                        <span className="sr-only">{s.done ? "เสร็จแล้ว: " : current ? "ขั้นตอนถัดไป: " : "ยังไม่ได้ทำ: "}</span>{s.label}
+                      </p>
+                      {!s.done && <p className="text-sm text-muted">{s.note ?? s.why}</p>}
                     </div>
-                    <p className="mt-2 flex-1 text-sm text-muted">{s.why}</p>
-                    {s.note && <p className="mt-2 text-sm font-medium text-accent">{s.note}</p>}
-                    {s.done ? (
-                      <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-buy"><CircleCheck aria-hidden className="size-4" /> เรียบร้อยแล้ว</p>
-                    ) : (
-                      <ButtonLink href={s.href} variant={current ? "brand" : "outline"} className="mt-3 w-full">{s.cta} <ArrowRight aria-hidden className="size-4" /></ButtonLink>
-                    )}
+                    {!s.done && (i === 0
+                      ? <TradingViewDialog current={profile.tradingview_username} label={s.cta} />
+                      : current ? <ButtonLink href={s.href} variant="outline">{s.cta}</ButtonLink> : <TextLink href={s.href}>{s.cta}</TextLink>)}
                   </li>
                 );
               })}
             </ol>
-          </CardContent>
-        </Card>
-      )}
+          </Section>
+        )}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-        {/* Latest signals */}
-        <Card className="gap-0 overflow-hidden rounded-2xl py-0 shadow-xs">
-          <CardHeader className="border-b border-line py-5">
-            <CardTitle className="text-lg">สัญญาณล่าสุด</CardTitle>
-            <CardDescription className="text-muted">{open.length ? `เปิดอยู่ ${open.length} รายการ` : "ยังไม่มี Setup ที่เปิดอยู่"}</CardDescription>
-            <CardAction><ButtonLink href="/signals" variant="ghost">ดูทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink></CardAction>
-          </CardHeader>
-          {setups.length ? (
-            <ul className="divide-y divide-line">{setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}</ul>
-          ) : (
-            <Empty title="ยังไม่มีสัญญาณ">สัญญาณจะแสดงเมื่อคุณมีสิทธิ์อินดิเคเตอร์และมี Setup ใหม่เข้ามา</Empty>
-          )}
-        </Card>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <Section title="สัญญาณล่าสุด" description={open.length ? `เปิดอยู่ ${open.length} รายการ` : undefined} action={setups.length > 0 && <TextLink href="/signals">ดูทั้งหมด</TextLink>}>
+            {setups.length ? (
+              <ul className="divide-y divide-line">{setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}</ul>
+            ) : (
+              <EmptyLine>สัญญาณจะแสดงที่นี่เมื่อคุณมีสิทธิ์อินดิเคเตอร์</EmptyLine>
+            )}
+          </Section>
 
-        <div className="space-y-6">
-          {/* My indicators */}
-          <Card className="gap-0 rounded-2xl py-0 shadow-xs">
-            <CardHeader className="border-b border-line py-5">
-              <CardTitle className="text-lg">อินดิเคเตอร์ของฉัน</CardTitle>
-              <CardDescription className="text-muted">{rights.length ? `${active.length} ใช้งานได้ · ${rights.length - active.length} หมดอายุ` : "ยังไม่มีสิทธิ์"}</CardDescription>
-              <CardAction><ButtonLink href="/billing" variant="ghost">ใบเสร็จ</ButtonLink></CardAction>
-            </CardHeader>
+          <Section title="อินดิเคเตอร์ของฉัน" action={rights.length > 0 && <TextLink href="/billing">ใบเสร็จ</TextLink>}>
             {rights.length ? (
-              <ul className="divide-y divide-line">
+              <Rows>
                 {rights.map((r) => {
                   const ok = isActive(r);
                   const soon = ok && expiring.includes(r);
                   return (
-                    <li key={r.code} className="flex items-center gap-3 px-6 py-4">
-                      <span className="num grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-sm font-bold text-accent">{r.code}</span>
+                    <Row key={r.code}>
+                      <span className="num w-10 shrink-0 text-sm font-semibold text-accent">{r.code}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate font-medium">{r.indicators?.name ?? r.code}</p>
-                          <Badge tone={!ok ? "neutral" : soon ? "brand" : "buy"}>{!ok ? "หมดอายุ" : soon ? "ใกล้หมด" : "ใช้งานได้"}</Badge>
-                        </div>
-                        <p className="mt-1 text-sm text-muted">
-                          {r.expires_at ? (ok ? `เหลือ ${daysLeft(r.expires_at)} วัน · ถึง ${fmtDate(r.expires_at)}` : `หมดอายุ ${fmtDate(r.expires_at)}`) : "ใช้ได้ตลอดชีพ"}
+                        <p className="truncate text-sm font-medium">{r.indicators?.name ?? r.code}</p>
+                        <p className="text-sm text-muted">
+                          {r.expires_at ? (ok ? `ถึง ${fmtDate(r.expires_at)} · เหลือ ${daysLeft(r.expires_at)} วัน` : `หมดอายุ ${fmtDate(r.expires_at)}`) : "ตลอดชีพ"}
                         </p>
-                        {ok && r.expires_at && <Progress value={pct(r)} aria-hidden className={cx("mt-2 h-1.5 bg-panel-3", soon ? "[&>div]:bg-brand" : "[&>div]:bg-buy")} />}
-                        {r.expires_at && (!ok || soon) && (
-                          <Link href={`/indicators/${r.code}`} className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">ต่ออายุ {r.code}</Link>
-                        )}
                       </div>
-                    </li>
+                      {r.expires_at && (!ok || soon)
+                        ? <TextLink href={`/indicators/${r.code}`}>ต่ออายุ</TextLink>
+                        : <Status tone={ok ? "good" : "neutral"}>{ok ? "ใช้งานได้" : "หมดอายุ"}</Status>}
+                    </Row>
                   );
                 })}
-              </ul>
+              </Rows>
             ) : (
-              <Empty title="ยังไม่มีอินดิเคเตอร์">เมื่อซื้อหรือได้รับสิทธิ์ผ่าน IB อินดิเคเตอร์จะแสดงที่นี่ พร้อมวันหมดอายุ</Empty>
+              <EmptyLine action={<TextLink href="/store">ไปที่ร้านค้า</TextLink>}>ยังไม่มีอินดิเคเตอร์</EmptyLine>
             )}
-          </Card>
-
-          {briefRes.data && (
-            <Card className="rounded-2xl shadow-xs">
-              <CardHeader>
-                <CardTitle className="text-lg">สรุปตลาดเช้านี้</CardTitle>
-                <CardDescription className="text-muted">{fmtDate(briefRes.data.brief_date)}</CardDescription>
-              </CardHeader>
-              <CardContent><p className="line-clamp-6 text-sm whitespace-pre-line text-muted">{briefRes.data.story}</p></CardContent>
-              <CardFooter>
-                <Link href="/news" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent underline underline-offset-4"><Newspaper aria-hidden className="size-4" /> อ่านสรุปเต็มและข่าว</Link>
-              </CardFooter>
-            </Card>
-          )}
+          </Section>
         </div>
+
+        {briefRes.data && (
+          <Section title="สรุปตลาดเช้านี้" description={fmtDate(briefRes.data.brief_date)} action={<TextLink href="/news">อ่านต่อ</TextLink>}>
+            <p className="line-clamp-4 px-4 py-4 text-sm whitespace-pre-line text-muted sm:px-5">{briefRes.data.story}</p>
+          </Section>
+        )}
       </div>
     </>
   );

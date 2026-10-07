@@ -26,14 +26,14 @@ export function ButtonLink({ variant = "brand", className, ...props }: Component
 }
 
 export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <UICard className={cn("gap-0 rounded-2xl py-0 shadow-sm", className)} {...props} />;
+  return <UICard className={cn("gap-0 rounded-lg py-0 shadow-none", className)} {...props} />;
 }
 
 export function CardHeader({ title, action, hint }: { title: ReactNode; action?: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
+    <div className="flex items-start justify-between gap-4 border-b border-line px-4 py-3.5 sm:px-5">
       <div className="min-w-0">
-        <h2 className="text-base leading-snug font-semibold tracking-tight">{title}</h2>
+        <h2 className="text-base leading-snug font-semibold">{title}</h2>
         {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
       </div>
       {action}
@@ -99,7 +99,7 @@ const noticeIcon = {
 export function Notice({ tone = "info", children }: { tone?: "info" | "error" | "success"; children: ReactNode }) {
   const t = { info: "border-line bg-panel text-fg", error: "border-sell/40 bg-sell-dim text-sell", success: "border-buy/40 bg-buy-dim text-buy" }[tone];
   return (
-    <div role={tone === "error" ? "alert" : "status"} className={cn("flex w-full gap-2.5 rounded-xl border px-4 py-3 text-sm", t)}>
+    <div role={tone === "error" ? "alert" : "status"} className={cn("flex w-full gap-2.5 rounded-lg border px-4 py-3 text-sm", t)}>
       {noticeIcon[tone]}
       <div className="min-w-0">{children}</div>
     </div>
@@ -108,12 +108,9 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "error" | 
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-      <div aria-hidden className="grid size-12 place-items-center rounded-xl border border-line bg-panel-2 text-muted shadow-xs">
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 7h18M5 7l1.5 12a2 2 0 0 0 2 1.8h7a2 2 0 0 0 2-1.8L19 7M9 7V5a3 3 0 0 1 6 0v2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      </div>
-      <p className="text-sm font-semibold">{title}</p>
-      {children && <div className="max-w-sm text-sm text-muted">{children}</div>}
+    <div className="px-4 py-8 text-sm sm:px-5">
+      <p className="font-medium">{title}</p>
+      {children && <div className="mt-1 max-w-prose text-muted">{children}</div>}
     </div>
   );
 }
@@ -127,8 +124,8 @@ export function FilterLink({ on, className, children, ...props }: ComponentProps
     <Link
       aria-current={on ? "true" : undefined}
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3.5 text-sm transition-colors",
-        on ? "border-line bg-panel font-semibold text-fg shadow-sm" : "border-transparent font-medium text-muted hover:bg-panel hover:text-fg",
+        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm transition-colors",
+        on ? "bg-panel font-semibold text-fg ring-1 ring-line" : "font-medium text-muted hover:text-fg",
         className,
       )}
       {...props}

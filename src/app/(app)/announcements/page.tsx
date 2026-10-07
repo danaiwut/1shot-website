@@ -1,7 +1,6 @@
-import { Megaphone, Pin } from "lucide-react";
+import { EmptyLine } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, cx, Empty } from "@/components/ui";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import type { Announcement } from "@/lib/types";
@@ -19,31 +18,28 @@ export default async function AnnouncementsPage() {
     <>
       <PageHeader
         title="ประกาศ"
-        description="ข่าวสารและคำแนะนำจากทีมงาน 1SHOT"
-        action={list.length ? <Badge>{list.length} ประกาศ{pinned ? ` · ปักหมุด ${pinned}` : ""}</Badge> : undefined}
+        description={list.length ? `ข่าวสารจากทีมงาน 1SHOT · ${list.length} ประกาศ${pinned ? ` · ปักหมุด ${pinned}` : ""}` : "ข่าวสารและคำแนะนำจากทีมงาน 1SHOT"}
       />
-      {list.length ? (
-        <ul className="mx-auto max-w-4xl space-y-4">
-          {list.map((a) => (
-            <li key={a.id}>
-              <Card className={cx("gap-0 rounded-2xl py-0 shadow-xs", a.pinned && "border-brand/40")}>
-                <article aria-labelledby={`ann-${a.id}`}>
-                  <CardHeader className={cx("gap-2 py-5", a.body && "border-b border-line", a.pinned && "bg-brand-dim/30")}>
-                    <CardDescription className="flex flex-wrap items-center gap-2 text-sm text-muted">
-                      {a.pinned ? <Badge tone="brand"><Pin aria-hidden /> ปักหมุด</Badge> : <Megaphone aria-hidden className="size-4 text-accent" />}
-                      <time dateTime={a.created_at}>{fmtDate(a.created_at)}</time>
-                    </CardDescription>
-                    <CardTitle><h2 id={`ann-${a.id}`} className="text-xl leading-snug font-bold">{a.title}</h2></CardTitle>
-                  </CardHeader>
-                  {a.body && <CardContent className="py-5"><p className="max-w-3xl leading-relaxed whitespace-pre-line">{a.body}</p></CardContent>}
+      <div className="max-w-3xl overflow-hidden rounded-lg border border-line bg-panel">
+        {list.length ? (
+          <ul className="divide-y divide-line">
+            {list.map((a) => (
+              <li key={a.id}>
+                <article aria-labelledby={`ann-${a.id}`} className="px-4 py-5 sm:px-5">
+                  <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+                    {a.pinned && <Badge>ปักหมุด</Badge>}
+                    <time dateTime={a.created_at} className="num">{fmtDate(a.created_at)}</time>
+                  </p>
+                  <h2 id={`ann-${a.id}`} className="mt-1.5 text-base font-semibold">{a.title}</h2>
+                  {a.body && <p className="mt-2 text-sm leading-relaxed whitespace-pre-line">{a.body}</p>}
                 </article>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <Card className="rounded-2xl py-0 shadow-xs"><Empty title="ยังไม่มีประกาศ">เมื่อทีมงานโพสต์ประกาศ จะแสดงที่นี่</Empty></Card>
-      )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyLine>ยังไม่มีประกาศ เมื่อทีมงานโพสต์ จะแสดงที่นี่</EmptyLine>
+        )}
+      </div>
     </>
   );
 }

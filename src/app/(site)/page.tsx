@@ -10,6 +10,7 @@ import { IndicatorShowcase } from "@/components/store/indicator-showcase";
 import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { loadIndicators, type PublicIndicator } from "@/lib/indicators";
+import { loadCurrentPromotion } from "@/lib/promotions";
 import { loadRatings, type Rating } from "@/lib/reviews/data";
 import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
 import { indicatorOffers } from "@/lib/store/offers";
@@ -28,11 +29,11 @@ const words = (text: string) => [...new Intl.Segmenter("th", { granularity: "wor
 
 export default async function HomePage() {
   const supabase = isSupabaseConfigured() ? await createClient() : null;
-  const [indicators, products, viewer, ratings] = supabase
-    ? await Promise.all([loadIndicators(supabase), loadCatalog(supabase), getViewer(), loadRatings(supabase)])
-    : [[] as PublicIndicator[], [], null, {} as Record<string, Rating>];
+  const [indicators, products, viewer, ratings, promotion] = supabase
+    ? await Promise.all([loadIndicators(supabase), loadCatalog(supabase), getViewer(), loadRatings(supabase), loadCurrentPromotion(supabase)])
+    : [[] as PublicIndicator[], [], null, {} as Record<string, Rating>, null];
   const owned = viewer && supabase ? await loadOwnership(supabase, viewer.userId) : undefined;
-  const bundles = products.filter((p) => p.kind === "bundle");
+  const bundles = products.filter((p) => p.kind !== "single");
   const offers = indicatorOffers(indicators, products, ratings, owned?.access);
 
   return (
@@ -73,6 +74,7 @@ export default async function HomePage() {
         headline={[words("แม่นยำ ชัดเจน และ"), words("ตรวจสอบได้ ในทุกจังหวะ"), words("ของทองคำ")]}
         indicators={indicators}
         offers={offers}
+        promotion={promotion}
       />
 
       {/* 4 · Bundles */}
@@ -89,7 +91,7 @@ export default async function HomePage() {
               </div>
               <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink>
             </Reveal>
-            <Reveal delay={0.1}><CatalogView products={bundles} access={owned?.access} subscribed={owned?.subscribed} from="/pricing" bundlesOnly /></Reveal>
+            <Reveal delay={0.1}><CatalogView products={bundles} access={owned?.access} subscribed={owned?.subscribed} returning={owned?.returning} from="/pricing" bundlesOnly /></Reveal>
           </div>
         </section>
       )}

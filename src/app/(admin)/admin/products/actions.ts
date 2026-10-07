@@ -9,8 +9,13 @@ export type ProductState = { error?: string; ok?: string };
 const ProductSchema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อสินค้า").max(120),
   description: z.string().trim().max(600),
-  kind: z.enum(["single", "bundle"]),
+  kind: z.enum(["single", "bundle", "pick"]),
   codes: z.array(z.string().regex(/^[A-Z]{2,4}$/)).min(1, "เลือกอินดิเคเตอร์อย่างน้อย 1 ตัว"),
+  pick_count: z.coerce.number().int().min(1).max(20).nullable(),
+  audience: z.enum(["all", "returning"]),
+  // Bangkok end-of-day for the chosen date; empty = no end.
+  available_until: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "วันที่ไม่ถูกต้อง").transform((d) => (d ? `${d}T23:59:59+07:00` : null)),
+  badge: z.string().trim().max(24).transform((b) => b || null),
   features: z.array(z.string().trim().min(1).max(120)).max(12),
   active: z.boolean(),
   featured: z.boolean(),
@@ -18,7 +23,15 @@ const ProductSchema = z.object({
 });
 
 function parseProduct(form: FormData) {
-  return ProductSchema.safeParse({
+  const kind = form.get("kind");
+  return ProductSchema.refine((p) => p.kind !== "single" || p.codes.length === 1, "สินค้ารายตัวเลือกได้ 1 อินดิเคเตอร์")
+    .refine((p) => p.kind !== "bundle" || p.codes.length >= 2, "แพ็กเกจรวมต้องมีอย่างน้อย 2 ตัว")
+    .refine((p) => p.kind !== "pick" || (p.pick_count !== null && p.pick_count <= p.codes.length), "จำนวนที่ให้เลือกต้องไม่เกินจำนวนอินดิเคเตอร์ในโปร")
+    .safeParse({
+    pick_count: kind === "pick" ? form.get("pick_count") || 2 : null,
+    audience: form.get("audience") || "all",
+    available_until: String(form.get("available_until") ?? ""),
+    badge: String(form.get("badge") ?? ""),
     name: form.get("name"),
     description: form.get("description") ?? "",
     kind: form.get("kind"),
@@ -48,7 +61,7 @@ export async function updateProduct(_: ProductState, form: FormData): Promise<Pr
   const { error } = await supabase.from("products").update(parsed.data).eq("id", id.data);
   if (error) return { error: "บันทึกไม่สำเร็จ" };
   revalidatePath("/admin/products", "layout");
-  revalidatePath("/pricing");
+  revalidatePath("/", "layout");
   return { ok: "บันทึกแล้ว" };
 }
 
@@ -73,6 +86,7 @@ export async function addPrice(_: ProductState, form: FormData): Promise<Product
   if (!Number.isFinite(baht) || baht < 10 || baht > 1_000_000) return { error: "ราคาต้องอยู่ระหว่าง 10 – 1,000,000 บาท" };
   const terms = PriceSchema.safeParse(Object.fromEntries(form));
   if (!terms.success) return { error: "เลือกรูปแบบราคาให้ครบ" };
+  if (terms.data.billing === "subscription" && form.get("kind") === "pick") return { error: "โปรแบบเลือกเองขายได้เฉพาะแบบจ่ายครั้งเดียว" };
 
   let interval: string | null = null;
   let duration_days: number | null = null;

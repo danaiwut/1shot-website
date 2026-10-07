@@ -47,3 +47,10 @@ export const SUB_STATUS: Record<string, { label: string; tone: "neutral" | "bran
 
 export const orderTerm = (o: Pick<Order, "billing" | "interval" | "duration_days">) =>
   termLabel({ billing: o.billing, interval: o.interval as ProductPrice["interval"], duration_days: o.duration_days });
+
+/** "รายตัว", "แพ็กเกจรวม · 2 ตัว", "เลือกเอง 2 จาก 5 ตัว" */
+export function kindLabel(p: { kind: "single" | "bundle" | "pick"; codes: string[]; pick_count: number | null }) {
+  if (p.kind === "single") return "รายตัว";
+  if (p.kind === "pick") return `เลือกเอง ${p.pick_count} จาก ${p.codes.length} ตัว`;
+  return `แพ็กเกจรวม · ${p.codes.length} ตัว`;
+}

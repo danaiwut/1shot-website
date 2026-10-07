@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import { BackLink, EmptyLine, Section, TextLink } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, cx, Empty } from "@/components/ui";
+import { cx } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { requestSubject, SUPPORT_STATUS } from "@/lib/support";
 import type { IndicatorRight, Profile, SupportMessage, SupportRequest } from "@/lib/types";
 import { ReplyForm } from "@/app/(app)/support/forms";
 import { staffReply } from "../actions";
-import { BackLink, InfoRow, Panel, TextLink } from "../../_components/admin-ui";
+import { ToneStatus } from "../../_components/tone-status";
 import { RequestControls } from "../controls";
 
 export const metadata = { title: "คำขอจากสมาชิก" };
@@ -32,72 +34,87 @@ export default async function AdminSupportThread({ params }: PageProps<"/admin/s
     <>
       <BackLink href="/admin/support">คำขอทั้งหมด</BackLink>
       <PageHeader
-        eyebrow="คำขอจากสมาชิก"
         title={requestSubject(req.kind, req.indicator_code)}
         description={`ส่งเมื่อ ${fmtDateTime(req.created_at)}`}
         action={<RequestControls id={req.id} status={req.status} assigned={Boolean(req.assigned_to)} />}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <Panel title="บทสนทนา" description={`${thread.length + 1} ข้อความ`} action={<Badge tone={st.tone}>{st.label}</Badge>}>
-          <div className="p-4 sm:p-6">
-            <ol className="space-y-4" aria-label="ข้อความในคำขอ">
-              <Bubble staff={false} at={req.created_at} body={req.message} />
-              {thread.map((m) => <Bubble key={m.id} staff={m.from_staff} at={m.created_at} body={m.body} />)}
-            </ol>
-          </div>
-          <div className="border-t border-line bg-panel-2/40 p-4 sm:p-6">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <Section title="บทสนทนา" description={`${thread.length + 1} ข้อความ`} action={<ToneStatus tone={st.tone}>{st.label}</ToneStatus>}>
+          <ol className="divide-y divide-line" aria-label="ข้อความในคำขอ">
+            <Message staff={false} at={req.created_at} body={req.message} />
+            {thread.map((m) => <Message key={m.id} staff={m.from_staff} at={m.created_at} body={m.body} />)}
+          </ol>
+          <div className="border-t border-line px-4 py-4 sm:px-5">
             <ReplyForm requestId={req.id} action={staffReply} label="ตอบกลับสมาชิก" />
           </div>
-        </Panel>
+        </Section>
 
-        <div className="min-w-0 space-y-6">
-          <Panel title="สถานะคำขอ">
+        <div className="min-w-0 space-y-10">
+          <Section title="สถานะคำขอ">
             <dl className="divide-y divide-line">
-              <InfoRow k="สถานะ"><Badge tone={st.tone}>{st.label}</Badge></InfoRow>
-              <InfoRow k="ผู้รับเรื่อง"><Badge tone={req.assigned_to ? "info" : "neutral"}>{req.assigned_to ? "มีผู้รับเรื่องแล้ว" : "ยังไม่มีผู้รับเรื่อง"}</Badge></InfoRow>
-              <InfoRow k="ส่งเมื่อ">{fmtDateTime(req.created_at)}</InfoRow>
-              <InfoRow k="อัปเดต">{fmtDateTime(req.updated_at)}</InfoRow>
+              <Info k="สถานะ"><ToneStatus tone={st.tone}>{st.label}</ToneStatus></Info>
+              <Info k="ผู้รับเรื่อง">{req.assigned_to ? "มีผู้รับเรื่องแล้ว" : "ยังไม่มีผู้รับเรื่อง"}</Info>
+              <Info k="ส่งเมื่อ"><span className="num tabular-nums">{fmtDateTime(req.created_at)}</span></Info>
+              <Info k="อัปเดต"><span className="num tabular-nums">{fmtDateTime(req.updated_at)}</span></Info>
             </dl>
-          </Panel>
+          </Section>
 
-          <Panel title="ข้อมูลสมาชิก" action={member && <TextLink href={`/admin/members/${member.id}`}>เปิดโปรไฟล์ / จัดการสิทธิ์</TextLink>}>
+          <Section title="ข้อมูลสมาชิก" action={member && <TextLink href={`/admin/members/${member.id}`}>เปิดโปรไฟล์ / จัดการสิทธิ์</TextLink>}>
             {member ? (
               <dl className="divide-y divide-line">
                 {[
                   ["ชื่อ", member.display_name || "—"], ["อีเมล", member.email], ["TradingView", member.tradingview_username || "—"],
                   ["Exness", member.exness_account ? `${member.exness_account} · ${member.ib_verified ? "IB ผ่านแล้ว" : "รอตรวจ"}` : "—"],
                 ].map(([k, v]) => (
-                  <InfoRow key={k} k={k}><span className="num break-all">{v}</span></InfoRow>
+                  <Info key={k} k={k}><span className="num break-all">{v}</span></Info>
                 ))}
-                <div className="px-4 py-3 sm:px-6">
+                <div className="px-4 py-3 sm:px-5">
                   <dt className="text-sm text-muted">สิทธิ์ปัจจุบัน</dt>
-                  <dd className="mt-2 flex flex-wrap gap-1.5 text-sm">
-                    {memberRights.map((r) => {
-                      const ok = !r.expires_at || new Date(r.expires_at).getTime() > now;
-                      return <Badge key={r.code} tone={ok ? "buy" : "neutral"} className="num">{r.code} · {r.expires_at ? fmtDate(r.expires_at) : "ตลอดชีพ"}{!ok && " (หมดอายุ)"}</Badge>;
-                    })}
-                    {!memberRights.length && <span>ไม่มี</span>}
+                  <dd className="mt-1 text-sm">
+                    {memberRights.length ? (
+                      <ul className="space-y-1">
+                        {memberRights.map((r) => {
+                          const ok = !r.expires_at || new Date(r.expires_at).getTime() > now;
+                          return (
+                            <li key={r.code} className="num flex items-center justify-between gap-3">
+                              <span className="font-medium">{r.code}</span>
+                              <span className={ok ? "text-fg" : "text-muted"}>{r.expires_at ? fmtDate(r.expires_at) : "ตลอดชีพ"}{!ok && " (หมดอายุ)"}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : <span>ไม่มี</span>}
                   </dd>
                 </div>
               </dl>
             ) : (
-              <Empty title="ไม่พบข้อมูลสมาชิก" />
+              <EmptyLine>ไม่พบข้อมูลสมาชิก</EmptyLine>
             )}
-          </Panel>
+          </Section>
         </div>
       </div>
     </>
   );
 }
 
-function Bubble({ staff, at, body }: { staff: boolean; at: string; body: string }) {
+function Info({ k, children }: { k: string; children: ReactNode }) {
   return (
-    <li className={cx("flex", staff ? "justify-end" : "justify-start")}>
-      <div className={cx("max-w-[85%] rounded-2xl px-4 py-3 shadow-xs", staff ? "rounded-br-md border border-brand/30 bg-brand-dim" : "rounded-bl-md border border-line bg-panel-2")}>
-        <p className="text-xs font-semibold text-muted">{staff ? "ทีมงาน" : "สมาชิก"} · {fmtDateTime(at)}</p>
-        <p className="mt-1 text-sm whitespace-pre-line">{body}</p>
-      </div>
+    <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+      <dt className="shrink-0 text-sm text-muted">{k}</dt>
+      <dd className="min-w-0 text-right text-sm">{children}</dd>
+    </div>
+  );
+}
+
+function Message({ staff, at, body }: { staff: boolean; at: string; body: string }) {
+  return (
+    <li className={cx("px-4 py-4 sm:px-5", staff && "bg-panel-2")}>
+      <p className="text-sm">
+        <span className={cx("font-medium", staff && "text-accent")}>{staff ? "ทีมงาน" : "สมาชิก"}</span>
+        <span className="num text-muted"> · {fmtDateTime(at)}</span>
+      </p>
+      <p className="mt-1 text-sm whitespace-pre-line">{body}</p>
     </li>
   );
 }

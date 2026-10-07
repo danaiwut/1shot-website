@@ -26,7 +26,7 @@ export default async function PricingPage() {
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-        <CatalogView products={products} access={owned?.access} subscribed={owned?.subscribed} from="/pricing" />
+        <CatalogView products={products} access={owned?.access} subscribed={owned?.subscribed} returning={owned?.returning} from="/pricing" />
       </section>
       <section className="mx-auto max-w-3xl px-5 pb-20">
         <p className="eyebrow">ก่อนเริ่มใช้งาน</p><h2 className="mt-3 mb-7 text-2xl font-semibold">ข้อมูลก่อนเลือกซื้อ</h2>

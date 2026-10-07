@@ -1,7 +1,9 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { after } from "next/server";
 import { requireViewer } from "@/lib/auth";
+import { autoVerifyIb } from "@/lib/exness-ib";
 import { confirmLink, issueLinkToken, requestRoomInvite, TelegramError } from "@/lib/telegram";
 
 export type FormState = { error?: string; ok?: string };
@@ -26,6 +28,7 @@ export async function saveProfile(_: FormState, form: FormData): Promise<FormSta
     })
     .eq("id", userId);
   if (error) return { error: "บันทึกไม่สำเร็จ" };
+  if (v.exness_account) after(() => autoVerifyIb(userId, v.exness_account));
   revalidatePath("/", "layout");
   return { ok: "บันทึกแล้ว" };
 }

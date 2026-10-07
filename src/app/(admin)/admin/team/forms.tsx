@@ -23,8 +23,8 @@ export function RemoveAdminForm({ email }: { email: string }) {
   const [state, action, pending] = useActionState<TeamState, FormData>(changeTeamRole, {});
   return (
     <details className="mt-3">
-      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-sell underline underline-offset-4">ถอดออกจากทีมงาน</summary>
-      <form action={action} className="mt-3 space-y-3 rounded-xl border border-sell/30 bg-sell-dim/40 p-4">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-sell underline-offset-4 hover:underline">ถอดออกจากทีมงาน</summary>
+      <form action={action} className="mt-2 space-y-3 rounded-lg border border-line bg-panel-2 p-4">
         <input type="hidden" name="role" value="member" />
         <input type="hidden" name="email" value={email} />
         <Field label="เหตุผลที่ถอดสิทธิ์แอดมิน" required><Input name="reason" required minLength={3} maxLength={300} /></Field>

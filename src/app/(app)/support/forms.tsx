@@ -1,6 +1,5 @@
 "use client";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
 import { Button, cx, Field, Notice, Select } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 import { openRequest, replyRequest, type SupportState } from "./actions";
@@ -11,7 +10,7 @@ export function NewRequestForm({ indicators, defaultKind, defaultCode }: { indic
   const [state, action, pending] = useActionState<SupportState, FormData>(openRequest, {});
   const [kind, setKind] = useState(defaultKind ?? "rights");
   return (
-    <form action={action} className="grid gap-5" noValidate>
+    <form action={action} className="grid gap-4" noValidate>
       <Field label="ประเภทคำขอ">
         <Select name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="rights">สิทธิ์ 1Shot Indicators (ขอสิทธิ์ / ต่ออายุ / สิทธิ์ไม่ขึ้น)</option>
@@ -30,9 +29,9 @@ export function NewRequestForm({ indicators, defaultKind, defaultCode }: { indic
       <Field label="รายละเอียด" hint="บอกสิ่งที่ต้องการให้ทีมงานช่วยตรวจสอบ เช่น ชื่อผู้ใช้ TradingView หรือวันที่ชำระเงิน" error={state.error}>
         <Textarea name="message" required minLength={5} maxLength={4000} rows={5} className={textarea} aria-invalid={Boolean(state.error)} />
       </Field>
-      <div className="flex justify-end border-t border-line pt-5">
+      <div className="flex justify-end">
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          <Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งคำขอ"}
+          {pending ? "กำลังส่ง…" : "ส่งคำขอ"}
         </Button>
       </div>
     </form>
@@ -54,7 +53,7 @@ export function ReplyForm({ requestId, action = replyRequest, label = "ตอบ
       </Field>
       {state.ok && <Notice tone="success">{state.ok}</Notice>}
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto"><Send aria-hidden className="size-4" /> {pending ? "กำลังส่ง…" : "ส่งข้อความ"}</Button>
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">{pending ? "กำลังส่ง…" : "ส่งข้อความ"}</Button>
       </div>
     </form>
   );

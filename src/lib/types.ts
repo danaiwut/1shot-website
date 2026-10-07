@@ -32,6 +32,8 @@ export interface IndicatorRight {
   expires_at: string | null;
   note: string | null;
   updated_at: string;
+  tv_synced_at?: string | null;
+  tv_synced_expires?: string | null;
 }
 
 export type SetupStatus = "pending" | "entry" | "retest" | "tp" | "sl" | "cancel" | "expired" | "close" | "info";
@@ -95,12 +97,19 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  kind: "single" | "bundle";
+  kind: "single" | "bundle" | "pick";
+  /** Indicator codes this product unlocks; for kind "pick" the pool the customer chooses from. */
   codes: string[];
   features: string[];
   active: boolean;
   featured: boolean;
   sort: number;
+  /** kind "pick": how many codes the customer chooses. */
+  pick_count: number | null;
+  /** "returning" = only customers who already bought or hold a right. */
+  audience: "all" | "returning";
+  available_until: string | null;
+  badge: string | null;
   product_prices?: ProductPrice[];
 }
 
@@ -187,3 +196,21 @@ export interface AuditEntry {
   detail: Record<string, unknown>;
   created_at: string;
 }
+
+export interface Promotion {
+  id: string;
+  title: string;
+  body: string;
+  badge: string | null;
+  code: string | null;
+  cta_label: string | null;
+  cta_href: string | null;
+  image_url: string | null;
+  starts_on: string;
+  ends_on: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface ExnessLot { account: string; day: string; lots: number; synced_at: string }
+export interface ExnessSyncRun { id: number; trigger: "cron" | "manual"; started_at: string; finished_at: string | null; ok: boolean | null; rows: number; error: string | null }

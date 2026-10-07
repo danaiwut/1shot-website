@@ -1,6 +1,5 @@
 "use client";
 import { useActionState, useEffect, useRef, useTransition } from "react";
-import { Trash2 } from "lucide-react";
 import { Button, Field, Input, Notice } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 import type { Announcement } from "@/lib/types";
@@ -18,14 +17,14 @@ export function AnnouncementForm({ item }: { item?: Announcement }) {
         <Textarea name="body" rows={item ? 4 : 5} maxLength={8000} defaultValue={item?.body}
           className="field-sizing-fixed bg-panel text-sm placeholder:text-faint focus-visible:border-brand/70" />
       </Field>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 rounded-xl border border-line bg-panel-2 px-4 py-1">
+      <div className="flex flex-wrap gap-x-6 gap-y-1">
         <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name="published" defaultChecked={item?.published ?? true} className="size-5 accent-[var(--color-brand)]" /> เผยแพร่ให้สมาชิกเห็น</label>
         <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name="pinned" defaultChecked={item?.pinned ?? false} className="size-5 accent-[var(--color-brand)]" /> ปักหมุดไว้ด้านบน</label>
       </div>
       {state.error && <Notice tone="error">{state.error}</Notice>}
       {state.ok && <Notice tone="success">{state.ok}</Notice>}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={pending}>{pending ? "กำลังบันทึก…" : item ? "บันทึกการแก้ไข" : "โพสต์ประกาศ"}</Button>
+        <Button type="submit" variant={item ? "outline" : "brand"} disabled={pending}>{pending ? "กำลังบันทึก…" : item ? "บันทึกการแก้ไข" : "โพสต์ประกาศ"}</Button>
         {item && <DeleteButton id={item.id} title={item.title} />}
       </div>
     </form>
@@ -35,8 +34,8 @@ export function AnnouncementForm({ item }: { item?: Announcement }) {
 function DeleteButton({ id, title }: { id: string; title: string }) {
   const [busy, start] = useTransition();
   return (
-    <Button type="button" variant="danger" disabled={busy} aria-label={`ลบประกาศ ${title}`} onClick={() => confirm(`ลบประกาศ “${title}”?`) && start(() => deleteAnnouncement(id))}>
-      <Trash2 aria-hidden className="size-4" /> ลบ
+    <Button type="button" variant="ghost" className="text-sell hover:text-sell" disabled={busy} aria-label={`ลบประกาศ ${title}`} onClick={() => confirm(`ลบประกาศ “${title}”?`) && start(() => deleteAnnouncement(id))}>
+      ลบ
     </Button>
   );
 }

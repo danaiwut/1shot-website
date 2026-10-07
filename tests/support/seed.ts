@@ -165,9 +165,9 @@ export function buildSeed(now = Date.now()) {
   const product_prices: Row[] = [];
   let pid = 1;
   const uuid = (prefix: string, n: number) => `${prefix}000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
-  const addProduct = (p: { name: string; description: string; kind: "single" | "bundle"; codes: string[]; features?: string[]; featured?: boolean; sort: number }, prices: [string, number, string | null, number | null][]) => {
+  const addProduct = (p: { name: string; description: string; kind: "single" | "bundle" | "pick"; codes: string[]; features?: string[]; featured?: boolean; sort: number; pick_count?: number; audience?: "all" | "returning"; badge?: string; available_until?: string }, prices: [string, number, string | null, number | null][]) => {
     const id = uuid("10", pid++);
-    products.push({ id, features: [], featured: false, active: true, created_at: iso(now - 60 * D), updated_at: iso(now - 60 * D), ...p });
+    products.push({ id, features: [], featured: false, active: true, pick_count: null, audience: "all", badge: null, available_until: null, created_at: iso(now - 60 * D), updated_at: iso(now - 60 * D), ...p });
     prices.forEach(([billing, baht, interval, days], i) => product_prices.push({
       id: uuid("20", product_prices.length + 1), product_id: id, billing, amount_satang: baht * 100, currency: "thb",
       interval, duration_days: days, active: true, sort: i, created_at: iso(now - 60 * D),
@@ -190,11 +190,24 @@ export function buildSeed(now = Date.now()) {
     description: "สาย SMC และ Supply/Demand สำหรับเทรดระหว่างวันและตามเทรนด์",
     features: ["Daytrade X · Trend Final · Supply and Demand", "เป้า TP หลายระดับ (R)"],
   }, [["subscription", 1590, "month", null], ["one_time", 3990, null, 90]]);
+  addProduct({
+    name: "โปรเดือนนี้: เลือก 2 อินดิเคเตอร์", kind: "pick", codes: ["DT", "RP", "TF", "AMD", "SW"], pick_count: 2, featured: true, badge: "HOT", sort: 5,
+    available_until: iso(now + 20 * D), description: "รับทันที 2 อินดิเคเตอร์ ใช้งานตลอดชีพ",
+    features: ["ใช้งานตลอดชีพ", "เข้ากลุ่ม OpenChat Community", "คลิปสอนการใช้งาน"],
+  }, [["one_time", 15000, null, null]]);
+  addProduct({
+    name: "ลูกค้าเก่า: ราคาแยกเดี่ยวพิเศษ", kind: "pick", codes: ["DT", "RP", "TF", "AMD", "SW", "SD"], pick_count: 1, audience: "returning", badge: "HOT", sort: 6,
+    available_until: iso(now + 20 * D), description: "สำหรับลูกค้าที่เคยซื้อแล้ว",
+  }, [["one_time", 8495, null, null]]);
+  addProduct({
+    name: "คู่ ICT: AMD Pro + Sweep", kind: "bundle", codes: ["AMD", "SW"], badge: "คู่แนะนำ", sort: 7,
+    description: "ดูวัฏจักร AMD แล้วเข้าเทรดตามจังหวะกวาด Liquidity",
+  }, [["one_time", 16999, null, null]]);
   const singles: Record<string, string> = {};
   INDICATORS.filter((i) => !i.is_reference).forEach((ind, i) => {
     singles[String(ind.code)] = addProduct(
       { name: String(ind.name), kind: "single", codes: [String(ind.code)], sort: 100 + i, description: String(ind.description) },
-      [["subscription", 790, "month", null], ["one_time", 1990, null, 90], ["one_time", 5900, null, null]],
+      [["subscription", 790, "month", null], ["one_time", 1990, null, 90], ["one_time", 14000, null, null]],
     );
   });
 

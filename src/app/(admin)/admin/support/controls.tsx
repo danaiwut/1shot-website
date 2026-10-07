@@ -11,7 +11,7 @@ export function RequestControls({ id, status, assigned }: { id: string; status: 
       {status === "resolved" ? (
         <Button variant="outline" disabled={busy} onClick={() => start(() => setRequestStatus(id, "open"))}>เปิดเรื่องอีกครั้ง</Button>
       ) : (
-        <Button disabled={busy} onClick={() => start(() => setRequestStatus(id, "resolved"))}>ปิดเรื่อง (เสร็จสิ้น)</Button>
+        <Button variant="outline" disabled={busy} onClick={() => start(() => setRequestStatus(id, "resolved"))}>ปิดเรื่อง (เสร็จสิ้น)</Button>
       )}
     </div>
   );

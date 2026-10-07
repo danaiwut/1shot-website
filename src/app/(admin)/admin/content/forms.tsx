@@ -1,6 +1,5 @@
 "use client";
 import { useActionState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
 import { Button, Field, Input, Notice } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 import { addNews, deleteBrief, deleteNews, saveBrief } from "./actions";
@@ -10,7 +9,7 @@ const area = "field-sizing-fixed bg-panel text-sm placeholder:text-faint focus-v
 export function BriefForm({ today, brief }: { today: string; brief?: { brief_date: string; story: string; facts: string } }) {
   const [state, action, pending] = useActionState(saveBrief, {});
   return (
-    <form action={action} className="space-y-5 p-4 sm:p-6" key={brief?.brief_date ?? today}>
+    <form action={action} className="space-y-5" key={brief?.brief_date ?? today}>
       <Field label="วันที่" required hint="ถ้ามีสรุปของวันนั้นอยู่แล้ว จะบันทึกทับ">
         <Input name="brief_date" type="date" required defaultValue={brief?.brief_date ?? today} className="w-44" />
       </Field>
@@ -30,8 +29,7 @@ export function BriefForm({ today, brief }: { today: string; brief?: { brief_dat
 export function NewsForm({ now }: { now: string }) {
   const [state, action, pending] = useActionState(addNews, {});
   return (
-    <form action={action} className="@container space-y-4 border-t border-line bg-panel-2/40 p-4 sm:p-6">
-      <h3 className="text-sm font-semibold">เพิ่มข่าว</h3>
+    <form action={action} className="@container space-y-4">
       <Field label="หัวข้อ (ต้นฉบับ)" required><Input name="title" required maxLength={300} /></Field>
       <Field label="หัวข้อภาษาไทย"><Input name="title_th" maxLength={300} /></Field>
       <div className="grid gap-4 @lg:grid-cols-2">
@@ -54,9 +52,9 @@ export function NewsForm({ now }: { now: string }) {
 export function DeleteNews({ id, title }: { id: number; title: string }) {
   const [busy, start] = useTransition();
   return (
-    <Button type="button" variant="danger" className="w-11 shrink-0 px-0" aria-label={`ลบข่าว ${title}`} disabled={busy}
+    <Button type="button" variant="ghost" className="shrink-0 text-sell hover:text-sell" aria-label={`ลบข่าว ${title}`} disabled={busy}
       onClick={() => confirm(`ลบข่าว “${title}”?`) && start(() => deleteNews(id))}>
-      <Trash2 aria-hidden className="size-4" />
+      ลบ
     </Button>
   );
 }
@@ -64,7 +62,7 @@ export function DeleteNews({ id, title }: { id: number; title: string }) {
 export function DeleteBrief({ date }: { date: string }) {
   const [busy, start] = useTransition();
   return (
-    <Button type="button" variant="danger" aria-label={`ลบสรุปวันที่ ${date}`} disabled={busy}
+    <Button type="button" variant="ghost" className="text-sell hover:text-sell" aria-label={`ลบสรุปวันที่ ${date}`} disabled={busy}
       onClick={() => confirm(`ลบสรุปวันที่ ${date}?`) && start(() => deleteBrief(date))}>
       ลบ
     </Button>

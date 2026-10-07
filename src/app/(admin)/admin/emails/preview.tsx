@@ -1,5 +1,4 @@
 "use client";
-import { Eye } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -9,15 +8,15 @@ export function EmailPreview({ subject, to, html }: { subject: string; to: strin
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" aria-label={`ดูตัวอย่างอีเมล: ${subject}`}>
-          <Eye aria-hidden className="size-4" /> ดูตัวอย่าง
+          ดูตัวอย่าง
         </Button>
       </DialogTrigger>
-      <DialogContent showCloseButton={false} className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl border-line bg-card sm:max-w-2xl">
+      <DialogContent showCloseButton={false} className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] rounded-lg border-line bg-card sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="leading-snug">{subject}</DialogTitle>
           <DialogDescription>ถึง {to}</DialogDescription>
         </DialogHeader>
-        <iframe title={`ตัวอย่างอีเมล: ${subject}`} srcDoc={html} sandbox="" className="h-[60dvh] w-full rounded-xl border border-line bg-white" />
+        <iframe title={`ตัวอย่างอีเมล: ${subject}`} srcDoc={html} sandbox="" className="h-[60dvh] w-full rounded-md border border-line bg-white" />
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">ปิด</Button>

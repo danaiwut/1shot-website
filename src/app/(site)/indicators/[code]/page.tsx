@@ -4,6 +4,7 @@ import { ArrowRight, BadgeCheck, Check, ChevronRight, CreditCard, Gift, ShieldAl
 import { RatingSummary, Stars } from "@/components/reviews/stars";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { IndicatorCard } from "@/components/store/indicator-explorer";
+import { PairPicker } from "@/components/store/pair-picker";
 import { ProductCard } from "@/components/store/product-card";
 import { Badge, ButtonLink, cx } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
@@ -11,7 +12,7 @@ import { fmtDate } from "@/lib/format";
 import { loadIndicator, loadIndicators } from "@/lib/indicators";
 import { loadRatings, loadReviews, viewerPurchased } from "@/lib/reviews/data";
 import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
-import { indicatorOffers, offerFor } from "@/lib/store/offers";
+import { indicatorOffers, offerFor, pairOffers } from "@/lib/store/offers";
 import { fmtTHB, priceSuffix } from "@/lib/store/pricing";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,6 +46,7 @@ export default async function IndicatorPage({ params }: PageProps<"/indicators/[
   const back = `/indicators/${code}`;
   const related = indicators.filter((item) => item.code !== code && item.family === ind.family).concat(indicators.filter((item) => item.code !== code && item.family !== ind.family)).slice(0, 3);
   const offers = indicatorOffers(indicators, products, ratings, owned?.access);
+  const pairs = free ? [] : pairOffers(products, code, owned?.returning);
 
   const profile = [
     ["ตลาด", "ทองคำ (XAUUSD)"],
@@ -98,7 +100,8 @@ export default async function IndicatorPage({ params }: PageProps<"/indicators/[
         </div>
 
         <aside id="purchase" className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <section className="border border-line bg-panel p-5"><p className="text-xs font-medium tracking-wider text-accent uppercase">เลือกสิทธิ์ใช้งาน</p><h2 className="mt-2 text-xl font-semibold">{free ? "เริ่มใช้งานฟรี" : has ? `สิทธิ์ใช้งาน ${ind.code}` : `ซื้อ ${ind.name}`}</h2>{free ? <><p className="mt-2 text-sm leading-6 text-muted">ข้อมูลอ้างอิงนี้เปิดให้สมาชิกทุกคน</p><ButtonLink href={viewer ? "/signals" : "/signup"} className="mt-5 w-full">{viewer ? "ดูสัญญาณ" : "สมัครสมาชิกฟรี"}</ButtonLink></> : single ? <div className="mt-5"><ProductCard product={single} access={access} subscribed={owned?.subscribed.includes(single.id)} from={back} variant="single" /></div> : <><p className="mt-2 text-sm leading-6 text-muted">ยังไม่มีการขายแบบรายตัว ขณะนี้เลือกใช้งานได้ผ่านแพ็กเกจรวม</p>{bundles.length > 0 && <ButtonLink href="#bundles" variant="outline" className="mt-5 w-full">ดูแพ็กเกจรวม</ButtonLink>}</>}</section>
+          <section className="border border-line bg-panel p-5"><p className="text-xs font-medium tracking-wider text-accent uppercase">เลือกสิทธิ์ใช้งาน</p><h2 className="mt-2 text-xl font-semibold">{free ? "เริ่มใช้งานฟรี" : has ? `สิทธิ์ใช้งาน ${ind.code}` : `ซื้อ ${ind.name}`}</h2>{free ? <><p className="mt-2 text-sm leading-6 text-muted">ข้อมูลอ้างอิงนี้เปิดให้สมาชิกทุกคน</p><ButtonLink href={viewer ? "/signals" : "/signup"} className="mt-5 w-full">{viewer ? "ดูสัญญาณ" : "สมัครสมาชิกฟรี"}</ButtonLink></> : single ? <div className="mt-5"><ProductCard product={single} access={access} subscribed={owned?.subscribed.includes(single.id)} returning={owned?.returning} from={back} variant="single" /></div> : <><p className="mt-2 text-sm leading-6 text-muted">ยังไม่มีการขายแบบรายตัว ขณะนี้เลือกใช้งานได้ผ่านแพ็กเกจรวม</p>{bundles.length > 0 && <ButtonLink href="#bundles" variant="outline" className="mt-5 w-full">ดูแพ็กเกจรวม</ButtonLink>}</>}</section>
+          {pairs.length > 0 && <PairPicker code={code} pairs={pairs} from={back} open />}
           {!free && <section className="border border-line bg-panel-2 p-5"><p className="text-sm font-semibold">สิ่งที่ควรทราบ</p><ul className="mt-4 space-y-3 text-sm text-muted"><li className="flex gap-3"><CreditCard className="mt-0.5 size-4 shrink-0 text-accent" />ชำระเป็นเงินบาทผ่าน Stripe</li><li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0 text-accent" />สิทธิ์จะแสดงในบัญชีหลังชำระเงิน</li><li className="flex gap-3"><Gift className="mt-0.5 size-4 shrink-0 text-accent" />ขอสิทธิ์ใช้ฟรีผ่าน Exness IB ได้</li></ul></section>}
           <p className="flex gap-2 border-l-2 border-brand bg-brand-dim p-4 text-xs leading-6 text-muted"><ShieldAlert className="mt-0.5 size-4 shrink-0 text-accent" />การเทรดมีความเสี่ยงสูง และไม่มีผลกำไรที่รับประกัน</p>
         </aside>

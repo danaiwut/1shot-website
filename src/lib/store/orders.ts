@@ -4,8 +4,11 @@ import { sendPurchaseEmail, sendRefundEmail } from "../email/send";
 import { publicEnv } from "../env";
 import { createAdminClient } from "../supabase/admin";
 import type { Order, Product, ProductPrice } from "../types";
+import { orderCodes, orderName, PickError } from "./pick";
 import { termLabel } from "./pricing";
 import { getStripe, idOf, invoiceSubscriptionId, periodEnd, StoreError } from "./stripe";
+import { after } from "next/server";
+import { syncTradingViewRights } from "../tradingview";
 
 /*
  * Order lifecycle:
@@ -17,6 +20,15 @@ import { getStripe, idOf, invoiceSubscriptionId, periodEnd, StoreError } from ".
 
 type Admin = ReturnType<typeof createAdminClient>;
 
+/** Run after the response when inside a request (webhook/action); otherwise (scripts, tests) start it now. */
+function later(task: () => Promise<void>) {
+  try {
+    after(task);
+  } catch {
+    void task();
+  }
+}
+
 async function loadPrice(admin: Admin, priceId: string) {
   const { data: price } = await admin.from("product_prices").select("*").eq("id", priceId).eq("active", true).maybeSingle<ProductPrice>();
   if (!price) throw new StoreError("ไม่พบราคานี้ หรือปิดขายแล้ว");
@@ -27,17 +39,50 @@ async function loadPrice(admin: Admin, priceId: string) {
 
 async function ensureCustomer(admin: Admin, userId: string, email: string) {
   const { data } = await admin.from("stripe_customers").select("stripe_customer_id").eq("user_id", userId).maybeSingle();
-  if (data?.stripe_customer_id) return data.stripe_customer_id as string;
+  if (data?.stripe_customer_id) {
+    // Receipts go to the email the customer confirmed on the checkout form.
+    try { await getStripe().customers.update(data.stripe_customer_id as string, { email }); } catch { /* keep the old email; never block checkout */ }
+    return data.stripe_customer_id as string;
+  }
   const customer = await getStripe().customers.create({ email, metadata: { user_id: userId } }, { idempotencyKey: `customer-${userId}` });
   await admin.from("stripe_customers").upsert({ user_id: userId, stripe_customer_id: customer.id });
   return customer.id;
 }
 
-/** Starts a purchase. Returns the Stripe Checkout URL to send the customer to. */
-export async function createCheckout(userId: string, email: string, priceId: string) {
+/** True when the user has a paid (or refunded) order or holds any indicator right. */
+async function isReturningCustomer(admin: Admin, userId: string) {
+  const [{ count: orders }, { count: rights }] = await Promise.all([
+    admin.from("orders").select("id", { count: "exact", head: true }).eq("user_id", userId).in("status", ["paid", "refunded"]),
+    admin.from("indicator_rights").select("code", { count: "exact", head: true }).eq("user_id", userId),
+  ]);
+  return (orders ?? 0) > 0 || (rights ?? 0) > 0;
+}
+
+/**
+ * Starts a purchase. Returns the Stripe Checkout URL to send the customer to.
+ * `chosen` is only used by "pick" products (the customer's choice from the pool).
+ */
+export async function createCheckout(userId: string, email: string, priceId: string, chosen: string[] = []) {
   const admin = createAdminClient();
   const { price, product } = await loadPrice(admin, priceId);
   const isSub = price.billing === "subscription";
+
+  if (product.available_until && new Date(product.available_until).getTime() <= Date.now()) {
+    throw new StoreError("โปรโมชั่นนี้หมดเวลาแล้ว");
+  }
+  if (product.audience === "returning" && !(await isReturningCustomer(admin, userId))) {
+    throw new StoreError("ราคานี้สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น");
+  }
+  if (product.kind === "pick" && isSub) throw new StoreError("โปรโมชั่นนี้ขายเฉพาะแบบจ่ายครั้งเดียว");
+  let codes: string[];
+  try {
+    const { data: lifetime } = await admin.from("indicator_rights").select("code").eq("user_id", userId).is("expires_at", null);
+    codes = orderCodes(product, chosen, ((lifetime ?? []) as { code: string }[]).map((r) => r.code));
+  } catch (err) {
+    if (err instanceof PickError) throw new StoreError(err.message);
+    throw err;
+  }
+  const name = orderName(product, codes);
 
   if (isSub) {
     const { data: existing } = await admin.from("subscriptions").select("id").eq("user_id", userId).eq("product_id", product.id)
@@ -46,7 +91,7 @@ export async function createCheckout(userId: string, email: string, priceId: str
   }
 
   const { data: order, error } = await admin.from("orders").insert({
-    user_id: userId, product_id: product.id, price_id: price.id, product_name: product.name, codes: product.codes,
+    user_id: userId, product_id: product.id, price_id: price.id, product_name: name, codes,
     billing: price.billing, interval: price.interval, duration_days: price.duration_days, amount_satang: price.amount_satang,
     currency: "thb", status: "pending", kind: "checkout",
   }).select("id").single<{ id: string }>();
@@ -64,7 +109,7 @@ export async function createCheckout(userId: string, email: string, priceId: str
       price_data: {
         currency: "thb",
         unit_amount: price.amount_satang,
-        product_data: { name: `${product.name} · ${termLabel(price)}`, ...(product.description && { description: product.description.slice(0, 300) }) },
+        product_data: { name: `${name} · ${termLabel(price)}`, ...(product.description && { description: product.description.slice(0, 300) }) },
         ...(isSub && { recurring: { interval: price.interval! } }),
       },
     }],
@@ -109,6 +154,8 @@ async function grantForOrder(admin: Admin, order: Order, until: Date | null) {
     p_until: isSub ? (until ?? new Date(Date.now() + 31 * 864e5)).toISOString() : null,
   });
   if (error) throw new Error(`grant_order failed: ${error.message}`);
+  // TradingView calls run after the webhook has answered Stripe.
+  later(() => syncTradingViewRights(order.user_id, order.codes));
 }
 
 export async function setOrderStatus(orderId: string, status: "failed" | "canceled") {
@@ -217,6 +264,7 @@ export async function revokeOrder(orderId: string) {
   if (error) throw new Error(`revoke_order failed: ${error.message}`);
   if (!data) return false;
   const { data: order } = await admin.from("orders").select("*").eq("id", orderId).single<Order>();
+  if (order) later(() => syncTradingViewRights(order.user_id, order.codes));
   if (order?.stripe_subscription_id) await cancelSubscriptionNow(order.stripe_subscription_id);
   if (order) await sendRefundEmail(order, Boolean(order.stripe_subscription_id));
   return true;

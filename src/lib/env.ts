@@ -31,6 +31,18 @@ export const serverEnv = {
   /** Google OAuth client (Web application) — Google redirects straight back to {SITE_URL}/auth/google/callback. */
   googleClientId: () => process.env.GOOGLE_CLIENT_ID ?? "",
   googleClientSecret: () => process.env.GOOGLE_CLIENT_SECRET ?? "",
+  /** Exness partner API (lot volumes). See src/lib/exness.ts. */
+  exnessApiUrl: () => process.env.EXNESS_API_URL ?? "",
+  exnessApiToken: () => process.env.EXNESS_API_TOKEN ?? "",
+  /** Exness partner (IB) login for the affiliates API — automatic IB check. See src/lib/exness-ib.ts. */
+  exnessPartnerLogin: () => process.env.EXNESS_PARTNER_LOGIN ?? "",
+  exnessPartnerPassword: () => process.env.EXNESS_PARTNER_PASSWORD ?? "",
+  exnessAffiliatesUrl: () => (process.env.EXNESS_AFFILIATES_URL || "https://my.exnessaffiliates.com").replace(/\/$/, ""),
+  /** TradingView script owner's browser session (cookie values), used to manage invite-only access. */
+  tradingviewSessionId: () => process.env.TRADINGVIEW_SESSIONID ?? "",
+  tradingviewSessionSign: () => process.env.TRADINGVIEW_SESSIONID_SIGN ?? "",
+  /** Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. */
+  cronSecret: () => process.env.CRON_SECRET ?? "",
   /** Comma-separated emails that are made owner automatically (first admin setup). */
   ownerEmails: () => (process.env.OWNER_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
 };

@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { ArrowRight, LifeBuoy } from "lucide-react";
+import { TextLink } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
 import { ButtonLink } from "@/components/ui";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = { title: "คู่มือการใช้งาน" };
 
@@ -40,59 +38,41 @@ export default function GuidePage() {
       <PageHeader
         title="คู่มือการใช้งาน"
         description="ทำตาม 5 หัวข้อนี้ ก็ใช้งาน 1SHOT ได้ครบ"
-        action={<ButtonLink href="/support" variant="outline"><LifeBuoy aria-hidden className="size-4" /> ติดต่อทีมงาน</ButtonLink>}
+        action={<ButtonLink href="/support" variant="outline">ติดต่อทีมงาน</ButtonLink>}
       />
-      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
-        <nav aria-label="สารบัญคู่มือ" className="lg:sticky lg:top-24">
-          <Card className="gap-0 rounded-2xl p-2 shadow-xs">
-            <p aria-hidden className="px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted">สารบัญ</p>
-            <ol className="grid gap-0.5 sm:grid-cols-2 lg:grid-cols-1">
-              {STEPS.map((s, i) => (
-                <li key={s.id}>
-                  <a href={`#${s.id}`} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none hover:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-ring/50">
-                    <span className="num grid size-6 shrink-0 place-items-center rounded-md bg-brand-dim text-xs font-bold text-accent">{i + 1}</span>
-                    {s.title}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </Card>
+      <div className="grid gap-10 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start">
+        <nav aria-labelledby="guide-toc" className="lg:sticky lg:top-24">
+          <h2 id="guide-toc" className="mb-2 text-sm font-semibold text-muted">สารบัญ</h2>
+          <ol className="border-l border-line">
+            {STEPS.map((s, i) => (
+              <li key={s.id}>
+                <a href={`#${s.id}`} className="-ml-px flex min-h-11 items-center gap-2 border-l border-transparent pl-3 text-sm text-muted outline-none hover:border-fg hover:text-fg focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                  <span className="num tabular-nums text-faint">{i + 1}.</span> {s.title}
+                </a>
+              </li>
+            ))}
+          </ol>
         </nav>
 
-        <div className="space-y-6">
+        <article className="max-w-2xl space-y-10">
           {STEPS.map((s, i) => (
-            <Card key={s.id} id={s.id} className="scroll-mt-24 gap-0 rounded-2xl py-0 shadow-xs">
-              <CardHeader className="border-b border-line py-5">
-                <CardDescription className="num text-xs font-semibold tracking-[0.14em] text-accent">ขั้นที่ {String(i + 1).padStart(2, "0")}</CardDescription>
-                <CardTitle><h2 className="text-lg leading-snug font-bold">{s.title}</h2></CardTitle>
-              </CardHeader>
-              <CardContent className="py-5">
-                <ol className="space-y-3">
-                  {s.body.map((b, j) => (
-                    <li key={b} className="flex gap-3">
-                      <span aria-hidden className="num mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-semibold text-muted">{j + 1}</span>
-                      <span className="leading-relaxed">{b}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-              <CardFooter className="border-t border-line bg-panel-2/40 py-3">
-                <Link href={s.link.href} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent underline underline-offset-4">{s.link.label} <ArrowRight aria-hidden className="size-4" /></Link>
-              </CardFooter>
-            </Card>
+            <section key={s.id} id={s.id} aria-labelledby={`${s.id}-h`} className="scroll-mt-24">
+              <h2 id={`${s.id}-h`} className="text-base font-semibold">
+                <span className="num mr-2 tabular-nums text-muted">{i + 1}.</span>{s.title}
+              </h2>
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed marker:text-muted">
+                {s.body.map((b) => <li key={b} className="pl-1">{b}</li>)}
+              </ol>
+              <TextLink href={s.link.href} className="mt-1">{s.link.label} <span aria-hidden>→</span></TextLink>
+            </section>
           ))}
 
-          <Card className="flex-row flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-t from-brand-dim/40 to-panel px-6 py-5 shadow-xs">
-            <div className="flex items-start gap-3">
-              <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-dim text-accent"><LifeBuoy className="size-5" /></span>
-              <div>
-                <h2 className="font-bold">ยังติดปัญหาอยู่?</h2>
-                <p className="text-sm text-muted">ติดต่อทีมงานเพื่อขอความช่วยเหลือ</p>
-              </div>
-            </div>
-            <ButtonLink href="/support" className="w-full sm:w-auto">ส่งคำขอรับความช่วยเหลือ</ButtonLink>
-          </Card>
-        </div>
+          <section aria-labelledby="guide-help" className="border-t border-line pt-8">
+            <h2 id="guide-help" className="text-base font-semibold">ยังติดปัญหาอยู่?</h2>
+            <p className="mt-1 text-sm text-muted">ส่งคำขอถึงทีมงาน แล้วติดตามคำตอบได้ในหน้าคำขอ</p>
+            <TextLink href="/support">ส่งคำขอรับความช่วยเหลือ <span aria-hidden>→</span></TextLink>
+          </section>
+        </article>
       </div>
     </>
   );

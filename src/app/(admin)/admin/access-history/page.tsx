@@ -1,12 +1,11 @@
 import Link from "next/link";
+import { EmptyLine, Section, Segmented, TableBox, Td, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Empty, FilterLink } from "@/components/ui";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { FilterLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { describeAudit } from "@/lib/support";
 import type { AuditEntry } from "@/lib/types";
-import { Panel, Segmented, td, Th, theadRow, Toolbar } from "../_components/admin-ui";
 
 export const metadata = { title: "ประวัติการจัดการสิทธิ์" };
 
@@ -33,47 +32,49 @@ export default async function AccessHistoryPage({ searchParams }: PageProps<"/ad
 
   return (
     <>
-      <PageHeader eyebrow="ระบบหลังบ้าน" title="ประวัติการจัดการสิทธิ์" description="บันทึกทุกการเพิ่ม ต่ออายุ ถอนสิทธิ์ เปลี่ยนบทบาท และตรวจ IB — ทั้งจากทีมงานและจากการชำระเงิน 200 รายการล่าสุด" />
-      <Panel title={f.label} description={`${rows.length} รายการ`}>
-        <Toolbar>
+      <PageHeader title="ประวัติการจัดการสิทธิ์" description="บันทึกทุกการเพิ่ม ต่ออายุ ถอนสิทธิ์ เปลี่ยนบทบาท และตรวจ IB — ทั้งจากทีมงานและจากการชำระเงิน 200 รายการล่าสุด" />
+      <Section
+        title={f.label}
+        description={`${rows.length} รายการ`}
+        action={
           <Segmented label="กรองประวัติตามประเภท">
             {FILTERS.map((x) => <FilterLink key={x.id} href={`/admin/access-history?type=${x.id}`} on={f.id === x.id}>{x.label}</FilterLink>)}
           </Segmented>
-        </Toolbar>
+        }
+      >
         {rows.length ? (
-          <Table className="min-w-[760px]">
-            <caption className="sr-only">ประวัติการจัดการสิทธิ์ {rows.length} รายการ</caption>
-            <TableHeader>
-              <TableRow className={theadRow}>
+          <TableBox caption={`ประวัติการจัดการสิทธิ์ ${rows.length} รายการ`} minWidth={760}>
+            <thead className="bg-panel-2">
+              <tr>
                 <Th>เวลา</Th>
                 <Th>การกระทำ</Th>
                 <Th>สมาชิก</Th>
                 <Th>โดย</Th>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((e) => {
                 const d = describeAudit(e);
                 return (
-                  <TableRow key={e.id} className="border-line align-top">
-                    <TableCell className={`${td} text-muted`}><time dateTime={e.created_at}>{fmtDateTime(e.created_at)}</time></TableCell>
-                    <TableCell className={`${td} whitespace-normal`}>
+                  <tr key={e.id} className="border-t border-line align-top">
+                    <Td className="num whitespace-nowrap text-muted tabular-nums"><time dateTime={e.created_at}>{fmtDateTime(e.created_at)}</time></Td>
+                    <Td>
                       <span className="font-medium">{d.title}</span>
                       {d.detail && <span className="block max-w-md text-xs text-muted">{d.detail}</span>}
-                    </TableCell>
-                    <TableCell className={td}>
+                    </Td>
+                    <Td>
                       {e.subject_id ? <Link href={`/admin/members/${e.subject_id}`} className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:text-accent hover:underline">{who(e.subject)}</Link> : <span className="text-faint">—</span>}
-                    </TableCell>
-                    <TableCell className={td}>
-                      {e.actor_id ? who(e.actor) : <Badge tone="info">ระบบ (การชำระเงิน / อัตโนมัติ)</Badge>}
-                    </TableCell>
-                  </TableRow>
+                    </Td>
+                    <Td>
+                      {e.actor_id ? who(e.actor) : <span className="text-muted">ระบบ (การชำระเงิน / อัตโนมัติ)</span>}
+                    </Td>
+                  </tr>
                 );
               })}
-            </TableBody>
-          </Table>
-        ) : <Empty title="ยังไม่มีประวัติในหมวดนี้" />}
-      </Panel>
+            </tbody>
+          </TableBox>
+        ) : <EmptyLine>ยังไม่มีประวัติในหมวดนี้</EmptyLine>}
+      </Section>
     </>
   );
 }

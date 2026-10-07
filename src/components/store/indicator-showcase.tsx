@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import type { PublicIndicator } from "@/lib/indicators";
+import type { Promotion } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useReduce } from "@/components/motion/use-reduce";
 import type { IndicatorOffer } from "./indicator-explorer";
@@ -14,13 +15,22 @@ import type { IndicatorOffer } from "./indicator-explorer";
  * sides — with one call to action under the centre phone.
  */
 
-export function IndicatorShowcase({ headline, indicators, offers }: { headline: string[][]; indicators: PublicIndicator[]; offers: IndicatorOffer[] }) {
+export function IndicatorShowcase({ headline, indicators, offers, promotion }: {
+  headline: string[][]; indicators: PublicIndicator[]; offers: IndicatorOffer[]; promotion?: Promotion | null;
+}) {
   return (
     <section id="indicators" aria-labelledby="indicators-title" className="relative scroll-mt-18 overflow-hidden bg-ink">
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-[520px] -translate-y-1/4 bg-[radial-gradient(50%_60%_at_50%_50%,rgb(178_0_22/0.28),transparent_70%)]" />
       <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-20 sm:px-6 sm:pt-28 sm:pb-24">
         <ScrollHeadline lines={headline} />
-        {indicators.length > 0 && <PhoneCarousel indicators={indicators} offers={offers} />}
+        {promotion ? (
+          <div className="mt-14 grid items-center gap-10 sm:mt-20 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+            <PromoCard promo={promotion} />
+            {indicators.length > 0 && <PhoneCarousel indicators={indicators} offers={offers} compact />}
+          </div>
+        ) : (
+          indicators.length > 0 && <PhoneCarousel indicators={indicators} offers={offers} />
+        )}
       </div>
     </section>
   );
@@ -54,7 +64,7 @@ function Word({ word, progress, range, lit }: { word: string; progress: MotionVa
   return <motion.span style={{ opacity: lit ? 1 : opacity }} className="text-fg">{word}</motion.span>;
 }
 
-function PhoneCarousel({ indicators, offers }: { indicators: PublicIndicator[]; offers: IndicatorOffer[] }) {
+function PhoneCarousel({ indicators, offers, compact = false }: { indicators: PublicIndicator[]; offers: IndicatorOffer[]; compact?: boolean }) {
   const start = Math.max(0, indicators.findIndex((i) => i.code === "AMD"));
   const [index, setIndex] = useState(start);
   const touch = useRef<number | null>(null);
@@ -68,7 +78,7 @@ function PhoneCarousel({ indicators, offers }: { indicators: PublicIndicator[]; 
       role="region"
       aria-roledescription="carousel"
       aria-label="อินดิเคเตอร์ของ 1SHOT"
-      className="mt-14 sm:mt-20"
+      className={compact ? "min-w-0" : "mt-14 sm:mt-20"}
       onKeyDown={(e) => { if (e.key === "ArrowLeft") go(-1); if (e.key === "ArrowRight") go(1); }}
     >
       <div
@@ -192,5 +202,42 @@ function Phone({ indicator: i, price, featured }: { indicator: PublicIndicator; 
         </div>
       </div>
     </div>
+  );
+}
+
+const thaiDate = (d: string) => new Date(`${d}T00:00:00+07:00`).toLocaleDateString("th-TH", { day: "numeric", month: "short", timeZone: "Asia/Bangkok" });
+
+/** Monthly promotion (admin › โปรโมชัน), shown beside the indicator carousel. */
+function PromoCard({ promo }: { promo: Promotion }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <aside aria-labelledby="promo-title" className="rounded-lg border border-brand/50 bg-panel p-6">
+      {promo.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- admin-provided poster (site path or https URL)
+        <img src={promo.image_url} alt={promo.title} loading="lazy" className="mb-5 aspect-square w-full rounded-md object-cover" />
+      )}
+      <p className="text-sm font-semibold text-accent">{promo.badge || "โปรโมชันประจำเดือน"}</p>
+      <h3 id="promo-title" className="mt-2 text-2xl leading-snug font-bold">{promo.title}</h3>
+      {promo.body && <p className="mt-2 text-sm leading-relaxed text-muted">{promo.body}</p>}
+      {promo.code && (
+        <div className="mt-5">
+          <p className="text-sm text-muted">ใช้โค้ดตอนชำระเงิน</p>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard?.writeText(promo.code!).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })}
+            className="mt-1.5 flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-dashed border-line-strong px-4 text-left hover:border-fg"
+            aria-label={`คัดลอกโค้ด ${promo.code}`}
+          >
+            <span className="num text-lg font-bold tracking-wider">{promo.code}</span>
+            {copied ? <Check aria-hidden className="size-4 text-buy" /> : <Copy aria-hidden className="size-4 text-muted" />}
+          </button>
+          <span aria-live="polite" className="sr-only">{copied ? "คัดลอกโค้ดแล้ว" : ""}</span>
+        </div>
+      )}
+      <p className="mt-4 text-sm text-muted">ถึง {thaiDate(promo.ends_on)}</p>
+      <Link href={promo.cta_href || "/pricing"} className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong">
+        {promo.cta_label || "ดูแพ็กเกจ"} <ArrowRight aria-hidden className="size-4" />
+      </Link>
+    </aside>
   );
 }

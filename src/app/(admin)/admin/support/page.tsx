@@ -1,12 +1,12 @@
 import Link from "next/link";
+import { EmptyLine, Section, Segmented, TableBox, Td, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Empty, FilterLink } from "@/components/ui";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { FilterLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { requestSubject, SUPPORT_STATUS } from "@/lib/support";
 import type { SupportRequest, SupportStatus } from "@/lib/types";
-import { Panel, Segmented, td, Th, theadRow, Toolbar } from "../_components/admin-ui";
+import { ToneStatus } from "../_components/tone-status";
 
 export const metadata = { title: "คำขอจากสมาชิก" };
 
@@ -29,53 +29,53 @@ export default async function AdminSupportPage({ searchParams }: PageProps<"/adm
 
   return (
     <>
-      <PageHeader eyebrow="ระบบหลังบ้าน" title="คำขอจากสมาชิก" description="ตรวจสอบรายละเอียดและตอบกลับสมาชิก เรื่องที่รอตอบนานที่สุดอยู่ด้านล่าง" />
-      <Panel title={current.label} description={`${rows.length} รายการ`}>
-        <Toolbar>
+      <PageHeader title="คำขอจากสมาชิก" description="ตรวจสอบรายละเอียดและตอบกลับสมาชิก เรื่องที่รอตอบนานที่สุดอยู่ด้านล่าง" />
+      <Section
+        title={current.label}
+        description={`${rows.length} รายการ`}
+        action={
           <Segmented label="กรองคำขอตามสถานะ">
             {FILTERS.map((f) => (
-              <FilterLink key={f.id} href={`/admin/support?status=${f.id}`} on={status === f.id}>{f.label} <span className="num">({count(f.id)})</span></FilterLink>
+              <FilterLink key={f.id} href={`/admin/support?status=${f.id}`} on={status === f.id}>{f.label} <span className="num tabular-nums">({count(f.id)})</span></FilterLink>
             ))}
           </Segmented>
-        </Toolbar>
+        }
+      >
         {rows.length ? (
-          <Table className="min-w-[760px]">
-            <caption className="sr-only">คำขอจากสมาชิก {rows.length} รายการ</caption>
-            <TableHeader>
-              <TableRow className={theadRow}>
+          <TableBox caption={`คำขอจากสมาชิก ${rows.length} รายการ`} minWidth={760}>
+            <thead className="bg-panel-2">
+              <tr>
                 <Th>สมาชิก · เรื่อง</Th>
                 <Th>ข้อความ</Th>
                 <Th>ผู้รับเรื่อง</Th>
                 <Th>อัปเดต</Th>
                 <Th>สถานะ</Th>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((r) => {
                 const st = SUPPORT_STATUS[r.status];
                 return (
-                  <TableRow key={r.id} className="border-line">
-                    <TableCell className={td}>
+                  <tr key={r.id} className="border-t border-line">
+                    <Td>
                       <Link href={`/admin/support/${r.id}`} className="group inline-flex min-h-11 flex-col justify-center">
                         <span className="font-medium group-hover:text-accent group-hover:underline">{r.profiles?.display_name || r.profiles?.email || "—"}</span>
                         <span className="text-xs text-muted">{requestSubject(r.kind, r.indicator_code)}</span>
                       </Link>
-                    </TableCell>
-                    <TableCell className={`${td} max-w-xs`}><span className="block truncate text-muted">{r.message}</span></TableCell>
-                    <TableCell className={td}>
-                      <Badge tone={r.assigned_to ? "info" : "neutral"}>{r.assigned_to ? "มีผู้รับเรื่องแล้ว" : "ยังไม่มีผู้รับเรื่อง"}</Badge>
-                    </TableCell>
-                    <TableCell className={`${td} text-muted`}>{fmtDateTime(r.updated_at)}</TableCell>
-                    <TableCell className={td}><Badge tone={st.tone}>{st.label}</Badge></TableCell>
-                  </TableRow>
+                    </Td>
+                    <Td className="max-w-xs"><span className="block truncate text-muted">{r.message}</span></Td>
+                    <Td className="whitespace-nowrap text-muted">{r.assigned_to ? "มีผู้รับเรื่องแล้ว" : "ยังไม่มีผู้รับเรื่อง"}</Td>
+                    <Td className="num whitespace-nowrap text-muted tabular-nums">{fmtDateTime(r.updated_at)}</Td>
+                    <Td><ToneStatus tone={st.tone}>{st.label}</ToneStatus></Td>
+                  </tr>
                 );
               })}
-            </TableBody>
-          </Table>
+            </tbody>
+          </TableBox>
         ) : (
-          <Empty title="ไม่มีคำขอในสถานะนี้" />
+          <EmptyLine>ไม่มีคำขอในสถานะนี้</EmptyLine>
         )}
-      </Panel>
+      </Section>
     </>
   );
 }

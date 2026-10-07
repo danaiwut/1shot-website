@@ -145,3 +145,10 @@ export async function signInWithGoogle(_: AuthState, form: FormData): Promise<Au
   });
   redirect(url);
 }
+
+/** Sign out from the app menu (a plain <form> inside the dropdown is unmounted before it can submit). */
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/");
+}

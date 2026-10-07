@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { BackLink, SettingsSection, StatRow } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, ButtonLink } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
-import { fmtTHB } from "@/lib/store/pricing";
+import { fmtTHB, kindLabel } from "@/lib/store/pricing";
 import type { Product } from "@/lib/types";
-import { BackLink, InfoRow, Panel } from "../../_components/admin-ui";
 import { AddPriceForm, PriceList, ProductForm } from "../forms";
 
 export const metadata = { title: "แก้ไขสินค้า" };
@@ -29,32 +28,27 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
     <>
       <BackLink href="/admin/products">สินค้าทั้งหมด</BackLink>
       <PageHeader
-        eyebrow="ผู้ดูแลระบบ · สินค้า"
         title={product.name}
-        description={`ขายแล้ว ${sold.length} รายการ · รายได้ ${fmtTHB(revenue)}`}
-        action={<ButtonLink href="/pricing" target="_blank" variant="outline">ดูหน้าราคา <ExternalLink aria-hidden className="size-4" /><span className="sr-only"> (เปิดแท็บใหม่)</span></ButtonLink>}
+        description={`${kindLabel(product)} · ${product.codes.join(" · ") || "ไม่มีอินดิเคเตอร์"}`}
+        action={<ButtonLink href="/pricing" target="_blank" variant="outline">ดูหน้าราคา<span className="sr-only"> (เปิดแท็บใหม่)</span></ButtonLink>}
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-6">
-          <Panel title="ข้อมูลสินค้า" description="ชื่อ ประเภท และอินดิเคเตอร์ที่ลูกค้าจะได้รับ">
+      <div className="space-y-10">
+        <StatRow
+          items={[
+            { label: "สถานะ", value: product.active ? "เปิดขาย" : "ปิดขาย" },
+            { label: "ราคาที่เปิดขาย", value: `${activePrices} / ${prices.length}` },
+            { label: "ขายแล้ว", value: `${sold.length} รายการ` },
+            { label: "รายได้", value: fmtTHB(revenue) },
+          ]}
+        />
+        <div>
+          <SettingsSection title="ข้อมูลสินค้า" description="ชื่อ ประเภท และอินดิเคเตอร์ที่ลูกค้าจะได้รับ">
             <ProductForm product={product} indicators={(indicators ?? []) as { code: string; name: string }[]} />
-          </Panel>
-        </div>
-        <div className="min-w-0 space-y-6">
-          <Panel title="สรุป">
-            <dl className="divide-y divide-line">
-              <InfoRow k="สถานะ"><Badge tone={product.active ? "buy" : "sell"}>{product.active ? "เปิดขาย" : "ปิดขาย"}</Badge></InfoRow>
-              <InfoRow k="ประเภท">{product.kind === "bundle" ? "แพ็กเกจรวม" : "รายตัว"}</InfoRow>
-              <InfoRow k="อินดิเคเตอร์"><span className="num">{product.codes.join(" · ") || "—"}</span></InfoRow>
-              <InfoRow k="ราคาที่เปิดขาย"><span className="num">{activePrices} / {prices.length}</span></InfoRow>
-              <InfoRow k="ขายแล้ว"><span className="num">{sold.length} รายการ</span></InfoRow>
-              <InfoRow k="รายได้"><span className="num font-semibold">{fmtTHB(revenue)}</span></InfoRow>
-            </dl>
-          </Panel>
-          <Panel title="ราคา" description="แก้ราคาไม่กระทบคนที่ซื้อไปแล้ว ถ้าจะเปลี่ยนราคา ให้เพิ่มราคาใหม่แล้วปิดขายราคาเก่า">
+          </SettingsSection>
+          <SettingsSection title="ราคา" description="แก้ราคาไม่กระทบคนที่ซื้อไปแล้ว ถ้าจะเปลี่ยนราคา ให้เพิ่มราคาใหม่แล้วปิดขายราคาเก่า">
             <PriceList productId={product.id} prices={prices} />
-            <AddPriceForm productId={product.id} />
-          </Panel>
+            <AddPriceForm productId={product.id} kind={product.kind} />
+          </SettingsSection>
         </div>
       </div>
     </>
