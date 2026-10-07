@@ -10,7 +10,7 @@ import { useReduce } from "./use-reduce";
  * (public/media/hero-macbook.mp4, already encoded at 2× speed). The site-wide pause switch (footer) stops the video too.
  */
 
-export function LiveHero({ lines, redLine, description, children }: { lines: string[][]; redLine: string; description: string; children?: React.ReactNode }) {
+export function LiveHero({ lines, redLine, description, children }: { lines: string[]; redLine: string; description: string; children?: React.ReactNode }) {
   const reduce = useReduce();
 
   return (
@@ -18,38 +18,34 @@ export function LiveHero({ lines, redLine, description, children }: { lines: str
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/3 h-[480px] w-[900px] rounded-full bg-brand/25 blur-[140px]" />
       <div aria-hidden className="pointer-events-none absolute right-0 bottom-10 h-[420px] w-[700px] rounded-full bg-brand/20 blur-[160px]" />
 
-      <div className="relative mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pt-12 pb-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-10 lg:py-16">
-        <div>
-          <h1 className="text-[2.4rem] leading-[1.08] font-black tracking-tight sm:text-6xl lg:text-[3.6rem] xl:text-[4rem]">
+      <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-10 px-4 pt-12 pb-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-8 lg:py-16">
+        <div className="max-w-[37rem]">
+          <h1 className="text-[2.35rem] leading-[1.12] font-black tracking-tight sm:text-5xl lg:text-[3.15rem] xl:text-[3.45rem]">
             {/* Screen readers get one stable sentence; the animated copy below is visual only. */}
-            <span className="sr-only">{lines.map((ws) => ws.join("")).join(" ")} {redLine}</span>
-            {lines.map((ws, l) => (
-              <span key={l} aria-hidden className="block">
-                {ws.map((w, j) => (
-                  <span key={j} className="-mt-[0.35em] inline-block overflow-hidden pt-[0.35em] pb-[0.1em] align-bottom">
-                    <motion.span
-                      className="inline-block"
-                      initial={{ y: "105%", filter: "blur(12px)" }} animate={{ y: 0, filter: "blur(0px)" }}
-                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 + (l * 3 + j) * 0.07 }}
-                    >
-                      {w}
-                    </motion.span>
-                  </span>
-                ))}
+            <span className="sr-only">{lines.join(" ")} {redLine}</span>
+            {lines.map((line, index) => (
+              <span key={line} aria-hidden className="-mt-[0.22em] block overflow-hidden pt-[0.22em] pb-[0.06em] sm:whitespace-nowrap">
+                <motion.span
+                  className="inline-block"
+                  initial={{ y: "105%", filter: "blur(12px)" }} animate={{ y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 + index * 0.12 }}
+                >
+                  {line}
+                </motion.span>
               </span>
             ))}
-            <span aria-hidden className="-mt-[0.05em] block pt-[0.05em] text-[0.55em] leading-tight tracking-[0.03em] text-brand dark:text-[#ff2e43]">
+            <span aria-hidden className="mt-2 block text-[0.48em] leading-tight tracking-[0.05em] text-brand dark:text-[#ff2e43]">
               {redLine}
             </span>
           </h1>
 
           <motion.p
-            className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
+            className="mt-7 max-w-[34rem] text-base leading-relaxed text-muted sm:text-lg"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }}
           >
             {description}
           </motion.p>
-          <motion.div className="mt-8 flex flex-wrap gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8 }}>
+          <motion.div className="mt-9 flex flex-wrap gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8 }}>
             <Link href="#indicators" className="group relative inline-flex h-14 items-center gap-2 overflow-hidden rounded-2xl bg-brand px-7 text-base font-semibold text-white shadow-[0_20px_60px_-15px_rgb(178_0_22/0.9)]">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
               <span className="relative">เลือกอินดิเคเตอร์</span>

@@ -42,9 +42,9 @@ export default async function HomePage() {
       {/* 1 · Live chart hero */}
       <LiveHero
         lines={[
-          words("ทุก Setup ต้องมีเหตุผล"),
-          words("เทรดด้วยโครงสร้าง"),
-          words("ไม่ใช่ความรู้สึก"),
+          "ทุก Setup ต้องมีเหตุผล",
+          "เทรดด้วยโครงสร้าง",
+          "ไม่ใช่ความรู้สึก",
         ]}
         redLine="EVERY SETUP. VERIFIED."
         description="ระบบวิเคราะห์จาก 1SHOT ที่ออกแบบทุก Setup ให้มีแผนชัดเจน ตั้งแต่ Entry, Stop Loss, Take Profit ไปจนถึง Risk Management พร้อมข้อมูลสำหรับติดตามและทบทวนการเทรดอย่างเป็นระบบ"
