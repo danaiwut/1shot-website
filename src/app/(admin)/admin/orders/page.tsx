@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { EmptyLine, Section, Segmented, StatRow, TableBox, Td, Th } from "@/components/app/kit";
+import { ExternalLink, Receipt, Repeat } from "lucide-react";
+import { Section, Segmented, StatRow, TableBox, Td, TextLink, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, FilterLink } from "@/components/ui";
+import { Badge, ButtonLink, cx, FilterLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { fmtTHB, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
 import type { Order, OrderStatus, Subscription } from "@/lib/types";
 import { ToneStatus } from "../_components/tone-status";
+import { EmptyState, matches, one, qs, ROW_ACTION, Toolbar } from "@/components/app/toolbar";
 import { RefundButton } from "./refund-button";
 
 export const metadata = { title: "ยอดขาย" };
@@ -21,6 +23,7 @@ const FILTERS: { id: OrderStatus | "all"; label: string }[] = [
 export default async function OrdersPage({ searchParams }: PageProps<"/admin/orders">) {
   const sp = await searchParams;
   const status = FILTERS.find((f) => f.id === sp.status)?.id ?? "all";
+  const q = one(sp.q);
   const { supabase } = await requireStaff();
 
   let list = supabase.from("orders").select("*, profiles(email, display_name)").order("created_at", { ascending: false }).limit(200);
@@ -39,8 +42,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
   const stripeBase = `https://dashboard.stripe.com${/^(sk|rk)_test_/.test(serverEnv.stripeSecretKey()) ? "/test" : ""}`;
 
   const list30 = paidRows.filter((o) => (o.paid_at ?? "") >= since30);
-  const rows = (orders ?? []) as WithUser<Order>[];
-  const stripeLink = "inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-sm font-medium text-accent underline-offset-4 hover:underline";
+  const loaded = (orders ?? []) as WithUser<Order>[];
+  const rows = loaded.filter((o) => matches(q, o.profiles?.display_name, o.profiles?.email, o.product_name, o.id, o.stripe_payment_intent_id));
+  const filtered = status !== "all" || Boolean(q);
 
   return (
     <>
@@ -57,23 +61,23 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
         />
 
         <Section
-          title="รายการคำสั่งซื้อ"
-          description={`${rows.length} รายการ${rows.length === 200 ? " (แสดงสูงสุด 200)" : ""}`}
-          action={
+          title={<>รายการคำสั่งซื้อ <span className="num ml-1 text-sm font-normal text-muted tabular-nums">{rows.length} รายการ</span></>}
+          description={`ล่าสุดก่อน${loaded.length === 200 ? " · แสดงสูงสุด 200 รายการ" : ""}`}
+        >
+          <Toolbar q={q} placeholder="ชื่อ อีเมล หรือสินค้า" keep={{ status: status === "all" ? undefined : status }}>
             <Segmented label="กรองคำสั่งซื้อตามสถานะ">
               {FILTERS.map((f) => (
-                <FilterLink key={f.id} href={f.id === "all" ? "/admin/orders" : `/admin/orders?status=${f.id}`} on={status === f.id}>{f.label}</FilterLink>
+                <FilterLink key={f.id} href={qs("/admin/orders", { status: f.id === "all" ? undefined : f.id, q })} on={status === f.id}>{f.label}</FilterLink>
               ))}
             </Segmented>
-          }
-        >
+          </Toolbar>
           {rows.length ? (
-            <TableBox caption={`คำสั่งซื้อ ${rows.length} รายการ`} minWidth={860}>
-              <thead className="bg-panel-2">
+            <TableBox caption={`คำสั่งซื้อ ${rows.length} รายการ`} minWidth={640}>
+              <thead>
                 <tr>
                   <Th>ลูกค้า</Th>
                   <Th>สินค้า</Th>
-                  <Th>วันที่</Th>
+                  <Th className="hidden lg:table-cell">วันที่</Th>
                   <Th className="text-right">ยอด</Th>
                   <Th>สถานะ</Th>
                   <Th className="text-right"><span className="sr-only">การจัดการ</span></Th>
@@ -85,24 +89,27 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                   return (
                     <tr key={o.id} className="border-t border-line">
                       <Td>
-                        <Link href={`/admin/members/${o.user_id}`} className="inline-flex min-h-11 flex-col justify-center font-medium hover:text-accent hover:underline">
-                          {o.profiles?.display_name || o.profiles?.email || "—"}
-                          <span className="text-xs font-normal text-muted">{o.profiles?.email}</span>
+                        <Link href={`/admin/members/${o.user_id}`} className="group flex min-h-11 flex-col justify-center">
+                          <span className="font-bold group-hover:text-accent group-hover:underline">{o.profiles?.display_name || o.profiles?.email?.split("@")[0] || "—"}</span>
+                          <span className="text-xs text-muted">{o.profiles?.email}</span>
                         </Link>
                       </Td>
                       <Td>
-                        {o.product_name}
-                        <span className="block text-xs text-muted">{orderTerm(o)}{o.kind === "renewal" && " · ต่ออายุ"}</span>
+                        <span className="font-medium">{o.product_name}</span>
+                        <span className="block text-xs text-muted">
+                          {orderTerm(o)}{o.kind === "renewal" && " · ต่ออายุ"}
+                          <span className="num lg:hidden"> · {fmtDateTime(o.created_at)}</span>
+                        </span>
                       </Td>
-                      <Td className="num text-muted tabular-nums">{fmtDateTime(o.created_at)}</Td>
-                      <Td className="num text-right font-medium tabular-nums">{fmtTHB(o.amount_satang)}</Td>
+                      <Td className="num hidden whitespace-nowrap text-muted tabular-nums lg:table-cell">{fmtDateTime(o.created_at)}</Td>
+                      <Td className={cx("num text-right font-bold whitespace-nowrap tabular-nums", (o.status === "refunded" || o.status === "canceled") && "text-muted line-through decoration-1")}>{fmtTHB(o.amount_satang)}</Td>
                       <Td><ToneStatus tone={st.tone}>{st.label}</ToneStatus></Td>
                       <Td>
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-2">
                           {o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}
                           {o.stripe_payment_intent_id && (
-                            <a href={`${stripeBase}/payments/${o.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" className={stripeLink} aria-label={`เปิดคำสั่งซื้อ ${o.product_name} ใน Stripe (เปิดแท็บใหม่)`}>
-                              Stripe
+                            <a href={`${stripeBase}/payments/${o.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" className={ROW_ACTION} aria-label={`เปิดคำสั่งซื้อ ${o.product_name} ใน Stripe (เปิดแท็บใหม่)`}>
+                              Stripe <ExternalLink aria-hidden className="size-3.5" />
                             </a>
                           )}
                         </div>
@@ -112,19 +119,29 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                 })}
               </tbody>
             </TableBox>
+          ) : filtered ? (
+            <EmptyState icon={<Receipt />} title="ไม่พบคำสั่งซื้อที่ตรงกับเงื่อนไข" action={<TextLink href="/admin/orders">ล้างตัวกรองและการค้นหา</TextLink>}>
+              ลองเปลี่ยนสถานะ หรือค้นด้วยอีเมลลูกค้าแทน
+            </EmptyState>
           ) : (
-            <EmptyLine>ไม่มีคำสั่งซื้อ</EmptyLine>
+            <EmptyState icon={<Receipt />} title="ยังไม่มีคำสั่งซื้อ" action={<ButtonLink href="/admin/products" variant="outline" className="rounded-full">ไปตั้งราคาสินค้า</ButtonLink>}>
+              เมื่อลูกค้าชำระเงินผ่าน Stripe รายการจะขึ้นที่นี่ทันที
+            </EmptyState>
           )}
         </Section>
 
-        <Section title="การสมัครแบบรายงวด" description={`${activeSubs.length} รายการที่ใช้งานอยู่`}>
+        <Section
+          title={<>การสมัครแบบรายงวด <span className="num ml-1 text-sm font-normal text-muted tabular-nums">{activeSubs.length} ใช้งานอยู่</span></>}
+          description="ตัดบัตรอัตโนมัติผ่าน Stripe · 100 รายการล่าสุด"
+        >
           {subscriptions.length ? (
-            <TableBox caption="การสมัครแบบรายงวด" minWidth={760}>
-              <thead className="bg-panel-2">
+            <TableBox caption="การสมัครแบบรายงวด" minWidth={600}>
+              <thead>
                 <tr>
                   <Th>ลูกค้า</Th>
                   <Th>แพ็กเกจ</Th>
-                  <Th>รอบถัดไป</Th>
+                  <Th className="text-right">ยอดต่อรอบ</Th>
+                  <Th className="hidden md:table-cell">รอบถัดไป</Th>
                   <Th>สถานะ</Th>
                   <Th className="text-right"><span className="sr-only">Stripe</span></Th>
                 </tr>
@@ -132,26 +149,34 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
               <tbody>
                 {subscriptions.map((s) => {
                   const st = SUB_STATUS[s.status] ?? { label: s.status, tone: "neutral" as const };
+                  const next = s.current_period_end && s.status !== "canceled" ? `${s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} ${fmtDate(s.current_period_end)}` : null;
                   return (
                     <tr key={s.id} className="border-t border-line">
                       <Td>
-                        <Link href={`/admin/members/${s.user_id}`} className="inline-flex min-h-11 items-center font-medium hover:text-accent hover:underline">{s.profiles?.display_name || s.profiles?.email || "—"}</Link>
+                        <Link href={`/admin/members/${s.user_id}`} className="group flex min-h-11 flex-col justify-center">
+                          <span className="font-bold group-hover:text-accent group-hover:underline">{s.profiles?.display_name || s.profiles?.email?.split("@")[0] || "—"}</span>
+                          <span className="text-xs text-muted">{s.profiles?.email}</span>
+                        </Link>
                       </Td>
                       <Td>
-                        {s.product_name}
-                        <span className="num block text-xs text-muted tabular-nums">{fmtTHB(s.amount_satang)}/{s.interval === "year" ? "ปี" : "เดือน"}</span>
+                        <span className="font-medium">{s.product_name}</span>
+                        {next && <span className="block text-xs text-muted md:hidden">{next}</span>}
                       </Td>
-                      <Td className="text-muted">
-                        {s.current_period_end && s.status !== "canceled" ? `${s.cancel_at_period_end ? "สิ้นสุด" : "ต่ออายุ"} ${fmtDate(s.current_period_end)}` : <span className="text-faint">—</span>}
+                      <Td className="num text-right whitespace-nowrap tabular-nums">
+                        <span className="font-bold">{fmtTHB(s.amount_satang)}</span>
+                        <span className="text-xs text-muted">/{s.interval === "year" ? "ปี" : "เดือน"}</span>
                       </Td>
+                      <Td className="hidden text-muted md:table-cell">{next ?? <span className="text-faint">—</span>}</Td>
                       <Td>
-                        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <ToneStatus tone={st.tone}>{st.label}</ToneStatus>
                           {s.cancel_at_period_end && <Badge>ไม่ต่ออายุ</Badge>}
                         </span>
                       </Td>
                       <Td className="text-right">
-                        <a href={`${stripeBase}/subscriptions/${s.id}`} target="_blank" rel="noopener noreferrer" className={stripeLink} aria-label={`เปิดการสมัคร ${s.product_name} ใน Stripe (เปิดแท็บใหม่)`}>Stripe</a>
+                        <a href={`${stripeBase}/subscriptions/${s.id}`} target="_blank" rel="noopener noreferrer" className={ROW_ACTION} aria-label={`เปิดการสมัคร ${s.product_name} ใน Stripe (เปิดแท็บใหม่)`}>
+                          Stripe <ExternalLink aria-hidden className="size-3.5" />
+                        </a>
                       </Td>
                     </tr>
                   );
@@ -159,7 +184,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
               </tbody>
             </TableBox>
           ) : (
-            <EmptyLine>ยังไม่มีการสมัครแบบรายงวด</EmptyLine>
+            <EmptyState icon={<Repeat />} title="ยังไม่มีการสมัครแบบรายงวด">
+              เพิ่มราคาแบบ “รายงวด” ให้สินค้า แล้วลูกค้าจะสมัครแบบตัดบัตรอัตโนมัติได้
+            </EmptyState>
           )}
         </Section>
       </div>

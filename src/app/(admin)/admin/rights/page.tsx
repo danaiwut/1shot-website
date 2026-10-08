@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { EmptyLine, Section, Status, TableBox, Td, Th } from "@/components/app/kit";
+import { ArrowDown } from "lucide-react";
+import { EmptyLine, Row, Rows, Section, Status } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
+import { cx } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
-import { CopyName, GrantForm, TvDoneButton } from "./forms";
+import { GrantForm } from "../_components/grant-form";
+import { CopyName, TvDoneButton } from "./forms";
 
 export const metadata = { title: "ให้สิทธิ์ลูกค้า" };
 
@@ -32,7 +35,7 @@ export default async function RightsPage({ searchParams }: PageProps<"/admin/rig
     ...((rights ?? []) as unknown as MemberRight[]).filter(needsTv).map((r) => ({
       key: `m-${r.user_id}-${r.code}`, code: r.code, expires_at: r.expires_at, synced: Boolean(r.tv_synced_at),
       tv: r.profiles?.tradingview_username ?? null,
-      who: <Link href={`/admin/members/${r.user_id}`} className="font-medium hover:underline">{r.profiles?.display_name || r.profiles?.email || "ดูข้อมูลลูกค้า"}</Link>,
+      who: <Link href={`/admin/members/${r.user_id}`} className="font-semibold hover:text-accent hover:underline">{r.profiles?.display_name || r.profiles?.email || "ดูข้อมูลลูกค้า"}</Link>,
       done: <TvDoneButton userId={r.user_id} code={r.code} label={`${r.code} ของ ${r.profiles?.email ?? ""}`} />,
     })),
     ...((grants ?? []) as Grant[]).filter(needsTv).map((g) => ({
@@ -43,37 +46,46 @@ export default async function RightsPage({ searchParams }: PageProps<"/admin/rig
     })),
   ];
 
+  const queueLink = (
+    <a href="#tv" className={cx(
+      "flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-colors",
+      pending.length ? "border-brand/40 bg-brand-dim hover:border-brand" : "border-line bg-panel hover:border-line-strong",
+    )}>
+      <span className={cx("num grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold tabular-nums", pending.length ? "bg-brand text-white" : "bg-panel-3 text-muted")}>{pending.length}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">ต้องเปิดใน TradingView</span>
+        <span className="block text-xs text-muted">{pending.length ? "ดูรายการด้านล่าง" : "ครบแล้ว ไม่มีอะไรค้าง"}</span>
+      </span>
+      <ArrowDown aria-hidden className="size-4 text-muted" />
+    </a>
+  );
+
   return (
     <>
-      <PageHeader title="ให้สิทธิ์ลูกค้า" description="ทำตาม 3 ขั้น แล้วกดให้สิทธิ์ ใช้ต่ออายุได้ด้วย" />
-      <div className="max-w-4xl space-y-12">
-        <GrantForm indicators={(indicators ?? []) as { code: string; name: string }[]} who={who} />
+      <PageHeader title="ให้สิทธิ์ลูกค้า" description="ใส่ชื่อ เลือกอินดิเคเตอร์ เลือกระยะเวลา แล้วกดให้สิทธิ์ ใช้ต่ออายุได้ด้วย" />
+      <div className="space-y-12">
+        <GrantForm indicators={(indicators ?? []) as { code: string; name: string }[]} who={who} extra={queueLink} />
 
         <Section
           id="tv"
-          title={`ต้องเปิดใน TradingView (${pending.length})`}
-          description="คัดลอกชื่อ → ไปเพิ่มชื่อนี้ในอินดิเคเตอร์บน TradingView → กลับมากด “เปิดแล้ว” (ถ้าตั้งระบบอัตโนมัติไว้ รายการจะหายไปเอง)"
-          bare={pending.length > 0}
+          title={<>ต้องเปิดใน TradingView <span className="ml-1 inline-grid min-w-7 place-items-center rounded-full bg-brand px-2 text-sm text-white tabular-nums">{pending.length}</span></>}
+          description="คัดลอกชื่อ → เพิ่มในอินดิเคเตอร์บน TradingView → กด “เปิดแล้ว” (ถ้าตั้งระบบอัตโนมัติไว้ รายการจะหายไปเอง)"
         >
           {pending.length ? (
-            <div className="overflow-hidden rounded-lg border border-line bg-panel">
-              <TableBox minWidth={720} caption="สิทธิ์ที่ต้องเปิดหรืออัปเดตใน TradingView">
-                <thead className="bg-panel-2">
-                  <tr><Th>ชื่อ TradingView</Th><Th>อินดิเคเตอร์</Th><Th>ใช้ได้ถึง</Th><Th>ลูกค้า</Th><Th><span className="sr-only">การทำงาน</span></Th></tr>
-                </thead>
-                <tbody>
-                  {pending.map((r) => (
-                    <tr key={r.key} className="border-t border-line">
-                      <Td>{r.tv ? <CopyName name={r.tv} /> : <Status tone="warn">ลูกค้ายังไม่กรอกชื่อ</Status>}</Td>
-                      <Td className="num font-semibold">{r.code}{r.synced && <span className="block text-xs font-normal text-muted">ต้องแก้วันหมดอายุ</span>}</Td>
-                      <Td className="num">{r.expires_at ? fmtDate(r.expires_at) : "ตลอดชีพ"}</Td>
-                      <Td>{r.who}</Td>
-                      <Td className="text-right">{r.done}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </TableBox>
-            </div>
+            <Rows>
+              {pending.map((r) => (
+                <Row key={r.key} className="grid gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(10rem,14rem)_4rem_minmax(0,1fr)_auto]">
+                  <div className="min-w-0">{r.tv ? <CopyName name={r.tv} /> : <Status tone="warn">ลูกค้ายังไม่กรอกชื่อ</Status>}</div>
+                  <span className="num w-fit rounded-md border border-line bg-panel-2 px-2 py-0.5 text-xs font-bold sm:justify-self-end lg:justify-self-start">{r.code}</span>
+                  <p className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                    {r.who}
+                    <span>{r.expires_at ? `ถึง ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</span>
+                    {r.synced && <Status tone="warn">ต้องแก้วันหมดอายุ</Status>}
+                  </p>
+                  <div className="sm:justify-self-end">{r.done}</div>
+                </Row>
+              ))}
+            </Rows>
           ) : <EmptyLine>เปิดใน TradingView ครบแล้ว ไม่มีอะไรต้องทำ</EmptyLine>}
         </Section>
       </div>

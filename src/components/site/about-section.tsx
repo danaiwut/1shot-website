@@ -66,7 +66,7 @@ export function AboutSection({ indicatorCount = 10, actionHref = "/signup", acti
 
         {/* Story */}
         <div>
-          <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">เกี่ยวกับ 1SHOT</p>
+          <p className="text-sm font-bold text-accent">เกี่ยวกับ 1SHOT</p>
           <h2 id="about-title" className="mt-4 text-4xl leading-[1.1] font-black tracking-tight text-fg sm:text-5xl">
             เปลี่ยนกราฟทองคำ<br />ให้เป็นแผนเทรด<br />ที่ตรวจสอบได้<span className="text-brand dark:text-[#ff2e43]">.</span>
           </h2>

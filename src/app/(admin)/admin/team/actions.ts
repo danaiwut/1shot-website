@@ -44,6 +44,6 @@ export async function setTeamRole(userId: string, role: "admin" | "member"): Pro
   if (row) await admin.from("audit_log").update({ detail: { ...row.detail, reason: role === "admin" ? "เพิ่มเป็นแอดมินจากหน้าทีมงาน" : "ถอดจากทีมงานจากหน้าทีมงาน" } }).eq("id", row.id);
 
   revalidatePath("/admin/team");
-  revalidatePath("/admin/access-history");
+  revalidatePath("/admin/logs");
   return { ok: role === "admin" ? `${target.email} เป็นแอดมินแล้ว` : `ถอด ${target.email} ออกจากทีมงานแล้ว` };
 }

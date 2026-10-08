@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { BackLink, EmptyLine, Row, Rows, Section, StatRow, Status, TableBox, Td, TextLink, Th } from "@/components/app/kit";
-import { PageHeader } from "@/components/app/page-header";
-import { Badge, ButtonLink } from "@/components/ui";
+import { KeyRound } from "lucide-react";
+import { BackLink, CARD, EmptyLine, Row, Rows, Section, StatRow, Status, TableBox, Td, TextLink, Th } from "@/components/app/kit";
+import { Badge, ButtonLink, cx } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import { lotsByAccount, monthStart } from "@/lib/lots";
@@ -10,7 +10,8 @@ import { fmtTHB, ORDER_STATUS, orderTerm } from "@/lib/store/pricing";
 import type { Indicator, IndicatorRight, Order, Profile, Subscription } from "@/lib/types";
 import { RefundButton } from "../../orders/refund-button";
 import { ToneStatus } from "../../_components/tone-status";
-import { GrantForm, IbToggle, RevokeButton, RoleSelect, UnlinkButton } from "./controls";
+import { GrantForm } from "../../_components/grant-form";
+import { IbToggle, RevokeButton, RoleSelect, UnlinkButton } from "./controls";
 
 export const metadata = { title: "ข้อมูลสมาชิก" };
 
@@ -32,123 +33,149 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
   const now = new Date();
 
   const activeRights = [...byCode.values()].filter((r) => !r.expires_at || new Date(r.expires_at) > now);
-  const spent = purchases.filter((o) => o.status === "paid").reduce((t, o) => t + o.amount_satang, 0);
-  // At-a-glance status: the four things support asks about first. Not-OK items say so in words.
-  const glance = [
-    { label: "สิทธิ์ที่ใช้ได้", value: activeRights.length ? activeRights.map((r) => r.code).join(" · ") : "ไม่มี", ok: activeRights.length > 0 },
-    { label: "Exness IB", value: !member.exness_account ? "ไม่ได้กรอก" : member.ib_verified ? "ตรวจผ่านแล้ว" : "รอตรวจ", ok: member.ib_verified },
-    { label: "Telegram", value: link ? (link.tg_username ? `@${link.tg_username}` : "เชื่อมแล้ว") : "ยังไม่เชื่อม", ok: Boolean(link) },
-    { label: "ยอดซื้อรวม", value: spent ? fmtTHB(spent) : "ยังไม่เคยซื้อ", ok: spent > 0 },
-  ];
+  const nextEnd = activeRights.filter((r) => r.expires_at).map((r) => r.expires_at!).sort()[0];
+  const paid = purchases.filter((o) => o.status === "paid");
+  const spent = paid.reduce((t, o) => t + o.amount_satang, 0);
   const label = member.display_name || member.email;
+  const tv = member.tradingview_username;
 
   return (
     <>
       <BackLink href="/admin/members">ลูกค้าทั้งหมด</BackLink>
-      <PageHeader
-        title={<span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="min-w-0 break-words">{label}</span>
-          {member.role !== "member" && <Badge>{ROLE_LABEL[member.role]}</Badge>}
-        </span>}
-        description={`${member.email} · สมัคร ${fmtDate(member.created_at)}`}
-        action={<ButtonLink href={`/admin/rights?who=${encodeURIComponent(member.tradingview_username || member.email)}`}>ให้สิทธิ์ลูกค้าคนนี้</ButtonLink>}
-      />
 
-      <div className="space-y-10">
-        <StatRow items={glance.map(({ label, value, ok }) => ({ label, value, hint: ok ? undefined : <Status tone="warn">ต้องดู</Status> }))} />
-
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="min-w-0 space-y-10">
-            <Section title="สิทธิ์อินดิเคเตอร์" description="ไม่ได้ซิงก์กับ TradingView อัตโนมัติ ต้องให้สิทธิ์ใน TradingView ให้ตรงกันด้วย">
-              <Rows>
-                {((indicators ?? []) as Indicator[]).map((ind) => {
-                  const r = byCode.get(ind.code);
-                  const active = r && (!r.expires_at || new Date(r.expires_at) > now);
-                  return (
-                    <Row key={ind.code} className="flex-col items-stretch gap-3 py-4 xl:flex-row xl:items-center xl:justify-between">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="num w-10 shrink-0 text-sm font-semibold text-accent">{ind.code}</span>
-                        <div className="min-w-0">
-                          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium">
-                            {ind.name}
-                            <Status tone={!r ? "neutral" : active ? "good" : "bad"}>{!r ? "ไม่มีสิทธิ์" : active ? "ใช้งานได้" : "หมดอายุ"}</Status>
-                          </p>
-                          <p className="text-sm text-muted">
-                            {r ? (r.expires_at ? `${active ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ") : "ไม่มีสิทธิ์"}
-                            {r?.note ? ` · ${r.note}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <GrantForm userId={member.id} code={ind.code} current={r?.expires_at ?? null} has={Boolean(r)} />
-                        {r && <RevokeButton userId={member.id} code={ind.code} />}
-                      </div>
-                    </Row>
-                  );
-                })}
-              </Rows>
-            </Section>
-
-            <Section
-              title="การซื้อ"
-              description={liveSubs.length ? `สมัครรายงวดอยู่ ${liveSubs.map((x) => x.product_name).join(", ")}` : "20 คำสั่งซื้อล่าสุด"}
-              action={<TextLink href="/admin/orders">คำสั่งซื้อทั้งหมด</TextLink>}
-            >
-              {purchases.length ? (
-                <TableBox caption="ประวัติการซื้อของสมาชิก" minWidth={560}>
-                  <thead className="bg-panel-2">
-                    <tr>
-                      <Th>สินค้า</Th>
-                      <Th>วันที่</Th>
-                      <Th className="text-right">ยอด</Th>
-                      <Th>สถานะ</Th>
-                      <Th><span className="sr-only">การจัดการ</span></Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {purchases.map((o) => (
-                      <tr key={o.id} className="border-t border-line">
-                        <Td>{o.product_name} <span className="block text-xs text-muted">{orderTerm(o)}</span></Td>
-                        <Td className="text-muted">{fmtDate(o.created_at)}</Td>
-                        <Td className="num text-right font-medium tabular-nums">{fmtTHB(o.amount_satang)}</Td>
-                        <Td><ToneStatus tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</ToneStatus></Td>
-                        <Td className="text-right">{o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}</Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </TableBox>
-              ) : (
-                <EmptyLine>ยังไม่เคยซื้อ</EmptyLine>
-              )}
-            </Section>
+      <div className="space-y-8">
+        {/* Who this is, at a glance */}
+        <section className={cx(CARD, "p-5 sm:p-6")}>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+            <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-2xl bg-brand text-2xl font-black text-white">{label.slice(0, 1).toUpperCase()}</span>
+            <div className="min-w-0 flex-1">
+              <h1 className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-black tracking-tight sm:text-3xl">
+                <span className="min-w-0 break-words">{label}</span>
+                {member.role !== "member" && <Badge tone="brand">{ROLE_LABEL[member.role]}</Badge>}
+              </h1>
+              <p className="mt-1 text-sm break-all text-muted">{member.email} · สมัคร {fmtDate(member.created_at)}{tv && <> · TV <span className="num font-medium text-fg">{tv}</span></>}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Status tone={activeRights.length ? "good" : "neutral"}>{activeRights.length ? `มีสิทธิ์ ${activeRights.length} ตัว` : "ไม่มีสิทธิ์"}</Status>
+                <Status tone={!member.exness_account ? "neutral" : member.ib_verified ? "good" : "warn"}>{!member.exness_account ? "ไม่ได้กรอก Exness" : member.ib_verified ? "IB ผ่านแล้ว" : "รอตรวจ IB"}</Status>
+                <Status tone={link ? "good" : "neutral"}>{link ? "เชื่อม Telegram แล้ว" : "ยังไม่เชื่อม Telegram"}</Status>
+                {liveSubs.length > 0 && <Status tone="good">สมัครรายงวดอยู่</Status>}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <ButtonLink href="#grant" className="h-11 rounded-full px-5"><KeyRound aria-hidden className="size-4" />ให้ / ต่อสิทธิ์</ButtonLink>
+              <ButtonLink href="#orders" variant="outline" className="h-11 rounded-full px-5">ประวัติการซื้อ</ButtonLink>
+            </div>
           </div>
+        </section>
 
-          <div className="min-w-0 space-y-10">
+        <StatRow items={[
+          { label: "สิทธิ์ที่ใช้ได้", value: activeRights.length ? activeRights.map((r) => r.code).join(" · ") : "ไม่มี", hint: activeRights.length ? undefined : <Status tone="warn">ต้องดู</Status> },
+          { label: "หมดอายุถัดไป", value: nextEnd ? fmtDate(nextEnd) : activeRights.length ? "ตลอดชีพ" : "—" },
+          { label: "ยอดซื้อรวม", value: spent ? fmtTHB(spent) : "—", hint: `${paid.length} คำสั่งซื้อที่ชำระแล้ว` },
+          { label: "Telegram", value: link ? (link.tg_username ? `@${link.tg_username}` : "เชื่อมแล้ว") : "ยังไม่เชื่อม" },
+        ]} />
+
+        <div className="grid items-start gap-8 xl:grid-cols-2">
+          <Section
+            title="สิทธิ์อินดิเคเตอร์"
+            description="ต้องเปิดใน TradingView ให้ตรงกันด้วย ถ้ายังไม่ได้ตั้งอัตโนมัติ"
+            action={<TextLink href="#grant">ให้เพิ่ม</TextLink>}
+          >
+            <Rows>
+              {((indicators ?? []) as Indicator[]).map((ind) => {
+                const r = byCode.get(ind.code);
+                const active = r && (!r.expires_at || new Date(r.expires_at) > now);
+                return (
+                  <Row key={ind.code} className="flex-wrap gap-y-2">
+                    <span className={cx("num grid h-9 w-12 shrink-0 place-items-center rounded-lg text-xs font-bold", active ? "bg-buy-dim text-buy" : "bg-panel-3 text-muted")}>{ind.code}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{ind.name}</p>
+                      <p className="text-sm text-muted">
+                        {r ? (r.expires_at ? `${active ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ") : "ไม่มีสิทธิ์"}
+                        {r?.note ? ` · ${r.note}` : ""}
+                      </p>
+                    </div>
+                    <Status tone={!r ? "neutral" : active ? "good" : "bad"}>{!r ? "ไม่มีสิทธิ์" : active ? "ใช้งานได้" : "หมดอายุ"}</Status>
+                    {r && <RevokeButton userId={member.id} code={ind.code} />}
+                  </Row>
+                );
+              })}
+            </Rows>
+          </Section>
+
+          <div className="min-w-0 space-y-8">
             <Section title="บัญชี">
               <dl className="divide-y divide-line">
                 <Info k="อีเมล"><span className="break-all">{member.email}</span></Info>
-                <Info k="TradingView"><span className="num">{member.tradingview_username ?? "—"}</span></Info>
+                <Info k="TradingView"><span className="num">{tv ?? "—"}</span></Info>
                 <Info k="Exness"><span className="num">{member.exness_account ?? "—"}</span></Info>
                 <Info k="ตรวจ IB"><IbToggle userId={member.id} verified={member.ib_verified} disabled={!member.exness_account} /></Info>
                 <Info k="บทบาท">{me.role === "owner" && me.id !== member.id ? <RoleSelect userId={member.id} role={member.role} /> : ROLE_LABEL[member.role]}</Info>
               </dl>
             </Section>
-            {member.exness_account && <LotSection supabase={supabase} account={member.exness_account} />}
-            <Section title="Telegram" description={link ? "เชื่อมบัญชีแล้ว" : "ยังไม่เชื่อม"}>
-              {link ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm sm:px-5">
-                  <div className="min-w-0">
-                    <p className="font-medium">{link.tg_name || "—"}</p>
-                    <p className="num text-sm text-muted">{link.tg_username ? `@${link.tg_username} · ` : ""}ID {link.tg_uid}</p>
+            <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <Section title="Telegram" description={link ? "เชื่อมบัญชีแล้ว" : "ยังไม่เชื่อม"}>
+                {link ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm sm:px-5">
+                    <div className="min-w-0">
+                      <p className="font-bold">{link.tg_name || "—"}</p>
+                      <p className="num text-sm text-muted">{link.tg_username ? `@${link.tg_username} · ` : ""}ID {link.tg_uid}</p>
+                    </div>
+                    <UnlinkButton userId={member.id} />
                   </div>
-                  <UnlinkButton userId={member.id} />
-                </div>
-              ) : (
-                <EmptyLine>สมาชิกยังไม่ได้เชื่อม Telegram</EmptyLine>
-              )}
-            </Section>
+                ) : (
+                  <EmptyLine>สมาชิกยังไม่ได้เชื่อม Telegram</EmptyLine>
+                )}
+              </Section>
+              {member.exness_account && <LotSection supabase={supabase} account={member.exness_account} />}
+            </div>
           </div>
         </div>
+
+        <Section id="grant" title="ให้หรือต่อสิทธิ์" description="ต่ออายุ ตั้งวันหมดอายุใหม่ หรือให้ตลอดชีพ ระบบส่งไป TradingView ให้ถ้าตั้งอัตโนมัติไว้" bare>
+          <GrantForm
+            member={{ id: member.id, label }}
+            indicators={((indicators ?? []) as Indicator[]).map((ind) => {
+              const r = byCode.get(ind.code);
+              const status = !r ? "ไม่มีสิทธิ์" : !r.expires_at ? "ตลอดชีพ" : `${new Date(r.expires_at) > now ? "ถึง" : "หมดอายุ"} ${fmtDate(r.expires_at)}`;
+              return { code: ind.code, name: ind.name, status };
+            })}
+          />
+        </Section>
+
+        <Section
+          id="orders"
+          title="การซื้อ"
+          description={liveSubs.length ? `สมัครรายงวดอยู่ ${liveSubs.map((x) => x.product_name).join(", ")}` : "20 คำสั่งซื้อล่าสุด"}
+          action={<TextLink href="/admin/orders">คำสั่งซื้อทั้งหมด</TextLink>}
+        >
+          {purchases.length ? (
+            <TableBox caption="ประวัติการซื้อของสมาชิก" minWidth={640}>
+              <thead className="bg-panel-2">
+                <tr>
+                  <Th>สินค้า</Th>
+                  <Th>วันที่</Th>
+                  <Th className="text-right">ยอด</Th>
+                  <Th>สถานะ</Th>
+                  <Th><span className="sr-only">การจัดการ</span></Th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchases.map((o) => (
+                  <tr key={o.id} className="border-t border-line">
+                    <Td><span className="font-semibold">{o.product_name}</span> <span className="block text-xs text-muted">{orderTerm(o)}</span></Td>
+                    <Td className="text-muted">{fmtDate(o.created_at)}</Td>
+                    <Td className="num text-right font-semibold tabular-nums">{fmtTHB(o.amount_satang)}</Td>
+                    <Td><ToneStatus tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].label}</ToneStatus></Td>
+                    <Td className="text-right">{o.status === "paid" && <RefundButton orderId={o.id} label={`${fmtTHB(o.amount_satang)} · ${o.product_name}`} />}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableBox>
+          ) : (
+            <EmptyLine>ยังไม่เคยซื้อ</EmptyLine>
+          )}
+        </Section>
       </div>
     </>
   );

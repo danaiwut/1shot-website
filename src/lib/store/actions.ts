@@ -88,7 +88,7 @@ export async function cancelSubscription(subscriptionId: string, cancel: boolean
   } catch (err) {
     return { error: err instanceof StoreError ? err.message : "ทำรายการไม่สำเร็จ" };
   }
-  revalidatePath("/billing");
+  revalidatePath("/store");
   return {};
 }
 

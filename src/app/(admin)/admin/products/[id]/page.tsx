@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
-import { BackLink, SettingsSection, StatRow } from "@/components/app/kit";
+import { BackLink, StatRow } from "@/components/app/kit";
+import { Panel } from "@/components/app/form-kit";
+import { SectionHeading } from "@/components/brand";
 import { PageHeader } from "@/components/app/page-header";
 import { ButtonLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
-import { fmtTHB, kindLabel } from "@/lib/store/pricing";
+import { fmtTHB, kindLabel, termLabel } from "@/lib/store/pricing";
 import type { Product } from "@/lib/types";
 import { AddPriceForm, PriceList, ProductForm } from "../forms";
 
@@ -23,6 +25,7 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
 
   const revenue = sold.reduce((s, o) => s + o.amount_satang, 0);
   const activePrices = prices.filter((p) => p.active).length;
+  const cheapest = prices.filter((p) => p.active).sort((a, b) => a.amount_satang - b.amount_satang)[0];
 
   return (
     <>
@@ -32,7 +35,7 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
         description={`${kindLabel(product)} · ${product.codes.join(" · ") || "ไม่มีอินดิเคเตอร์"}`}
         action={<ButtonLink href="/pricing" target="_blank" variant="outline">ดูหน้าราคา<span className="sr-only"> (เปิดแท็บใหม่)</span></ButtonLink>}
       />
-      <div className="space-y-10">
+      <div className="space-y-12">
         <StatRow
           items={[
             { label: "สถานะ", value: product.active ? "เปิดขาย" : "ปิดขาย" },
@@ -41,15 +44,18 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
             { label: "รายได้", value: fmtTHB(revenue) },
           ]}
         />
-        <div>
-          <SettingsSection title="ข้อมูลสินค้า" description="ชื่อ ประเภท และอินดิเคเตอร์ที่ลูกค้าจะได้รับ">
-            <ProductForm product={product} indicators={(indicators ?? []) as { code: string; name: string }[]} />
-          </SettingsSection>
-          <SettingsSection title="ราคา" description="แก้ราคาไม่กระทบคนที่ซื้อไปแล้ว ถ้าจะเปลี่ยนราคา ให้เพิ่มราคาใหม่แล้วปิดขายราคาเก่า">
+        <ProductForm
+          product={product}
+          indicators={(indicators ?? []) as { code: string; name: string }[]}
+          price={cheapest ? `${fmtTHB(cheapest.amount_satang)} · ${termLabel(cheapest)}` : undefined}
+        />
+        <section id="prices" className="scroll-mt-24">
+          <SectionHeading eyebrow="ราคา" title="ราคาที่ขาย" size="sm" description="แก้ราคาไม่กระทบคนที่ซื้อไปแล้ว ถ้าจะเปลี่ยนราคา ให้เพิ่มราคาใหม่แล้วปิดขายราคาเก่า" />
+          <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
             <PriceList productId={product.id} prices={prices} />
-            <AddPriceForm productId={product.id} kind={product.kind} />
-          </SettingsSection>
-        </div>
+            <Panel title="เพิ่มราคา"><AddPriceForm productId={product.id} kind={product.kind} /></Panel>
+          </div>
+        </section>
       </div>
     </>
   );

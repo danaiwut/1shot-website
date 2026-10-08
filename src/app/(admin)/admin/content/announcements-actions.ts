@@ -20,7 +20,7 @@ export async function saveAnnouncement(_: AnnState, form: FormData): Promise<Ann
     ? await supabase.from("announcements").update(row).eq("id", parsed.data.id)
     : await supabase.from("announcements").insert({ ...row, created_by: userId });
   if (error) return { error: "บันทึกไม่สำเร็จ" };
-  revalidatePath("/admin/announcements");
+  revalidatePath("/admin/content");
   revalidatePath("/announcements");
   return { ok: parsed.data.id ? "บันทึกการแก้ไขแล้ว" : "โพสต์ประกาศแล้ว" };
 }
@@ -28,6 +28,6 @@ export async function saveAnnouncement(_: AnnState, form: FormData): Promise<Ann
 export async function deleteAnnouncement(id: string) {
   const { supabase } = await requireStaff();
   await supabase.from("announcements").delete().eq("id", z.uuid().parse(id));
-  revalidatePath("/admin/announcements");
+  revalidatePath("/admin/content");
   revalidatePath("/announcements");
 }

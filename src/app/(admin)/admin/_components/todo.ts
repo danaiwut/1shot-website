@@ -62,8 +62,8 @@ export async function loadTodo(supabase: Client): Promise<TodoGroup[]> {
       items: (orders.data ?? []).map((o) => ({ key: o.id, href: "/admin/orders?status=pending", title: `${fmtTHB(o.amount_satang)} · ${name(one(o.profiles as Who | Who[]))}`, meta: fmtDateTime(o.created_at) })),
     },
     {
-      id: "hooks", title: "ระบบรับเงินแจ้งข้อผิดพลาด", action: "ดูรายละเอียด", href: "/admin/webhooks",
-      items: (hooks.data ?? []).map((h) => ({ key: String(h.id), href: "/admin/webhooks", title: h.error || "ไม่ทราบสาเหตุ", meta: fmtDateTime(h.received_at) })),
+      id: "hooks", title: "Webhook TradingView แจ้งข้อผิดพลาด", action: "ดูรายละเอียด", href: "/admin/logs?tab=webhooks",
+      items: (hooks.data ?? []).map((h) => ({ key: String(h.id), href: "/admin/logs?tab=webhooks", title: h.error || "ไม่ทราบสาเหตุ", meta: fmtDateTime(h.received_at) })),
     },
   ];
   return groups.filter((g) => g.items.length > 0);

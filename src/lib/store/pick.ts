@@ -32,3 +32,10 @@ export function orderCodes(
 /** Name stored on the order and shown on the Stripe page: "โปรตุลาคม (AMD + SW)". */
 export const orderName = (product: Pick<Product, "kind" | "name">, codes: string[]) =>
   product.kind === "pick" ? `${product.name} (${codes.join(" + ")})` : product.name;
+
+/** Sum of the chosen codes' single prices — the honest "normal price" for a pick. */
+export function pickCompare(parts: Record<string, number>, chosen: string[], amount: number) {
+  if (!chosen.length || chosen.some((c) => !(c in parts))) return null;
+  const sum = chosen.reduce((t, c) => t + parts[c], 0);
+  return sum > amount ? sum : null;
+}

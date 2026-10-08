@@ -10,7 +10,7 @@ export const INDICATOR_IMAGE_BUCKET = "indicator-images";
 export type PublicIndicator = Omit<Indicator, "telegram_room_id"> & { image_url: string | null };
 
 /** Storage object key → public URL. A path starting with "/" is a file shipped in /public (seeded images). */
-function imageUrl(supabase: Client, path: string | null) {
+export function imageUrl(supabase: Client, path: string | null) {
   if (!path) return null;
   if (path.startsWith("/")) return path;
   return supabase.storage.from(INDICATOR_IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;

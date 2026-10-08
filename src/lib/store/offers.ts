@@ -1,5 +1,5 @@
 import type { CatalogPrice, CatalogProduct } from "./catalog";
-import { fmtTHB, priceSuffix } from "./pricing";
+import { termLabel } from "./pricing";
 
 /** How an indicator can be bought: its own single product, the bundles that include it, and the cheapest entry price. */
 export function offerFor(products: CatalogProduct[], code: string) {
@@ -51,22 +51,26 @@ export function savingPercent(compare: number | null, amount: number) {
   return Math.floor(((compare - amount) / compare) * 100);
 }
 
-/** Card summary for each indicator: cheapest price, rating, and whether the viewer already has it. */
-export function indicatorOffers(
-  indicators: { code: string; is_reference: boolean }[],
-  products: CatalogProduct[],
-  ratings: Record<string, { avg: number; count: number }>,
-  access?: Record<string, string | null>,
-) {
-  return indicators.map((i) => {
-    const { from } = offerFor(products, i.code);
-    const free = i.is_reference;
-    return {
-      code: i.code,
-      rating: ratings[i.code],
-      price: free ? "ฟรีสำหรับสมาชิก" : from ? fmtTHB(from.amount_satang) : "ยังไม่เปิดขาย",
-      suffix: from && !free ? priceSuffix(from) : undefined,
-      owned: Boolean(access && i.code in access),
-    };
-  });
+/**
+ * Options for the buy configurator on an indicator page. Singles: the indicator's own prices, plus "pick 1"
+ * deals that include it (e.g. the returning-customer price) when the viewer may buy them. Pairs: see pairOffers.
+ */
+export function buyOptions(products: CatalogProduct[], code: string, returning = false) {
+  const { single } = offerFor(products, code);
+  const singles = [
+    ...(single?.prices ?? []).map((p) => ({ priceId: p.id, label: termLabel(p), note: undefined as string | undefined, amount: p.amount_satang, compare: null as number | null, codes: undefined as string[] | undefined })),
+    ...products
+      .filter((p) => p.kind === "pick" && p.pick_count === 1 && p.codes.includes(code) && (p.audience === "all" || returning))
+      .flatMap((p) => p.prices.map((x) => ({
+        priceId: x.id, label: `${termLabel(x)} · ${p.name}`, note: p.audience === "returning" ? "ราคาพิเศษสำหรับลูกค้าเก่า" : p.badge ?? undefined,
+        amount: x.amount_satang, compare: x.parts[code] && x.parts[code] > x.amount_satang ? x.parts[code] : null, codes: [code],
+      }))),
+  ];
+  const pairs = pairOffers(products, code, returning).map((o) => ({
+    partner: o.partner, partnerName: o.product.names[o.partner] ?? o.partner, priceId: o.price.id,
+    amount: o.price.amount_satang, compare: o.compareSatang, pick: o.product.kind === "pick",
+    note: o.product.audience === "returning" ? "ราคาลูกค้าเก่า" : undefined,
+  }));
+  const perks = [...new Set([...(single?.features ?? []), "เปิดสิทธิ์ใน TradingView ให้อัตโนมัติ", "ห้องสัญญาณ Telegram"])];
+  return { singles, pairs, perks };
 }

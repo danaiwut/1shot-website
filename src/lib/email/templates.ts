@@ -93,7 +93,7 @@ export function refundEmail(o: Order, name: string, site: string, subscriptionCa
     "สิทธิ์ที่ได้จากคำสั่งซื้อนี้ถูกถอนแล้ว สิทธิ์จากการซื้ออื่นยังใช้ได้ตามเดิม",
     subscriptionCanceled ? "การสมัครแบบรายงวดของแพ็กเกจนี้ถูกยกเลิกแล้ว จะไม่มีการตัดเงินงวดถัดไป" : "",
   ].filter(Boolean).join(" ");
-  const cta = { href: `${site}/billing`, label: "ดูประวัติการชำระเงิน" };
+  const cta = { href: `${site}/store#history`, label: "ดูประวัติการชำระเงิน" };
   return {
     subject,
     html: layout({ site, preheader: `คืนเงิน ${fmtTHB(o.amount_satang)}`, title, intro, rows, cta, note }),

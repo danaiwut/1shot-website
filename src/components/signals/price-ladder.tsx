@@ -30,14 +30,15 @@ export function PriceLadder({
       </svg>
       <div className="relative flex-1" style={{ height: H }}>
         {rows.map((row) => (
-          <div key={row.label} className="absolute inset-x-0 flex -translate-y-1/2 items-center justify-between gap-3 text-sm" style={{ top: y(row.price) }}>
-            <span className="text-xs font-medium" style={{ color: row.color }}>{row.label}</span>
-            <span className="num">{fmtPrice(row.price)}</span>
+          <div key={row.label} className="absolute inset-x-0 flex -translate-y-1/2 items-center gap-3" style={{ top: y(row.price) }}>
+            <span className="w-12 text-xs font-bold tracking-wider uppercase" style={{ color: row.color }}>{row.label}</span>
+            <span aria-hidden className="h-px flex-1 border-t border-dashed border-line-strong/50" />
+            <span className={`num font-bold tabular-nums ${compact ? "text-sm" : "text-base sm:text-lg"}`}>{fmtPrice(row.price)}</span>
           </div>
         ))}
         {r !== null && !compact && (
-          <div className="absolute right-0 bottom-0 translate-y-full pt-2 text-xs text-muted">
-            RR <span className="num text-fg">1 : {r}</span>
+          <div className="absolute right-0 bottom-0 translate-y-full pt-3 text-xs font-semibold text-muted">
+            RR <span className="num ml-1 rounded-full bg-panel-3 px-2.5 py-0.5 text-sm text-fg">1 : {r}</span>
           </div>
         )}
       </div>

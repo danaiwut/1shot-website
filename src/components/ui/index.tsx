@@ -4,7 +4,6 @@ import { cloneElement, isValidElement, useId, type ComponentProps, type ReactEle
 
 import { cn } from "@/lib/utils";
 import { Button as UIButton, buttonVariants } from "./button";
-import { Card as UICard } from "./card";
 import { Input as UIInput } from "./input";
 
 /*
@@ -23,22 +22,6 @@ export function Button({ variant = "brand", className, ...props }: ComponentProp
 
 export function ButtonLink({ variant = "brand", className, ...props }: ComponentProps<typeof Link> & { variant?: Variant }) {
   return <Link className={cn(buttonVariants({ variant: toShadcn[variant] }), className)} {...props} />;
-}
-
-export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <UICard className={cn("gap-0 rounded-lg py-0 shadow-none", className)} {...props} />;
-}
-
-export function CardHeader({ title, action, hint }: { title: ReactNode; action?: ReactNode; hint?: ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-line px-4 py-3.5 sm:px-5">
-      <div className="min-w-0">
-        <h2 className="text-base leading-snug font-semibold">{title}</h2>
-        {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
-      </div>
-      {action}
-    </div>
-  );
 }
 
 type Tone = "neutral" | "brand" | "buy" | "sell" | "info";
@@ -62,7 +45,7 @@ export function Field({ label, hint, error, required, children }: { label: strin
     ? cloneElement(children as ReactElement<Record<string, unknown>>, { "aria-describedby": `${id}-note`, ...(error && { "aria-invalid": true }) })
     : children;
   return (
-    <label className="grid gap-2">
+    <label className="grid content-start gap-2">
       <span className="text-sm leading-none font-medium">
         {label}
         {required && <><span aria-hidden className="ml-0.5 text-accent">*</span><span className="sr-only"> (จำเป็น)</span></>}
@@ -124,8 +107,8 @@ export function FilterLink({ on, className, children, ...props }: ComponentProps
     <Link
       aria-current={on ? "true" : undefined}
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm transition-colors",
-        on ? "bg-panel font-semibold text-fg ring-1 ring-line" : "font-medium text-muted hover:text-fg",
+        "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm transition-colors",
+        on ? "bg-fg font-semibold text-ink" : "font-medium text-muted hover:bg-panel-3 hover:text-fg",
         className,
       )}
       {...props}

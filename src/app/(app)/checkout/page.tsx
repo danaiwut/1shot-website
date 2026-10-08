@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/app/kit";
+import { PageHeader } from "@/components/app/page-header";
 import { Notice } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
@@ -35,8 +36,9 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
   return (
     <>
       <BackLink href={from}>กลับ</BackLink>
+      <PageHeader eyebrow="ชำระเงิน" title="ยืนยันคำสั่งซื้อ" description="กรอกไม่กี่ขั้นตอน แล้วชำระผ่าน Stripe ระบบเปิดสิทธิ์ใน TradingView ให้อัตโนมัติ" />
       {product.audience === "returning" && !owned.returning && (
-        <div className="mb-6 max-w-3xl"><Notice tone="error">ราคานี้สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น บัญชีนี้ยังไม่มีประวัติการซื้อ</Notice></div>
+        <div className="mb-6"><Notice tone="error">ราคานี้สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น บัญชีนี้ยังไม่มีประวัติการซื้อ</Notice></div>
       )}
       <CheckoutForm
         priceId={price.id}

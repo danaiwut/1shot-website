@@ -23,6 +23,7 @@ type Current = { expires_at: string | null };
  *   - a username/email that belongs to a member → indicator_rights on their account
  *   - a TradingView username with no account yet → tradingview_grants; it moves onto their account
  *     automatically when they save that username (DB trigger)
+ *   - a `user_id` field (member detail page) → that member only; `who` is ignored
  * TradingView usernames are checked against TradingView first. Everything is pushed to TradingView
  * when automation is configured; the rest shows up in the "ต้องเปิดใน TradingView" list.
  */
@@ -33,9 +34,12 @@ export async function grantRights(_: GrantState, form: FormData): Promise<GrantS
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   const v = parsed.data;
-  const { names, emails, invalid } = splitTargets(v.who);
+  const userId = form.get("user_id");
+  const fixed = typeof userId === "string" && userId ? z.uuid().safeParse(userId) : null;
+  if (fixed && !fixed.success) return { error: "ข้อมูลไม่ถูกต้อง" };
+  const { names, emails, invalid } = fixed ? { names: [], emails: [], invalid: [] } : splitTargets(v.who);
   if (invalid.length) return { error: `ชื่อไม่ถูกต้อง: ${invalid.join(", ")} (ชื่อ TradingView ใช้ได้เฉพาะ A–Z 0–9 _ . -)` };
-  if (!names.length && !emails.length) return { error: "กรุณาใส่ชื่อผู้ใช้ TradingView อย่างน้อย 1 ชื่อ" };
+  if (!fixed && !names.length && !emails.length) return { error: "กรุณาใส่ชื่อผู้ใช้ TradingView อย่างน้อย 1 ชื่อ" };
   if (names.length + emails.length > 200) return { error: "ครั้งละไม่เกิน 200 คน" };
 
   let duration: Duration;
@@ -53,19 +57,21 @@ export async function grantRights(_: GrantState, form: FormData): Promise<GrantS
   const notOnTv = checks.filter((c) => !c.r.ok && c.r.reason === "not_found").map((c) => c.typed);
   const tvNames = checks.filter((c) => c.r.ok || c.r.reason !== "not_found").map((c) => (c.r.ok ? c.r.username : c.typed));
 
-  // 2. Which of them are members?
+  // 2. Which of them are members? (A fixed member from the member page skips the lookup.)
   const { supabase, userId: staffId } = await requireStaff();
-  const [byEmail, byName] = await Promise.all([
+  type P = { id: string; email: string; tradingview_username: string | null };
+  const [byId, byEmail, byName] = await Promise.all([
+    fixed ? supabase.from("profiles").select("id, email, tradingview_username").eq("id", fixed.data) : { data: [] },
     emails.length ? supabase.from("profiles").select("id, email, tradingview_username").in("email", emails) : { data: [] },
     tvNames.length
       ? supabase.from("profiles").select("id, email, tradingview_username").or(tvNames.map((n) => `tradingview_username.ilike.${n}`).join(","))
       : { data: [] },
   ]);
-  type P = { id: string; email: string; tradingview_username: string | null };
+  if (fixed && !(byId.data ?? []).length) return { error: "ไม่พบลูกค้า" };
   const wanted = new Set(tvNames.map((n) => n.toLowerCase()));
   // ilike treats "_" as a wildcard, so keep exact (case-insensitive) matches only.
   const nameMembers = ((byName.data ?? []) as P[]).filter((p) => p.tradingview_username && wanted.has(p.tradingview_username.toLowerCase()));
-  const members = [...new Map([...((byEmail.data ?? []) as P[]), ...nameMembers].map((p) => [p.id, p])).values()];
+  const members = [...new Map([...((byId.data ?? []) as P[]), ...((byEmail.data ?? []) as P[]), ...nameMembers].map((p) => [p.id, p])).values()];
   const missingEmails = emails.filter((e) => !members.some((p) => p.email.toLowerCase() === e));
   const memberNames = new Set(nameMembers.map((p) => p.tradingview_username!.toLowerCase()));
   const guests = tvNames.filter((n) => !memberNames.has(n.toLowerCase()));
@@ -110,6 +116,7 @@ export async function grantRights(_: GrantState, form: FormData): Promise<GrantS
   ]);
   revalidatePath("/admin/rights");
   revalidatePath("/admin/members");
+  for (const p of members) revalidatePath(`/admin/members/${p.id}`);
   revalidatePath("/admin");
 
   const people = members.length + guests.length;

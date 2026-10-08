@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { ChevronRight, KeyRound, Search } from "lucide-react";
 import { EmptyLine, Section, Segmented, Status, TableBox, Td, TextLink, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, Button, cx, FilterLink, Input, Notice } from "@/components/ui";
+import { Badge, Button, ButtonLink, cx, FilterLink, Input, Notice } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDate, ROLE_LABEL } from "@/lib/format";
 import { fmtTHB } from "@/lib/store/pricing";
@@ -53,54 +54,65 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
 
   return (
     <>
-      <PageHeader title="ลูกค้า" description="พิมพ์ค้นหา แล้วกดชื่อลูกค้าเพื่อดูข้อมูลหรือให้สิทธิ์" />
+      <PageHeader
+        title="ลูกค้า"
+        description="ค้นหา กรอง แล้วกดชื่อลูกค้าเพื่อดูข้อมูลหรือให้สิทธิ์"
+        action={<ButtonLink href="/admin/rights" className="h-11 rounded-full px-5"><KeyRound aria-hidden className="size-4" />ให้สิทธิ์ลูกค้า</ButtonLink>}
+      />
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {error && <Notice tone="error">โหลดข้อมูลลูกค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</Notice>}
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <Segmented label="กรองลูกค้า" className="max-w-full">
+            {filters.map((f) => <FilterLink key={f.key} href={filterHref(f.key)} on={selected.key === f.key}>{f.label} <span className="num tabular-nums">({loaded.filter(f.test).length})</span></FilterLink>)}
+          </Segmented>
+          <form role="search" className="flex w-full gap-2 lg:w-auto lg:min-w-96">
+            <input type="hidden" name="status" value={selected.key} />
+            <label htmlFor="member-q" className="sr-only">ค้นหาสมาชิก</label>
+            <div className="relative flex-1">
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
+              <Input id="member-q" type="search" name="q" defaultValue={q} placeholder="อีเมล ชื่อ TradingView หรือเลข Exness" className="h-11 rounded-full pl-10" />
+            </div>
+            <Button type="submit" variant="outline" className="h-11 rounded-full px-5">ค้นหา</Button>
+          </form>
+        </div>
 
         <Section
           title={<>{selected.label} <span className="num ml-1 text-sm font-normal text-muted tabular-nums">{rows.length} คน</span></>}
-          description="แสดงล่าสุด 200 คน"
-          action={
-            <form role="search" className="flex w-full gap-2 sm:w-auto sm:min-w-80">
-              <input type="hidden" name="status" value={selected.key} />
-              <label htmlFor="member-q" className="sr-only">ค้นหาสมาชิก</label>
-              <Input id="member-q" type="search" name="q" defaultValue={q} placeholder="อีเมล ชื่อ หรือเลขบัญชี" className="flex-1" />
-              <Button type="submit" variant="outline">ค้นหา</Button>
-            </form>
-          }
+          description={q ? <>ผลการค้นหา “{q}” · <Link href={`/admin/members?status=${selected.key}`} className="text-accent hover:underline">ล้าง</Link></> : "แสดงล่าสุด 200 คน"}
         >
-          <div className="border-b border-line px-4 py-3 sm:px-5">
-            <Segmented label="กรองลูกค้า">
-              {filters.map((f) => <FilterLink key={f.key} href={filterHref(f.key)} on={selected.key === f.key}>{f.label} <span className="num tabular-nums">({loaded.filter(f.test).length})</span></FilterLink>)}
-            </Segmented>
-          </div>
           {rows.length ? (
-            <TableBox caption={`รายชื่อสมาชิก ${rows.length} คน`} minWidth={920}>
+            <TableBox caption={`รายชื่อสมาชิก ${rows.length} คน`} minWidth={1000}>
               <thead className="bg-panel-2">
                 <tr>
-                  <Th>สมาชิก</Th>
+                  <Th>ลูกค้า</Th>
                   <Th>TradingView</Th>
                   <Th>Exness / IB</Th>
                   <Th>Telegram</Th>
                   <Th>สิทธิ์ · หมดอายุถัดไป</Th>
                   <Th className="text-right">ยอดซื้อรวม</Th>
                   <Th>สมัครเมื่อ</Th>
+                  <Th><span className="sr-only">ดูข้อมูล</span></Th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
                   const active = r.indicator_rights.filter((x) => !x.expires_at || new Date(x.expires_at) > now);
                   const next = nextExpiry(r);
+                  const name = r.display_name || r.email.split("@")[0];
                   return (
                     <tr key={r.id} className="border-t border-line">
                       <Td>
-                        <Link href={`/admin/members/${r.id}`} className="group flex min-h-11 flex-col justify-center">
-                          <span className="flex items-center gap-2 font-medium group-hover:text-accent group-hover:underline">
-                            {r.display_name || r.email.split("@")[0]}
-                            {r.role !== "member" && <Badge>{ROLE_LABEL[r.role]}</Badge>}
+                        <Link href={`/admin/members/${r.id}`} className="group flex min-h-11 items-center gap-3">
+                          <span aria-hidden className={cx("grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold", active.length ? "bg-brand-dim text-accent" : "bg-panel-3 text-muted")}>{name.slice(0, 1).toUpperCase()}</span>
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2 font-bold group-hover:text-accent group-hover:underline">
+                              {name}
+                              {r.role !== "member" && <Badge>{ROLE_LABEL[r.role]}</Badge>}
+                            </span>
+                            <span className="block text-xs text-muted">{r.email}</span>
                           </span>
-                          <span className="block text-xs text-muted">{r.email}</span>
                         </Link>
                       </Td>
                       <Td className="num">{r.tradingview_username ?? <span className="text-faint">—</span>}</Td>
@@ -113,12 +125,17 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
                       <Td>{r.telegram_links ? `@${r.telegram_links.tg_username || "linked"}` : <span className="text-faint">—</span>}</Td>
                       <Td>
                         {active.length ? (
-                          <span className="num font-medium">{active.map((x) => x.code).join(" · ")}</span>
+                          <span className="flex flex-wrap gap-1">{active.map((x) => <span key={x.code} className="num rounded-md bg-buy-dim px-1.5 py-0.5 text-xs font-bold text-buy">{x.code}</span>)}</span>
                         ) : <span className="text-faint">ไม่มีสิทธิ์</span>}
-                        {next && <span className={cx("mt-0.5 block text-xs", expiringSoon(r) ? "font-semibold text-accent" : "text-muted")}>ถึง {fmtDate(next)}{expiringSoon(r) && " · ใกล้หมดอายุ"}</span>}
+                        {next && <span className={cx("mt-1 block text-xs", expiringSoon(r) ? "font-semibold text-accent" : "text-muted")}>ถึง {fmtDate(next)}{expiringSoon(r) && " · ใกล้หมดอายุ"}</span>}
                       </Td>
-                      <Td className="num text-right font-medium tabular-nums">{spend.get(r.id) ? fmtTHB(spend.get(r.id)!) : <span className="font-normal text-faint">—</span>}</Td>
-                      <Td className="text-muted">{fmtDate(r.created_at)}</Td>
+                      <Td className="num text-right font-semibold tabular-nums">{spend.get(r.id) ? fmtTHB(spend.get(r.id)!) : <span className="font-normal text-faint">—</span>}</Td>
+                      <Td className="whitespace-nowrap text-muted">{fmtDate(r.created_at)}</Td>
+                      <Td className="text-right">
+                        <Link href={`/admin/members/${r.id}`} aria-label={`ดูข้อมูล ${name}`} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-line-strong px-3.5 text-sm font-medium whitespace-nowrap hover:border-fg">
+                          ดู <ChevronRight aria-hidden className="size-4" />
+                        </Link>
+                      </Td>
                     </tr>
                   );
                 })}

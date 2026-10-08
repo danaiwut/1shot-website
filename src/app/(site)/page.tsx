@@ -1,5 +1,4 @@
 import { ArrowRight, CandlestickChart, Clock3, MonitorSmartphone, Target } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
 import { CountUp } from "@/components/motion/hero";
 import { IntroCurtain } from "@/components/motion/intro";
 import { LiveHero } from "@/components/motion/live-hero";
@@ -15,6 +14,8 @@ import { loadIndicators, type PublicIndicator } from "@/lib/indicators";
 import { loadCurrentPromotion } from "@/lib/promotions";
 import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
 import { createClient } from "@/lib/supabase/server";
+import { ButtonLink, cx } from "@/components/ui";
+import { track } from "@/components/brand";
 
 // Product facts shown under the hero. The indicator count comes from the DB.
 const stats = (indicatorCount: number) => [
@@ -59,7 +60,7 @@ export default async function HomePage() {
                   <span aria-hidden className="num block text-3xl leading-none font-bold sm:text-4xl">
                     {s.n === null ? s.text : <><CountUp to={s.n} />{s.suffix}</>}
                   </span>
-                  <span aria-hidden className="mt-2 block text-xs font-semibold tracking-[0.14em] text-fg">{s.k}</span>
+                  <span aria-hidden className={cx("mt-2 block text-xs font-semibold text-fg", track(s.k, "tracking-[0.14em]"))}>{s.k}</span>
                   <span aria-hidden className="mt-0.5 block text-sm text-muted">{s.d}</span>
                 </p>
               </StaggerItem>

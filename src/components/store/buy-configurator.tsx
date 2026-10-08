@@ -18,12 +18,14 @@ type Props = {
   /** Viewer's current right on this indicator: expiry, null = lifetime, undefined = none. */
   owned?: string | null;
   signedIn: boolean;
+  /** Where checkout's "back" returns to. */
+  from?: string;
 };
 
 const pct = (compare: number | null, amount: number) => (compare && compare > amount ? Math.floor(((compare - amount) / compare) * 100) : null);
 
 /** Apple-store style: choose how to buy (one / pair), then the option, then a sticky summary with one button. */
-export function BuyConfigurator({ code, name, singles, pairs, perks, owned, signedIn }: Props) {
+export function BuyConfigurator({ code, name, singles, pairs, perks, owned, signedIn, from = `/indicators/${code}` }: Props) {
   const [mode, setMode] = useState<"single" | "pair">(singles.length ? "single" : "pair");
   const [singleId, setSingleId] = useState(singles[0]?.priceId);
   const [partner, setPartner] = useState(pairs[0]?.partner);
@@ -50,7 +52,7 @@ export function BuyConfigurator({ code, name, singles, pairs, perks, owned, sign
 
   return (
     <form action={action} className="space-y-9">
-      <input type="hidden" name="from" value={`/indicators/${code}`} />
+      <input type="hidden" name="from" value={from} />
       {chosen && <input type="hidden" name="price_id" value={chosen.priceId} />}
       {mode === "single" && single?.codes?.map((c) => <input key={c} type="hidden" name="codes" value={c} />)}
       {mode === "pair" && pair?.pick && <><input type="hidden" name="codes" value={code} /><input type="hidden" name="codes" value={pair.partner} /></>}

@@ -1,8 +1,10 @@
-import { EmptyLine, Section, Segmented, TextLink } from "@/components/app/kit";
-import { PageHeader } from "@/components/app/page-header";
+import { Radio, SearchX } from "lucide-react";
+import { CARD, Segmented } from "@/components/app/kit";
+import { EmptyState } from "@/components/app/toolbar";
+import { DarkPanel, Dot } from "@/components/brand";
 import { LiveRefresh } from "@/components/signals/live-refresh";
 import { SetupRow } from "@/components/signals/setup-row";
-import { ButtonLink, FilterLink } from "@/components/ui";
+import { ButtonLink, cx, FilterLink } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import type { Indicator, Setup } from "@/lib/types";
 
@@ -38,6 +40,8 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
   const setups = (data ?? []) as Setup[];
   const total = count ?? setups.length;
   const openShown = setups.filter((s) => !s.terminal).length;
+  const buyShown = setups.filter((s) => s.side === "BUY").length;
+  const sellShown = setups.filter((s) => s.side === "SELL").length;
   const inds = (indicators ?? []) as Pick<Indicator, "code" | "name">[];
   const filtered = Boolean(code || side || statusId !== "all");
 
@@ -47,23 +51,44 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
     return `/signals?${p}`;
   };
 
-  const summary = setups.length
-    ? `แสดง ${setups.length} จาก ${total} รายการ${openShown ? ` · เปิดอยู่ ${openShown}` : ""}`
-    : undefined;
+  const stats = [
+    { k: filtered ? "ตามตัวกรอง" : "ทั้งหมด", v: total },
+    { k: total > setups.length ? "เปิดอยู่ (ที่แสดง)" : "เปิดอยู่", v: openShown },
+    { k: "BUY / SELL", v: `${buyShown} / ${sellShown}` },
+  ];
 
   return (
-    <>
-      <PageHeader title="สัญญาณ" description="Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด" action={<LiveRefresh />} />
+    <div className="space-y-8">
+      <DarkPanel as="header" className="px-6 py-9 sm:px-10 sm:py-11">
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">Live signals</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">สัญญาณ<Dot /></h1>
+            <p className="mt-3 max-w-xl text-base text-muted">Setup จากอินดิเคเตอร์ที่คุณมีสิทธิ์ เรียงตามการอัปเดตล่าสุด กดแต่ละรายการเพื่อดูระดับราคาและไทม์ไลน์</p>
+            <div className="mt-5"><LiveRefresh /></div>
+          </div>
+          <dl className="grid w-full grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:w-auto">
+            {stats.map((x) => (
+              <div key={x.k} className="bg-panel/80 px-4 py-3 backdrop-blur sm:px-5">
+                <dt className="text-xs font-semibold text-muted">{x.k}</dt>
+                <dd className="num mt-1 text-xl font-black tracking-tight tabular-nums sm:text-2xl">{x.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </DarkPanel>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="-mx-4 flex flex-nowrap items-center gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&>nav]:max-w-none [&>nav]:shrink-0">
         <Segmented label="กรองตามสถานะ">
           {STATUS_FILTERS.map((f) => <FilterLink key={f.id} href={href({ status: f.id, page: "" })} on={f.id === statusId}>{f.label}</FilterLink>)}
         </Segmented>
         <Segmented label="กรองตามฝั่ง">
-          {SIDES.map((s) => <FilterLink key={s.label} href={href({ side: s.v, page: "" })} on={side === s.v} className={s.v ? "num" : undefined}>{s.label}</FilterLink>)}
+          {SIDES.map((s) => (
+            <FilterLink key={s.label} href={href({ side: s.v, page: "" })} on={side === s.v} className={cx(s.v && "num font-bold", s.v === "BUY" && side !== "BUY" && "text-buy", s.v === "SELL" && side !== "SELL" && "text-sell")}>{s.label}</FilterLink>
+          ))}
         </Segmented>
         {inds.length > 0 && (
-          <Segmented label="กรองตามอินดิเคเตอร์" className="flex w-full flex-nowrap overflow-x-auto [scrollbar-width:none] sm:inline-flex sm:w-auto sm:flex-wrap">
+          <Segmented label="กรองตามอินดิเคเตอร์">
             <FilterLink href={href({ code: "", page: "" })} on={!code}>ทุกอินดิเคเตอร์</FilterLink>
             {inds.map((i) => (
               <FilterLink key={i.code} href={href({ code: i.code, page: "" })} on={code === i.code} title={i.name} className="num">{i.code}</FilterLink>
@@ -72,26 +97,35 @@ export default async function SignalsPage({ searchParams }: PageProps<"/signals"
         )}
       </div>
 
-      <Section title="รายการ Setup" description={summary}>
-        {setups.length ? (
-          <ul aria-label={`สัญญาณ ${setups.length} จาก ${total} รายการ`} className="divide-y divide-line">
-            {setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}
-          </ul>
-        ) : filtered ? (
-          <EmptyLine action={<TextLink href="/signals">ล้างตัวกรอง</TextLink>}>ไม่พบสัญญาณตามตัวกรองนี้</EmptyLine>
-        ) : (
-          <EmptyLine>ยังไม่มีสัญญาณ · Setup ใหม่จะแสดงที่นี่ทันทีที่อินดิเคเตอร์ส่งมา</EmptyLine>
-        )}
+      <section aria-labelledby="setups-title">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+          <h2 id="setups-title" className="text-lg font-bold tracking-tight">รายการ Setup</h2>
+          {setups.length > 0 && <p className="num text-sm text-muted">แสดง {setups.length} จาก {total} รายการ</p>}
+        </div>
+        <div className={CARD}>
+          {setups.length ? (
+            <ul aria-label={`สัญญาณ ${setups.length} จาก ${total} รายการ`} className="divide-y divide-line">
+              {setups.map((s) => <li key={s.setup_key}><SetupRow s={s} /></li>)}
+            </ul>
+          ) : filtered ? (
+            <EmptyState icon={<SearchX />} title="ไม่พบสัญญาณตามตัวกรองนี้" action={<ButtonLink href="/signals" variant="outline" className="rounded-full">ล้างตัวกรอง</ButtonLink>}>
+              ลองเลือกสถานะ ฝั่ง หรืออินดิเคเตอร์อื่น
+            </EmptyState>
+          ) : (
+            <EmptyState icon={<Radio />} title="ยังไม่มีสัญญาณ" action={<ButtonLink href="/store" className="rounded-full">เลือกอินดิเคเตอร์</ButtonLink>}>
+              Setup ใหม่จะแสดงที่นี่ทันทีที่อินดิเคเตอร์ส่งมา ถ้ายังไม่มีสิทธิ์ เลือกอินดิเคเตอร์ได้ที่ร้านค้า
+            </EmptyState>
+          )}
 
-        {total > setups.length && (
-          <div className="flex justify-center border-t border-line px-4 py-4">
-            <ButtonLink href={href({ page: String(page + 1) })} scroll={false} variant="outline">
-              โหลดเพิ่ม <span className="num tabular-nums text-muted">({setups.length}/{total})</span>
-            </ButtonLink>
-          </div>
-        )}
-      </Section>
-    </>
+          {total > setups.length && (
+            <div className="flex justify-center border-t border-line px-4 py-5">
+              <ButtonLink href={href({ page: String(page + 1) })} scroll={false} variant="outline" className="h-11 rounded-full px-6">
+                โหลดเพิ่ม <span className="num tabular-nums text-muted">({setups.length}/{total})</span>
+              </ButtonLink>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
-

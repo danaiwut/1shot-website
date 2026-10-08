@@ -311,6 +311,6 @@ export async function setCancelAtPeriodEnd(userId: string, subscriptionId: strin
 export async function billingPortalUrl(userId: string) {
   const { data } = await createAdminClient().from("stripe_customers").select("stripe_customer_id").eq("user_id", userId).maybeSingle();
   if (!data?.stripe_customer_id) throw new StoreError("ยังไม่มีข้อมูลการชำระเงินกับ Stripe");
-  const session = await getStripe().billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: `${publicEnv.siteUrl()}/billing` });
+  const session = await getStripe().billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: `${publicEnv.siteUrl()}/store#history` });
   return session.url;
 }

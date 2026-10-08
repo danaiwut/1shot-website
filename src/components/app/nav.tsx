@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import {
-  Activity, ArrowLeftRight, Bell, ChevronDown, BadgePercent, KeyRound, BookOpen, ChevronsUpDown, CreditCard, History, Home, LayoutDashboard, LayoutGrid, LifeBuoy, LogOut,
+  Activity, ArrowLeftRight, Bell, ChevronDown, BadgePercent, KeyRound, BookOpen, ChevronsUpDown, History, Home, LayoutDashboard, LayoutGrid, LifeBuoy, LogOut,
   Megaphone, Newspaper, Receipt, Settings2, ShieldHalf, ShoppingBag, Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -40,8 +40,7 @@ const isFolder = (e: Entry): e is Folder => "children" in e;
 const MEMBER: Entry[] = [
   { href: "/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/signals", label: "สัญญาณ", icon: Activity },
-  { href: "/store", label: "ร้านค้า", icon: ShoppingBag },
-  { href: "/billing", label: "การชำระเงิน", icon: CreditCard },
+  { href: "/store", label: "ร้านค้า", icon: ShoppingBag, also: [{ href: "/checkout", label: "ชำระเงิน" }, { href: "/billing", label: "ผลการชำระเงิน" }] },
   { label: "ข่าวสาร", icon: Newspaper, children: [
     { href: "/news", label: "ข่าวและสรุปตลาด", icon: Newspaper },
     { href: "/announcements", label: "ประกาศ", icon: Megaphone },
@@ -63,14 +62,10 @@ const ADMIN: Entry[] = [
   { href: "/admin/more", label: "อื่นๆ", icon: LayoutGrid, also: [
     { href: "/admin/indicators", label: "อินดิเคเตอร์" },
     { href: "/admin/support", label: "คำขอจากลูกค้า" },
-    { href: "/admin/announcements", label: "ประกาศ" },
-    { href: "/admin/content", label: "ข่าวและสรุปเช้า" },
-    { href: "/admin/blog", label: "บล็อกข่าวสาร" },
+    { href: "/admin/content", label: "เนื้อหา" },
     { href: "/admin/lots", label: "Lot Exness" },
     { href: "/admin/team", label: "ทีมงาน" },
-    { href: "/admin/access-history", label: "ประวัติการให้สิทธิ์" },
-    { href: "/admin/emails", label: "อีเมลที่ส่งออก" },
-    { href: "/admin/webhooks", label: "บันทึกระบบรับเงิน" },
+    { href: "/admin/logs", label: "บันทึกระบบ" },
   ] },
 ];
 const AREA = {

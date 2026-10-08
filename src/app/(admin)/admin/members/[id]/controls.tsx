@@ -1,8 +1,8 @@
 "use client";
-import { useActionState, useState, useTransition } from "react";
-import { Button, cx, Input, Select } from "@/components/ui";
+import { useState, useTransition } from "react";
+import { Button, cx, Select } from "@/components/ui";
 import type { Role } from "@/lib/types";
-import { grantRight, revokeRight, setIbVerified, setRole, unlinkTelegram } from "../../actions";
+import { revokeRight, setIbVerified, setRole, unlinkTelegram } from "../../actions";
 
 function useAction() {
   const [busy, start] = useTransition();
@@ -48,29 +48,6 @@ export function RoleSelect({ userId, role }: { userId: string; role: Role }) {
         <option value="owner">เจ้าของ</option>
       </Select>
     </span>
-  );
-}
-
-export function GrantForm({ userId, code, current, has }: { userId: string; code: string; current: string | null; has: boolean }) {
-  const [state, action, pending] = useActionState(grantRight, {});
-  const [duration, setDuration] = useState<"lifetime" | "date">(has && current === null ? "lifetime" : "date");
-  const defaultDate = current
-    ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date(current))
-    : new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date(Date.now() + 30 * 86400000));
-  return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
-      <input type="hidden" name="user_id" value={userId} />
-      <input type="hidden" name="code" value={code} />
-      <Select name="duration" aria-label={`ระยะเวลาสิทธิ์ ${code}`} className="w-32" value={duration} onChange={(e) => setDuration(e.target.value as "lifetime" | "date")}>
-        <option value="date">ถึงวันที่</option>
-        <option value="lifetime">ตลอดชีพ</option>
-      </Select>
-      {duration === "date" && (
-        <Input name="expires_on" type="date" aria-label={`วันหมดอายุ ${code}`} defaultValue={defaultDate} className="w-40" />
-      )}
-      <Button type="submit" variant="outline" disabled={pending} aria-label={`${has ? "อัปเดต" : "ให้สิทธิ์"} ${code}`}>{has ? "อัปเดต" : "ให้สิทธิ์"}</Button>
-      {state.error && <span role="alert" className="w-full text-sm text-sell xl:text-right">{state.error}</span>}
-    </form>
   );
 }
 

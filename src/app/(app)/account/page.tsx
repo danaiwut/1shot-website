@@ -1,102 +1,152 @@
-import { EmptyLine, Row, Rows, SettingsSection, Status, TextLink } from "@/components/app/kit";
-import { PageHeader } from "@/components/app/page-header";
+import Link from "next/link";
+import { BarChart3, Check, KeyRound, Send, UserRound, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { FormLayout, Panel, Step } from "@/components/app/form-kit";
+import { Status } from "@/components/app/kit";
+import { DarkPanel, Dot, track } from "@/components/brand";
+import { cx } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
-import { fmtDate } from "@/lib/format";
 import { lotsByAccount, monthStart } from "@/lib/lots";
-import type { IndicatorRight } from "@/lib/types";
 import { changePassword } from "../../(auth)/actions";
 import { PasswordForm } from "../../(auth)/auth-form";
-import { ProfileForm, RoomButton, TelegramLinker } from "./forms";
+import { ProfileForm, TelegramLinker } from "./forms";
 
 export const metadata = { title: "บัญชีของฉัน" };
 
 export default async function AccountPage() {
   const { profile, supabase, userId } = await requireViewer();
-  const [{ data: link }, { data: token }, { data: rights }] = await Promise.all([
+  const [{ data: link }, { data: token }] = await Promise.all([
     supabase.from("telegram_links").select("*").eq("user_id", userId).maybeSingle(),
     supabase.from("telegram_link_tokens").select("tg_uid, tg_name, tg_username, expires_at").eq("user_id", userId).maybeSingle(),
-    supabase.from("indicator_rights").select("*, indicators(name, telegram_room_id)").eq("user_id", userId).order("code"),
   ]);
   const account = profile.exness_account;
   const [lotsNow, lotsPrev] = account
     ? await Promise.all([lotsByAccount(supabase, monthStart(0), monthStart(1), [account]), lotsByAccount(supabase, monthStart(-1), monthStart(0), [account])])
     : [null, null];
   const pending = token?.tg_uid && new Date(token.expires_at) > new Date() ? { name: token.tg_name, username: token.tg_username } : null;
-  const list = (rights ?? []) as (IndicatorRight & { indicators: { name: string; telegram_room_id: string | null } | null })[];
+  const name = profile.display_name || profile.email.split("@")[0];
 
   const ib = profile.ib_verified
     ? <Status tone="good">ผ่านการตรวจ IB</Status>
     : profile.exness_account ? <Status tone="warn">IB รอตรวจ</Status> : undefined;
 
-  return (
+  const checks: { label: string; ok: boolean; line: string; href: string }[] = [
+    { label: "TradingView", ok: Boolean(profile.tradingview_username), line: profile.tradingview_username ?? "ยังไม่ได้กรอก", href: "#profile" },
+    { label: "Telegram", ok: Boolean(link), line: link ? (link.tg_username ? `@${link.tg_username}` : link.tg_name || "เชื่อมแล้ว") : "ยังไม่เชื่อม", href: "#telegram" },
+    { label: "Exness IB", ok: profile.ib_verified, line: profile.ib_verified ? "ผ่านการตรวจแล้ว" : account ? "รอแอดมินตรวจ" : "ไม่บังคับ", href: "#profile" },
+  ];
+  const jump: { href: string; label: string; icon: LucideIcon }[] = [
+    { href: "#profile", label: "ข้อมูลสมาชิก", icon: UserRound },
+    { href: "#telegram", label: "Telegram", icon: Send },
+    ...(account ? [{ href: "#lots", label: "Lot ที่เทรด", icon: BarChart3 }] : []),
+    { href: "#password", label: "รหัสผ่าน", icon: KeyRound },
+  ];
+
+  const aside = (
     <>
-      <PageHeader title="บัญชีของฉัน" description={profile.email} action={ib} />
+      <Panel title="สถานะบัญชี">
+        <ul className="space-y-1">
+          {checks.map((c) => (
+            <li key={c.label}>
+              <a href={c.href} className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-panel-2">
+                <span aria-hidden className={cx("grid size-8 shrink-0 place-items-center rounded-full", c.ok ? "bg-buy-dim text-buy" : "bg-panel-3 text-muted")}>
+                  {c.ok ? <Check className="size-4" strokeWidth={3} /> : <X className="size-4" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">{c.label}<span className="sr-only">{c.ok ? " (เรียบร้อย)" : " (ยังไม่เสร็จ)"}</span></span>
+                  <span className="num block truncate text-xs text-muted">{c.line}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+      <Panel title="ไปที่">
+        <nav aria-label="ส่วนของหน้าบัญชี" className="grid grid-cols-2 gap-2 xl:grid-cols-1">
+          {jump.map((j) => (
+            <a key={j.href} href={j.href} className="flex min-h-11 items-center gap-2.5 rounded-xl border border-line px-3 text-sm font-medium transition-colors hover:border-brand/50 hover:text-accent">
+              <j.icon aria-hidden className="size-4 shrink-0 text-accent" /> {j.label}
+            </a>
+          ))}
+        </nav>
+        <Link href="/activity" className="mt-3 block text-center text-sm font-medium text-muted underline-offset-4 hover:text-accent hover:underline">ดูประวัติการเปลี่ยนแปลง</Link>
+      </Panel>
+    </>
+  );
 
-      <div className="max-w-4xl">
-        <SettingsSection title="ข้อมูลสมาชิก" description="ชื่อ TradingView ใช้เปิดสิทธิ์อินดิเคเตอร์ให้คุณ">
-          <ProfileForm profile={profile} />
-        </SettingsSection>
-
-        <SettingsSection
-          id="telegram"
-          title="Telegram"
-          description={<>ใช้รับลิงก์เข้าห้องสัญญาณตามสิทธิ์ของคุณ<span className="mt-2 block"><Status tone={link ? "good" : "neutral"}>{link ? "เชื่อมแล้ว" : "ยังไม่เชื่อม"}</Status></span></>}
-        >
-          {link ? (
-            <div className="rounded-lg border border-line bg-panel px-4 py-3">
-              <p className="truncate text-sm font-medium">{link.tg_name || "Telegram"}</p>
-              <p className="num truncate text-sm text-muted">{link.tg_username ? `@${link.tg_username}` : `ID ${link.tg_uid}`}</p>
-            </div>
-          ) : (
-            <TelegramLinker pending={pending} />
-          )}
-        </SettingsSection>
-
-        <SettingsSection title="ห้องสัญญาณ" description="ลิงก์เข้าห้องใช้ได้ครั้งเดียว ภายใน 10 นาที">
-          {!link && list.length > 0 && <p className="text-sm text-muted">เชื่อม Telegram ด้านบนก่อน จึงจะขอลิงก์เข้าห้องได้</p>}
-          <div className="overflow-hidden rounded-lg border border-line bg-panel">
-            {list.length ? (
-              <Rows>
-                {list.map((r) => {
-                  const active = !r.expires_at || new Date(r.expires_at) > new Date();
-                  return (
-                    <Row key={r.code} className="flex-wrap justify-between gap-y-2">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="num w-10 shrink-0 text-sm font-semibold text-accent">{r.code}</span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{r.indicators?.name ?? r.code}</p>
-                          <p className="text-sm text-muted">
-                            <Status tone={active ? "good" : "neutral"}>{active ? "ใช้งานได้" : "หมดอายุ"}</Status>
-                            <span> · {r.expires_at ? `${active ? "ถึง" : "เมื่อ"} ${fmtDate(r.expires_at)}` : "ตลอดชีพ"}</span>
-                          </p>
-                        </div>
-                      </div>
-                      {r.indicators?.telegram_room_id
-                        ? <RoomButton code={r.code} disabled={!active || !link} />
-                        : <span className="text-sm text-muted">ไม่มีห้อง</span>}
-                    </Row>
-                  );
-                })}
-              </Rows>
-            ) : (
-              <EmptyLine action={<TextLink href="/store">ไปที่ร้านค้า</TextLink>}>ยังไม่มีสิทธิ์อินดิเคเตอร์ ซื้อแพ็กเกจ หรือกรอกบัญชี Exness แล้วรอแอดมินให้สิทธิ์</EmptyLine>
-            )}
+  return (
+    <div className="space-y-8">
+      <DarkPanel as="header" className="px-6 py-8 sm:px-10 sm:py-10">
+        <div className="relative flex flex-wrap items-center gap-5">
+          <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-2xl bg-brand text-2xl font-black text-white uppercase shadow-[0_16px_40px_-16px_rgb(178_0_22/0.9)] sm:size-20 sm:text-3xl">
+            {name.slice(0, 1)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">My account</p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight break-words sm:text-4xl">บัญชีของฉัน<Dot /></h1>
+            <p className="mt-1 truncate text-sm text-muted sm:text-base">{profile.email}</p>
           </div>
-        </SettingsSection>
+          <div className="flex flex-wrap gap-2">
+            <Status tone={link ? "good" : "neutral"}>{link ? "Telegram เชื่อมแล้ว" : "ยังไม่เชื่อม Telegram"}</Status>
+            {ib}
+          </div>
+        </div>
+      </DarkPanel>
+
+      <FormLayout aside={aside}>
+        <div id="profile" className="scroll-mt-24">
+          <Step n={1} title="ข้อมูลสมาชิก" hint="ชื่อ TradingView ใช้เปิดสิทธิ์อินดิเคเตอร์ให้คุณ">
+            <ProfileForm profile={profile} />
+          </Step>
+        </div>
+
+        <div id="telegram" className="scroll-mt-24">
+          <Step
+            n={2} title="Telegram"
+            aside={<Status tone={link ? "good" : "neutral"}>{link ? "เชื่อมแล้ว" : "ยังไม่เชื่อม"}</Status>}
+            hint={<>ใช้รับลิงก์เข้าห้องสัญญาณ ขอลิงก์ได้ที่ <Link href="/dashboard#rights" className="font-medium text-accent underline-offset-4 hover:underline">อินดิเคเตอร์ของฉัน</Link></>}
+          >
+            {link ? (
+              <div className="flex items-center gap-4 rounded-2xl border border-line bg-panel-2 p-4">
+                <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand text-white"><Send className="size-5" /></span>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{link.tg_name || "Telegram"}</p>
+                  <p className="num truncate text-sm text-muted">{link.tg_username ? `@${link.tg_username}` : `ID ${link.tg_uid}`}</p>
+                </div>
+              </div>
+            ) : (
+              <TelegramLinker pending={pending} />
+            )}
+          </Step>
+        </div>
 
         {account && (
-          <SettingsSection title="Lot ที่เทรด (Exness)" description={`บัญชี ${account} · อัปเดตจาก Exness วันละครั้ง`}>
-            <dl className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-panel">
-              <div className="px-4 py-3.5"><dt className="text-sm text-muted">เดือนนี้</dt><dd className="num mt-1 text-xl font-semibold tabular-nums">{(lotsNow?.get(account)?.lots ?? 0).toFixed(2)}</dd></div>
-              <div className="border-l border-line px-4 py-3.5"><dt className="text-sm text-muted">เดือนที่แล้ว</dt><dd className="num mt-1 text-xl font-semibold tabular-nums">{(lotsPrev?.get(account)?.lots ?? 0).toFixed(2)}</dd></div>
-            </dl>
-          </SettingsSection>
+          <div id="lots" className="scroll-mt-24">
+            <Step title="Lot ที่เทรด (Exness)" hint={`บัญชี ${account} · อัปเดตจาก Exness วันละครั้ง`}>
+              <dl className="grid grid-cols-2 gap-3">
+                {[
+                  { k: "เดือนนี้", v: lotsNow?.get(account)?.lots ?? 0, hot: true },
+                  { k: "เดือนที่แล้ว", v: lotsPrev?.get(account)?.lots ?? 0, hot: false },
+                ].map((x) => (
+                  <div key={x.k} className={cx("rounded-2xl border px-5 py-4", x.hot ? "border-brand/40 bg-brand-dim" : "border-line bg-panel-2")}>
+                    <dt className={cx("text-xs font-bold text-muted", track(x.k, "tracking-[0.14em]"))}>{x.k}</dt>
+                    <dd className="num mt-2 text-3xl font-black tracking-tight tabular-nums">{x.v.toFixed(2)}</dd>
+                    <dd className="text-xs text-muted">lot</dd>
+                  </div>
+                ))}
+              </dl>
+            </Step>
+          </div>
         )}
 
-        <SettingsSection id="password" title="รหัสผ่าน" description="ลืมรหัสผ่านปัจจุบัน? ออกจากระบบแล้วใช้ “ลืมรหัสผ่าน” ที่หน้าเข้าสู่ระบบ">
-          <PasswordForm action={changePassword} email={profile.email} withCurrent submit="เปลี่ยนรหัสผ่าน" />
-        </SettingsSection>
-      </div>
-    </>
+        <div id="password" className="scroll-mt-24">
+          <Step n={3} title="รหัสผ่าน" hint="ลืมรหัสผ่านปัจจุบัน? ออกจากระบบแล้วใช้ “ลืมรหัสผ่าน” ที่หน้าเข้าสู่ระบบ">
+            <div className="max-w-xl [&_button[type=submit]]:rounded-full [&_button[type=submit]]:px-6">
+              <PasswordForm action={changePassword} email={profile.email} withCurrent submit="เปลี่ยนรหัสผ่าน" />
+            </div>
+          </Step>
+        </div>
+      </FormLayout>
+    </div>
   );
 }

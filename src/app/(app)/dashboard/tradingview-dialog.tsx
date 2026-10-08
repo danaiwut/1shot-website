@@ -1,11 +1,11 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
-import { Button, Field, Input, Notice } from "@/components/ui";
+import { Button, cx, Field, Input, Notice } from "@/components/ui";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { saveTradingViewName, type TvNameState } from "./actions";
 
 /** "ไปกรอกชื่อ" on the dashboard: enter the TradingView username in place, no page change. */
-export function TradingViewDialog({ current, label, variant = "outline" }: { current: string | null; label: string; variant?: "outline" | "brand" }) {
+export function TradingViewDialog({ current, label, variant = "outline", className }: { current: string | null; label: string; variant?: "outline" | "brand"; className?: string }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<TvNameState, FormData>(saveTradingViewName, {});
   useEffect(() => {
@@ -16,8 +16,8 @@ export function TradingViewDialog({ current, label, variant = "outline" }: { cur
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant={variant}>{label}</Button></DialogTrigger>
-      <DialogContent className="rounded-lg sm:max-w-md">
+      <DialogTrigger asChild><Button variant={variant} className={cx("rounded-full px-5", className)}>{label}</Button></DialogTrigger>
+      <DialogContent className="rounded-2xl sm:max-w-md">
         <form action={action} className="space-y-5">
           <DialogHeader>
             <DialogTitle>ชื่อผู้ใช้ TradingView</DialogTitle>
@@ -29,8 +29,8 @@ export function TradingViewDialog({ current, label, variant = "outline" }: { cur
           {state.error && <Notice tone="error">{state.error}</Notice>}
           {state.ok && <Notice tone="success">{state.ok}</Notice>}
           <DialogFooter className="gap-2">
-            <DialogClose asChild><Button type="button" variant="ghost">ยกเลิก</Button></DialogClose>
-            <Button type="submit" disabled={pending}>{pending ? "กำลังตรวจสอบ…" : "บันทึก"}</Button>
+            <DialogClose asChild><Button type="button" variant="ghost" className="rounded-full">ยกเลิก</Button></DialogClose>
+            <Button type="submit" className="rounded-full px-6" disabled={pending}>{pending ? "กำลังตรวจสอบ…" : "บันทึก"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

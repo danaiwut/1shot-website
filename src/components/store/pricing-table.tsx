@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { Check, Copy, Loader2 } from "lucide-react";
 import { cx } from "@/components/ui";
 import { buy, type BuyState } from "@/lib/store/actions";
@@ -11,21 +12,33 @@ import type { Promotion } from "@/lib/types";
 const thaiDate = (iso: string) => new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
 const num = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 });
 
+type Ownership = {
+  /** code → expiry (null = lifetime) for codes the viewer can already use */
+  access?: Record<string, string | null>;
+  /** Product ids the viewer has a live subscription to. */
+  subscribed?: string[];
+  /** Viewer has bought before (undefined = not signed in). Gates "ลูกค้าเก่า" deals. */
+  returning?: boolean;
+};
+
 /**
- * Homepage "แพ็กเกจและโปรโมชั่น": the running promotion as the heading, then a classic three-card
- * pricing table (featured deal in the middle, raised and in brand red).
+ * "แพ็กเกจและโปรโมชั่น" (homepage, /pricing, /store): the running promotion as the heading, then a classic
+ * pricing table (featured deal in the middle, raised and in brand red). `max` caps the cards (homepage: 3).
  */
-export function PricingTable({ products, promotion, from = "/" }: { products: CatalogProduct[]; promotion: Promotion | null; from?: string }) {
-  // Featured deal in the middle, at most three cards.
-  const ranked = [...products].sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort - b.sort).slice(0, 3);
+export function PricingTable({ products, promotion, from = "/", max = 3, heading = true, ...own }: {
+  products: CatalogProduct[]; promotion: Promotion | null; from?: string; max?: number; heading?: boolean;
+} & Ownership) {
+  // Featured deal in the middle.
+  const ranked = [...products].sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort - b.sort).slice(0, max);
   const [hero, ...rest] = ranked;
   const cards = rest.length === 2 ? [rest[0], hero, rest[1]] : ranked;
+  if (!hero) return null;
 
   return (
     <div className="relative">
-      <Heading promotion={promotion} />
-      <ul className={cx("mx-auto mt-12 grid max-w-5xl items-stretch gap-5 sm:mt-14 lg:gap-0", cards.length === 3 ? "lg:grid-cols-3" : cards.length === 2 ? "max-w-3xl md:grid-cols-2 md:gap-5" : "max-w-sm")}>
-        {cards.map((p) => <PlanCard key={p.id} product={p} featured={p.id === hero.id && cards.length > 1} from={from} />)}
+      {heading && <Heading promotion={promotion} />}
+      <ul className={cx("mx-auto grid items-stretch gap-5", heading && "mt-12 sm:mt-14", cards.length >= 3 ? "max-w-5xl lg:grid-cols-3 lg:gap-x-0 lg:gap-y-12" : cards.length === 2 ? "max-w-3xl md:grid-cols-2" : "max-w-sm")}>
+        {cards.map((p) => <DealCard key={p.id} product={p} featured={p.id === hero.id && cards.length > 1} from={from} {...own} />)}
       </ul>
     </div>
   );
@@ -63,21 +76,29 @@ function Heading({ promotion: promo }: { promotion: Promotion | null }) {
   );
 }
 
-function PlanCard({ product: p, featured, from }: { product: CatalogProduct; featured: boolean; from: string }) {
+/** One deal / bundle, landing style. Picks choose their indicators at checkout. */
+export function DealCard({ product: p, featured, from, access = {}, subscribed = [], returning }: { product: CatalogProduct; featured: boolean; from: string } & Ownership) {
   const [state, action, pending] = useActionState<BuyState, FormData>(buy, {});
-  const price = p.prices[0];
+  const [priceId, setPriceId] = useState(p.prices[0]?.id);
+  const price = p.prices.find((x) => x.id === priceId) ?? p.prices[0];
   const off = savingPercent(price.compareSatang, price.amount_satang);
   const names = p.codes.map((c) => p.names[c] ?? c);
   const term = termLabel(price);
   const pay = price.billing === "subscription" ? "ตัดบัตรอัตโนมัติ ยกเลิกได้" : "จ่ายครั้งเดียว";
+  const pick = p.kind === "pick" ? p.pick_count ?? 1 : 0;
+  const lifetime = p.codes.filter((c) => c in access && access[c] === null);
+  const ownedAll = pick ? p.codes.length - lifetime.length < pick : lifetime.length === p.codes.length;
+  const locked = p.audience === "returning" && returning === false;
+  const isSub = subscribed.includes(p.id) && price.billing === "subscription";
   const rows: { key: string; main: string; sub?: string }[] = [
     p.kind === "pick"
       ? { key: "codes", main: `เลือกเอง ${p.pick_count} ตัว จาก ${names.length} ตัว`, sub: names.join(" · ") }
-      : { key: "codes", main: names.join(" + ") },
+      : { key: "codes", main: names.map((n, i) => (p.codes[i] in access ? `${n} ✓` : n)).join(" + ") },
     ...p.features.map((f) => ({ key: f, main: f })),
     // Don't repeat "ตลอดชีพ" when a feature already says it.
     { key: "terms", main: p.features.some((f) => f.includes(term)) ? pay : `${term} · ${pay}` },
   ];
+  const note = cx("mt-6 flex h-12 w-full items-center justify-center rounded-lg px-3 text-sm font-semibold", featured ? "bg-white/15 text-white" : "bg-panel-3 text-muted");
 
   return (
     <li
@@ -106,6 +127,21 @@ function PlanCard({ product: p, featured, from }: { product: CatalogProduct; fea
           : " "}
       </p>
 
+      {p.prices.length > 1 && (
+        <fieldset className={cx("mx-auto mt-4 inline-flex rounded-full border p-1", featured ? "border-white/30" : "border-line")}>
+          <legend className="sr-only">เลือกระยะเวลา</legend>
+          {p.prices.map((x) => (
+            <label key={x.id} className={cx(
+              "cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+              x.id === price.id ? (featured ? "bg-white text-brand" : "bg-brand text-white") : featured ? "text-white/85 hover:text-white" : "text-muted hover:text-fg",
+            )}>
+              <input type="radio" name={`term-${p.id}`} checked={x.id === price.id} onChange={() => setPriceId(x.id)} className="sr-only" />
+              {termLabel(x)}
+            </label>
+          ))}
+        </fieldset>
+      )}
+
       <ul className={cx("mt-6 flex-1 divide-y border-y text-sm", featured ? "divide-white/25 border-white/25" : "divide-line border-line")}>
         {rows.map((r) => (
           <li key={r.key} className="px-1 py-3.5 font-medium">
@@ -116,21 +152,29 @@ function PlanCard({ product: p, featured, from }: { product: CatalogProduct; fea
       </ul>
       {p.available_until && <p className={cx("mt-4 text-xs", featured ? "text-white/85" : "text-muted")}>ถึง {thaiDate(p.available_until)}</p>}
 
-      <form action={action} className="mt-6">
-        <input type="hidden" name="price_id" value={price.id} />
-        <input type="hidden" name="from" value={from} />
-        <button
-          type="submit"
-          disabled={pending}
-          className={cx(
-            "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 text-sm font-bold tracking-wide transition-colors disabled:opacity-60",
-            featured ? "border-white bg-white text-brand hover:bg-white/90" : "border-brand text-accent hover:bg-brand hover:text-white",
-          )}
-        >
-          {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
-          {pending ? "กำลังไปหน้าชำระเงิน…" : p.kind === "pick" ? "เลือกอินดิเคเตอร์" : "เลือกแพ็กเกจนี้"}
-        </button>
-      </form>
+      {locked ? (
+        <p className={note}>สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น</p>
+      ) : ownedAll ? (
+        <p className={note}>คุณมีสิทธิ์ตลอดชีพแล้ว</p>
+      ) : isSub ? (
+        <Link href="/store#history" className={cx(note, "hover:underline")}>สมัครอยู่แล้ว · ดูประวัติ</Link>
+      ) : (
+        <form action={action} className="mt-6">
+          <input type="hidden" name="price_id" value={price.id} />
+          <input type="hidden" name="from" value={from} />
+          <button
+            type="submit"
+            disabled={pending}
+            className={cx(
+              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 text-sm font-bold tracking-wide transition-colors disabled:opacity-60",
+              featured ? "border-white bg-white text-brand hover:bg-white/90" : "border-brand text-accent hover:bg-brand hover:text-white",
+            )}
+          >
+            {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            {pending ? "กำลังไปหน้าชำระเงิน…" : pick ? "เลือกอินดิเคเตอร์" : price.billing === "subscription" ? `สมัคร${term}` : "เลือกแพ็กเกจนี้"}
+          </button>
+        </form>
+      )}
       {state.error && <p role="alert" className={cx("mt-2 text-sm", featured ? "text-white" : "text-sell")}>{state.error}</p>}
     </li>
   );

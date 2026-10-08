@@ -46,7 +46,7 @@ export async function saveBlogPost(_: BlogState, form: FormData): Promise<BlogSt
     return { error: error.code === "23505" ? "โพสต์นี้เพิ่มไว้แล้ว" : "บันทึกไม่สำเร็จ" };
   }
   revalidatePath("/");
-  revalidatePath("/admin/blog");
+  revalidatePath("/admin/content");
   return { ok: `เพิ่มโพสต์แล้ว${sources.length > paths.length ? ` (รูป ${sources.length - paths.length} รูปใช้ไม่ได้ ข้ามไป)` : ""}` };
 }
 
@@ -54,7 +54,7 @@ export async function setBlogActive(id: string, active: boolean) {
   const { supabase } = await requireStaff();
   await supabase.from("blog_posts").update({ active }).eq("id", z.uuid().parse(id));
   revalidatePath("/");
-  revalidatePath("/admin/blog");
+  revalidatePath("/admin/content");
 }
 
 export async function deleteBlogPost(id: string) {
@@ -62,5 +62,5 @@ export async function deleteBlogPost(id: string) {
   const { data } = await supabase.from("blog_posts").delete().eq("id", z.uuid().parse(id)).select("image_paths").maybeSingle<{ image_paths: string[] }>();
   if (data) await removeBlogImages(data.image_paths);
   revalidatePath("/");
-  revalidatePath("/admin/blog");
+  revalidatePath("/admin/content");
 }

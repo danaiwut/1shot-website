@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { EmptyLine, Section, Status, TableBox, Td, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Badge, ButtonLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { SalesTabs } from "../_components/sales-tabs";
 import { fmtDate } from "@/lib/format";
 import { fmtTHB, kindLabel, priceSuffix } from "@/lib/store/pricing";
 import type { Product } from "@/lib/types";
+import { Badge, ButtonLink, cx } from "@/components/ui";
+import { track } from "@/components/brand";
 
 export const metadata = { title: "ราคาและโปร" };
 
@@ -41,20 +42,24 @@ export default async function ProductsPage() {
                   <tr key={p.id} className="border-t border-line">
                     <Td>
                       <Link href={`/admin/products/${p.id}`} className="group inline-flex min-h-11 flex-col justify-center">
-                        <span className="block font-medium group-hover:text-accent group-hover:underline">{p.name}</span>
-                        <span className="block text-xs text-muted">{kindLabel(p)}</span>
+                        <span className="block font-bold group-hover:text-accent">{p.name}</span>
+                        <span className={cx("mt-0.5 block text-xs font-semibold text-accent", track(kindLabel(p), "tracking-[0.1em]"))}>{kindLabel(p)}</span>
                       </Link>
                     </Td>
-                    <Td className="num font-medium">{p.codes.join(" · ") || <span className="text-faint">—</span>}</Td>
-                    <Td className="num tabular-nums">
+                    <Td>
+                      {p.codes.length ? (
+                        <span className="flex flex-wrap gap-1.5">{p.codes.map((c) => <span key={c} className="num rounded-md border border-line bg-panel-2 px-2 py-0.5 text-xs font-bold">{c}</span>)}</span>
+                      ) : <span className="text-faint">—</span>}
+                    </Td>
+                    <Td className="tabular-nums">
                       {prices.length ? (
-                        <span className="flex flex-col gap-0.5">{prices.map((x) => <span key={x.id}>{fmtTHB(x.amount_satang)} <span className="text-xs text-muted">{priceSuffix(x)}</span></span>)}</span>
+                        <span className="flex flex-col gap-0.5">{prices.map((x) => <span key={x.id}><b className="text-base font-extrabold tracking-tight">{fmtTHB(x.amount_satang)}</b> <span className="text-xs text-muted">{priceSuffix(x)}</span></span>)}</span>
                       ) : <Status tone="bad">ยังไม่มีราคา</Status>}
                     </Td>
                     <Td>
                       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <Status tone={p.active ? "good" : "neutral"}>{p.active ? "เปิดขาย" : "ปิดขาย"}</Status>
-                        {p.featured && <Badge>แนะนำ</Badge>}
+                        {p.featured && <Badge tone="brand">แนะนำ</Badge>}
                         {p.audience === "returning" && <Badge>ลูกค้าเก่า</Badge>}
                         {p.available_until && (new Date(p.available_until) < new Date()
                           ? <Status tone="neutral">หมดเวลาโปร</Status>

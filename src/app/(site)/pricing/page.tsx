@@ -46,7 +46,7 @@ export default async function PricingPage() {
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/3 h-[480px] bg-[radial-gradient(50%_60%_at_50%_40%,rgb(178_0_22/0.12),transparent_70%)] dark:bg-[radial-gradient(50%_60%_at_50%_40%,rgb(178_0_22/0.35),transparent_70%)]" />
         <div className="relative mx-auto max-w-5xl px-4 pt-20 pb-16 text-center sm:px-6 sm:pt-28 sm:pb-20">
           <Reveal>
-            <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">ราคาและแพ็กเกจ</p>
+            <p className="text-sm font-bold text-accent">ราคาและแพ็กเกจ</p>
             <h1 className="mt-4 text-4xl leading-[1.08] font-black tracking-tight text-balance sm:text-6xl">
               จ่ายครั้งเดียว<br />ใช้ได้<span className="text-brand dark:text-[#ff2e43]">ตลอดชีพ</span>
             </h1>
@@ -85,7 +85,7 @@ export default async function PricingPage() {
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
             <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">ซื้อรายตัว</p>
+                <p className="text-sm font-bold text-accent">ซื้อรายตัว</p>
                 <h2 id="singles-title" className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">เลือกเฉพาะตัวที่ใช่<span className="text-brand dark:text-[#ff2e43]">.</span></h2>
                 <p className="mt-2 max-w-lg text-base text-muted">ทุกตัวใช้ได้ตลอดชีพ อยากได้หลายตัว ซื้อคู่ถูกกว่า</p>
               </div>
@@ -126,7 +126,7 @@ export default async function PricingPage() {
       <section aria-labelledby="faq-title" className="bg-panel">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-16">
           <div>
-            <p className="text-sm font-bold tracking-[0.18em] text-accent uppercase">คำถามก่อนซื้อ</p>
+            <p className="text-sm font-bold text-accent">คำถามก่อนซื้อ</p>
             <h2 id="faq-title" className="mt-3 text-3xl font-black tracking-tight">มีคำถาม?<br />เรามีคำตอบ<span className="text-brand dark:text-[#ff2e43]">.</span></h2>
             <p className="mt-3 text-base text-muted">ไม่เจอคำตอบที่หา สมัครสมาชิกแล้วส่งคำถามได้ที่เมนูช่วยเหลือ</p>
           </div>

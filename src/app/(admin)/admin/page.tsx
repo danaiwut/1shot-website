@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, BadgePercent, CheckCircle2, KeyRound, Receipt, Search } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { StatRow } from "@/components/app/kit";
+import { CARD } from "@/components/app/kit";
+import { DarkPanel, Dot, SectionHeading, track } from "@/components/brand";
+import { cx } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtTHB } from "@/lib/store/pricing";
 import { loadTodo } from "./_components/todo";
@@ -17,7 +19,7 @@ const ACTIONS: { href: string; title: string; line: string; icon: LucideIcon }[]
   { href: "/admin/orders", title: "ยอดขาย", line: "ใครซื้ออะไร เงินเข้าเท่าไร", icon: Receipt },
 ];
 
-/** Back-office home: four big buttons, what needs doing today, and three numbers. */
+/** Back-office home: greeting with three numbers, four big buttons, and what needs doing today. */
 export default async function AdminHomePage() {
   const { supabase, profile } = await requireStaff();
   const now = Date.now();
@@ -35,47 +37,68 @@ export default async function AdminHomePage() {
   const waiting = todo.reduce((n, g) => n + g.items.length, 0);
   const name = profile.display_name || profile.email.split("@")[0];
 
-  return (
-    <div className="space-y-10">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">สวัสดี {name}</h1>
-        <p className="mt-1 text-base text-muted">{waiting ? `วันนี้มีเรื่องรอคุณ ${waiting} รายการ` : "วันนี้ไม่มีงานค้าง เรียบร้อยดี"}</p>
-      </header>
+  const today = new Intl.DateTimeFormat("th-TH", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Bangkok" }).format(new Date());
 
-      <nav aria-label="ทำอะไรดี" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  return (
+    <div className="space-y-12">
+      <DarkPanel as="header" className="px-6 py-10 sm:px-10 sm:py-12">
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className={cx("text-sm font-bold text-accent", track(today, "tracking-[0.18em]"))}>{today}</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">สวัสดี {name}<Dot /></h1>
+            <p className="mt-3 text-base text-muted sm:text-lg">{waiting ? `วันนี้มีเรื่องรอคุณ ${waiting} รายการ` : "วันนี้ไม่มีงานค้าง เรียบร้อยดี"}</p>
+          </div>
+          <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
+            {[
+              { k: "ยอดขาย 30 วัน", v: fmtTHB(revenue) },
+              { k: "ลูกค้าทั้งหมด", v: members.count ?? 0 },
+              { k: "ใหม่ 7 วัน", v: newMembers.count ?? 0 },
+            ].map((x) => (
+              <div key={x.k} className="bg-panel/80 px-4 py-3 backdrop-blur sm:px-5">
+                <dt className="text-xs font-semibold text-muted">{x.k}</dt>
+                <dd className="mt-1 text-xl font-black tracking-tight tabular-nums sm:text-2xl">{x.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </DarkPanel>
+
+      <nav aria-label="ทำอะไรดี" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {ACTIONS.map((a) => (
-          <Link key={a.href} href={a.href} className="group flex min-h-24 items-center gap-4 rounded-xl border border-line bg-panel p-5 transition-colors hover:border-brand/60 focus-visible:border-brand">
-            <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-dim text-accent"><a.icon aria-hidden className="size-6" /></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg font-semibold">{a.title}</span>
-              <span className="block text-sm text-muted">{a.line}</span>
+          <Link key={a.href} href={a.href} className="group flex flex-col gap-5 rounded-2xl border border-line bg-panel p-5 shadow-[0_20px_60px_-40px_rgb(0_0_0/0.35)] transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-brand/50 focus-visible:border-brand">
+            <span className="flex items-center justify-between">
+              <span className="grid size-12 place-items-center rounded-xl bg-brand text-white shadow-[0_10px_30px_-10px_rgb(178_0_22/0.7)]"><a.icon aria-hidden className="size-6" /></span>
+              <ArrowRight aria-hidden className="size-5 text-faint transition-transform group-hover:translate-x-1 group-hover:text-accent" />
             </span>
-            <ArrowRight aria-hidden className="size-5 shrink-0 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+            <span>
+              <span className="block text-lg font-bold">{a.title}</span>
+              <span className="mt-0.5 block text-sm text-muted">{a.line}</span>
+            </span>
           </Link>
         ))}
       </nav>
 
       <section aria-labelledby="todo-title">
-        <h2 id="todo-title" className="text-lg font-semibold">งานวันนี้</h2>
+        <SectionHeading id="todo-title" eyebrow="To-do" title="งานวันนี้" size="sm" />
         {todo.length ? (
-          <ul className="mt-4 grid gap-3 lg:grid-cols-2">
+          <ul className="mt-6 grid gap-4 lg:grid-cols-2">
             {todo.map((g) => (
-              <li key={g.id} className="flex flex-col rounded-xl border border-line bg-panel">
-                <div className="flex items-center justify-between gap-3 px-5 pt-4">
-                  <h3 className="font-semibold">{g.title}</h3>
-                  <span className="num grid min-w-8 place-items-center rounded-full bg-brand px-2 py-0.5 text-sm font-bold text-white">{g.items.length}</span>
+              <li key={g.id} className={cx(CARD, "flex flex-col")}>
+                <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
+                  <h3 className="font-bold">{g.title}</h3>
+                  <span className="grid min-w-8 place-items-center rounded-full bg-brand px-2.5 py-0.5 text-sm font-bold text-white tabular-nums">{g.items.length}</span>
                 </div>
-                <ul className="mt-2 flex-1 divide-y divide-line px-5">
+                <ul className="flex-1 divide-y divide-line px-6">
                   {g.items.slice(0, 3).map((i) => (
-                    <li key={i.key} className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 py-2 text-sm">
-                      <Link href={i.href} className="min-w-0 flex-1 truncate hover:text-accent hover:underline">{i.title}</Link>
-                      <span className="num shrink-0 text-muted">{i.meta}</span>
+                    <li key={i.key} className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 py-2 text-sm">
+                      <Link href={i.href} className="min-w-0 flex-1 truncate font-medium hover:text-accent hover:underline">{i.title}</Link>
+                      <span className="shrink-0 text-xs text-muted tabular-nums">{i.meta}</span>
                     </li>
                   ))}
                   {g.items.length > 3 && <li className="py-2 text-sm text-muted">และอีก {g.items.length - 3} รายการ</li>}
                 </ul>
-                <div className="px-5 pt-1 pb-4">
-                  <Link href={g.href} className="inline-flex h-11 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong">
+                <div className="px-6 pt-2 pb-5">
+                  <Link href={g.href} className="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-5 text-sm font-semibold text-ink transition-colors hover:bg-brand hover:text-white">
                     {g.action} <ArrowRight aria-hidden className="size-4" />
                   </Link>
                 </div>
@@ -83,21 +106,10 @@ export default async function AdminHomePage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-panel px-5 py-5 text-sm">
+          <p className={cx(CARD, "mt-6 flex items-center gap-3 px-6 py-6 text-sm")}>
             <CheckCircle2 aria-hidden className="size-5 text-buy" /> ไม่มีงานค้าง ทุกอย่างเรียบร้อย
           </p>
         )}
-      </section>
-
-      <section aria-labelledby="numbers-title">
-        <h2 id="numbers-title" className="mb-4 text-lg font-semibold">ตัวเลขสำคัญ</h2>
-        <StatRow
-          items={[
-            { label: "ยอดขาย 30 วัน", value: fmtTHB(revenue), hint: `${paidRows.length} คำสั่งซื้อ` },
-            { label: "ลูกค้าทั้งหมด", value: members.count ?? 0, hint: "คน" },
-            { label: "ลูกค้าใหม่ 7 วัน", value: newMembers.count ?? 0, hint: "คน" },
-          ]}
-        />
       </section>
     </div>
   );
