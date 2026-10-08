@@ -5,6 +5,7 @@ import { Chip, FaqList, RiskNote, SectionHeading } from "@/components/brand";
 import { RatingSummary, Stars } from "@/components/reviews/stars";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { Badge, ButtonLink, cx } from "@/components/ui";
+import { Stagger, StaggerItem } from "@/components/motion/reveal";
 import { fmtDate } from "@/lib/format";
 import { loadIndicator, loadIndicators, type PublicIndicator } from "@/lib/indicators";
 import { loadReviews, viewerPurchased } from "@/lib/reviews/data";
@@ -129,11 +130,20 @@ export function IndicatorDetail({ data, shell, base }: { data: IndicatorDetailDa
       {ind.points.length > 0 && (
         <Band tone="panel-2" narrow>
           <SectionHeading eyebrow="เข้าใจในหนึ่งนาที" title={`${ind.name} ช่วยอะไรคุณ`} size="sm" />
-          <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+          <Stagger className="mt-8 grid gap-4 sm:grid-cols-3">
             {ind.points.map((point, i) => (
-              <div key={point} className="bg-panel p-5"><p className="num text-sm font-bold text-accent">0{i + 1}</p><p className="mt-3 text-sm leading-7">{point}</p></div>
+              <StaggerItem
+                key={point}
+                className="group relative overflow-hidden rounded-2xl border border-line bg-panel p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_60px_-36px_rgb(178_0_22/0.5)]"
+              >
+                <span aria-hidden className="num pointer-events-none absolute -top-3 right-3 text-7xl leading-none font-black text-accent/10 transition-colors duration-300 select-none group-hover:text-accent/25">
+                  0{i + 1}
+                </span>
+                <span aria-hidden className="block h-1 w-10 rounded-full bg-accent/70 transition-[width] duration-300 group-hover:w-16" />
+                <p className="relative mt-5 text-sm leading-7">{point}</p>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </Band>
       )}
 

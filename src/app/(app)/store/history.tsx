@@ -103,7 +103,7 @@ export async function PurchaseHistory({ supabase, userId }: { supabase: Client; 
                 const st = ORDER_STATUS[o.status];
                 const paid = o.status === "paid";
                 return (
-                  <li key={o.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 transition-colors hover:bg-panel-2/60 sm:px-6">
+                  <li key={o.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 transition-colors hover:bg-panel-3/60 sm:px-6">
                     <span className={cx("grid size-11 shrink-0 place-items-center rounded-xl", paid ? "bg-buy-dim text-buy" : "bg-panel-3 text-muted")}><Receipt aria-hidden className="size-5" /></span>
                     <div className="min-w-0 flex-1 basis-48">
                       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold">{o.product_name}<Status tone={DOT[st.tone]}>{st.label}</Status></p>

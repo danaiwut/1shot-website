@@ -79,7 +79,7 @@ export default async function NewsPage() {
                   const { box, Icon } = impact(n.gold_impact);
                   return (
                     <li key={n.id}>
-                      <a href={n.link} target="_blank" rel="noopener noreferrer" className="group block px-5 py-5 outline-none transition-colors hover:bg-panel-2/70 focus-visible:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 sm:px-6">
+                      <a href={n.link} target="_blank" rel="noopener noreferrer" className="group block px-5 py-5 outline-none transition-colors hover:bg-panel-3/70 focus-visible:bg-panel-3/60 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50 sm:px-6">
                         <span className="flex items-center gap-2 text-xs text-muted">
                           <span className="font-semibold text-fg">{n.source}</span> · <time dateTime={n.published_at} className="num">{fmtDateTime(n.published_at)}</time>
                         </span>

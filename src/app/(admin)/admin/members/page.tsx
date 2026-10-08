@@ -84,7 +84,7 @@ export default async function AdminMembersPage({ searchParams }: PageProps<"/adm
         >
           {rows.length ? (
             <TableBox caption={`รายชื่อสมาชิก ${rows.length} คน`} minWidth={1000}>
-              <thead className="bg-panel-2">
+              <thead className="bg-panel-3/60">
                 <tr>
                   <Th>ลูกค้า</Th>
                   <Th>TradingView</Th>

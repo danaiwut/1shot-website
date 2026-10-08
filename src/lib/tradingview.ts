@@ -1,6 +1,6 @@
 import "server-only";
-import { serverEnv } from "./env";
 import { createAdminClient } from "./supabase/admin";
+import { getTvSession, tvConfigured } from "./tv-session";
 
 /*
  * TradingView invite-only access, automated.
@@ -13,15 +13,13 @@ import { createAdminClient } from "./supabase/admin";
 
 const TV = "https://www.tradingview.com";
 
-export const tvConfigured = () => Boolean(serverEnv.tradingviewSessionId());
-
-function headers(): HeadersInit {
-  const sign = serverEnv.tradingviewSessionSign();
+async function headers(): Promise<HeadersInit> {
+  const { id, sign } = await getTvSession();
   return {
     origin: TV,
     referer: `${TV}/`,
     "content-type": "application/x-www-form-urlencoded",
-    cookie: `sessionid=${serverEnv.tradingviewSessionId()}${sign ? `; sessionid_sign=${sign}` : ""}`,
+    cookie: `sessionid=${id}${sign ? `; sessionid_sign=${sign}` : ""}`,
   };
 }
 
@@ -43,7 +41,7 @@ export async function checkTradingViewUser(name: string): Promise<UsernameCheck>
 }
 
 async function post(path: string, body: Record<string, string>) {
-  const res = await fetch(`${TV}${path}`, { method: "POST", headers: headers(), body: new URLSearchParams(body), cache: "no-store", signal: AbortSignal.timeout(10000) });
+  const res = await fetch(`${TV}${path}`, { method: "POST", headers: await headers(), body: new URLSearchParams(body), cache: "no-store", signal: AbortSignal.timeout(10000) });
   const text = await res.text();
   let status: string | undefined;
   try { status = (JSON.parse(text) as { status?: string }).status; } catch { /* not JSON */ }
@@ -79,7 +77,7 @@ export async function revokeTradingView(scriptId: string, username: string) {
  * Never throws (called from the Stripe webhook); failures stay visible in the manual queue.
  */
 export async function syncTradingViewRights(userId: string, codes: string[]) {
-  if (!tvConfigured() || !codes.length) return;
+  if (!(await tvConfigured()) || !codes.length) return;
   const admin = createAdminClient();
   try {
     const [{ data: profile }, { data: indicators }, { data: rights }] = await Promise.all([
@@ -116,7 +114,7 @@ export async function syncTradingViewRights(userId: string, codes: string[]) {
  * (public.tradingview_grants). Never throws.
  */
 export async function syncTradingViewGrants(username: string, codes: string[]) {
-  if (!tvConfigured() || !codes.length) return;
+  if (!(await tvConfigured()) || !codes.length) return;
   const admin = createAdminClient();
   try {
     const [{ data: indicators }, { data: grants }] = await Promise.all([

@@ -57,7 +57,7 @@ export function Rows({ children, className, ...props }: ComponentProps<"ul">) {
 }
 
 export function Row({ children, className, ...props }: ComponentProps<"li">) {
-  return <li className={cn("flex min-h-16 items-center gap-3 px-4 py-3.5 transition-colors hover:bg-panel-2/60 sm:px-6", className)} {...props}>{children}</li>;
+  return <li className={cn("flex min-h-16 items-center gap-3 px-4 py-3.5 transition-colors hover:bg-panel-3/60 sm:px-6", className)} {...props}>{children}</li>;
 }
 
 export function EmptyLine({ children, action }: { children: ReactNode; action?: ReactNode }) {
@@ -130,7 +130,7 @@ export function Td({ className, ...props }: ComponentProps<"td">) {
 export function TableBox({ children, minWidth = 640, caption }: { children: ReactNode; minWidth?: number; caption?: string }) {
   return (
     <div className="relative overflow-x-auto">
-      <table className="w-full border-collapse [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-panel-2/60 [&_thead]:bg-panel-2" style={{ minWidth }}>
+      <table className="w-full border-collapse [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-panel-3/60 [&_thead]:bg-panel-3/60" style={{ minWidth }}>
         {caption && <caption className="sr-only">{caption}</caption>}
         {children}
       </table>

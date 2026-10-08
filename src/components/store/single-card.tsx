@@ -53,7 +53,7 @@ export function SingleCard({ product, indicator: ind, owned, pairSaving, base = 
           </p>
           {pairSaving ? (
             <Link href={`${href}#purchase`} className="mt-1.5 inline-flex min-h-8 items-center gap-1.5 text-sm font-medium text-buy hover:underline">
-              <Sparkles aria-hidden className="size-4" /> จับคู่ประหยัดสูงสุด {pairSaving}%
+              <Sparkles aria-hidden className="size-4" /> ซื้อคู่ลดทันที {pairSaving}%
             </Link>
           ) : <span className="mt-1.5 block min-h-8" />}
 

@@ -27,7 +27,7 @@ export default async function ProductsPage() {
       <Section title="สินค้าทั้งหมด" description={`${products.length} รายการ · เปิดขาย ${products.filter((p) => p.active).length}`}>
         {products.length ? (
           <TableBox caption="สินค้าและราคา" minWidth={720}>
-            <thead className="bg-panel-2">
+            <thead className="bg-panel-3/60">
               <tr>
                 <Th>สินค้า</Th>
                 <Th>อินดิเคเตอร์</Th>

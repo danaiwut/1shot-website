@@ -14,7 +14,7 @@ export function SetupRow({ s }: { s: Setup }) {
   return (
     <Link
       href={`/signals/${encodeURIComponent(s.setup_key)}`}
-      className="group @container relative block outline-none transition-colors hover:bg-panel-2/70 focus-visible:bg-panel-2 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50"
+      className="group @container relative block outline-none transition-colors hover:bg-panel-3/70 focus-visible:bg-panel-3/60 focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50"
     >
       <span aria-hidden className={cx("absolute inset-y-3 left-0 w-1 rounded-r-full", s.side === "BUY" ? "bg-buy" : s.side === "SELL" ? "bg-sell" : "bg-line-strong", s.terminal && "opacity-40")} />
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-4 pr-4 pl-5 sm:pr-5 sm:pl-6 @3xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_3.5rem_minmax(7rem,auto)_1rem] @3xl:gap-x-5">

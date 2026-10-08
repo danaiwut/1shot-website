@@ -62,13 +62,13 @@ export default function GuidePage() {
           <ol className="space-y-0.5">
             {STEPS.map((s, i) => (
               <li key={s.id}>
-                <a href={`#${s.id}`} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-muted outline-none transition-colors hover:bg-panel-2 hover:text-fg focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                <a href={`#${s.id}`} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-muted outline-none transition-colors hover:bg-panel-3 hover:text-fg focus-visible:ring-[3px] focus-visible:ring-ring/50">
                   <span className="num grid size-7 shrink-0 place-items-center rounded-full bg-panel-3 text-xs font-bold text-fg">{i + 1}</span>{s.title}
                 </a>
               </li>
             ))}
             <li>
-              <a href="#guide-help" className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-muted hover:bg-panel-2 hover:text-fg">
+              <a href="#guide-help" className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-muted hover:bg-panel-3 hover:text-fg">
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-dim text-accent"><LifeBuoy aria-hidden className="size-3.5" /></span>ยังติดปัญหา?
               </a>
             </li>

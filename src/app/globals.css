@@ -17,7 +17,7 @@
 
   --color-ink: #ffffff;
   --color-panel: #ffffff;
-  --color-panel-2: #f5f6f8;
+  --color-panel-2: #ffffff;
   --color-panel-3: #efefef;
   --color-line: rgb(0 0 0 / 0.08);
   --color-line-strong: #7a7a7a;
@@ -51,8 +51,8 @@
   /* Dark-red theme (default). All text pairs checked ≥ 7:1 (WCAG AAA), borders ≥ 3:1. */
   html:not([data-theme="light"]) {
     --color-ink: #000000;
-    --color-panel: #121214;
-    --color-panel-2: #0a0a0b;
+    --color-panel: #000000;
+    --color-panel-2: #000000;
     --color-panel-3: #1d1d20;
     --color-line: rgb(255 255 255 / 0.1);
     --color-line-strong: #7d7d7d;
@@ -71,8 +71,8 @@
   }
   .surface-dark {
     --color-ink: #000000;
-    --color-panel: #0b0b0b;
-    --color-panel-2: #141414;
+    --color-panel: #000000;
+    --color-panel-2: #000000;
     --color-panel-3: #1e1e1e;
     --color-line: rgb(255 255 255 / 0.1);
     --color-line-strong: #757575;
@@ -93,7 +93,7 @@
   .surface-light {
     --color-ink: #ffffff;
     --color-panel: #ffffff;
-    --color-panel-2: #f5f6f8;
+    --color-panel-2: #ffffff;
     --color-panel-3: #efefef;
     --color-line: rgb(0 0 0 / 0.08);
     --color-line-strong: #7a7a7a;

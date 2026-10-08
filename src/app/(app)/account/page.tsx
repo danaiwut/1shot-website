@@ -48,7 +48,7 @@ export default async function AccountPage() {
         <ul className="space-y-1">
           {checks.map((c) => (
             <li key={c.label}>
-              <a href={c.href} className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-panel-2">
+              <a href={c.href} className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-panel-3">
                 <span aria-hidden className={cx("grid size-8 shrink-0 place-items-center rounded-full", c.ok ? "bg-buy-dim text-buy" : "bg-panel-3 text-muted")}>
                   {c.ok ? <Check className="size-4" strokeWidth={3} /> : <X className="size-4" />}
                 </span>

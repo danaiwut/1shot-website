@@ -151,7 +151,7 @@ export default async function MemberPage({ params }: PageProps<"/admin/members/[
         >
           {purchases.length ? (
             <TableBox caption="ประวัติการซื้อของสมาชิก" minWidth={640}>
-              <thead className="bg-panel-2">
+              <thead className="bg-panel-3/60">
                 <tr>
                   <Th>สินค้า</Th>
                   <Th>วันที่</Th>

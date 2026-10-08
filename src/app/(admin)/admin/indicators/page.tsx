@@ -40,7 +40,7 @@ export default async function IndicatorsAdminPage() {
               return (
                 <li key={i.code} className={cx(CARD, "overflow-visible")}>
                   <details className="group">
-                    <summary className="flex min-h-20 cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-3 transition-colors hover:bg-panel-2/60 sm:px-6 group-open:rounded-b-none [&::-webkit-details-marker]:hidden">
+                    <summary className="flex min-h-20 cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-3 transition-colors hover:bg-panel-3/60 sm:px-6 group-open:rounded-b-none [&::-webkit-details-marker]:hidden">
                       <span className="surface-dark relative grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-ink">
                         {i.image_url
                           // eslint-disable-next-line @next/next/no-img-element -- admin-provided poster

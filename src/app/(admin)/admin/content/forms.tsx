@@ -109,7 +109,7 @@ export function NewsForm({ now }: { now: string }) {
         <Step n={3} title="ผลต่อทองคำ" hint="ขึ้นต้นด้วย “หนุน…” = สีเขียว · “กดดัน…” = สีแดง">
           <div className="mb-3 flex flex-wrap gap-2">
             {[["หนุน", "หนุนทองคำ ", "border-buy/40 text-buy"], ["กดดัน", "กดดันทองคำ ", "border-sell/40 text-sell"]].map(([label, prefix, tone]) => (
-              <button key={label} type="button" onClick={() => impact(prefix)} className={cx("min-h-9 rounded-full border px-3.5 text-sm font-semibold hover:bg-panel-2", tone)}>{label}…</button>
+              <button key={label} type="button" onClick={() => impact(prefix)} className={cx("min-h-9 rounded-full border px-3.5 text-sm font-semibold hover:bg-panel-3", tone)}>{label}…</button>
             ))}
           </div>
           <Field label="ผลต่อทองคำ"><Input name="gold_impact" maxLength={500} {...on("gold_impact")} placeholder="หนุนทองคำ ดอลลาร์อ่อนค่าหลังเฟดส่งสัญญาณลดดอกเบี้ย" /></Field>

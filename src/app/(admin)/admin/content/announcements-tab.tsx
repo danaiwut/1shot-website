@@ -38,7 +38,7 @@ export async function AnnouncementsTab({ edit }: { edit?: string }) {
                   <Link
                     href={`/admin/content?tab=announcements&edit=${a.id}#editor`}
                     aria-current={current ? "true" : undefined}
-                    className={cx("group flex min-h-16 items-start gap-4 px-4 py-4 transition-colors hover:bg-panel-2/60 sm:px-6", current && "bg-brand-dim/40")}
+                    className={cx("group flex min-h-16 items-start gap-4 px-4 py-4 transition-colors hover:bg-panel-3/60 sm:px-6", current && "bg-brand-dim/40")}
                   >
                     <span className="min-w-0 flex-1">
                       <span className="flex min-w-0 items-center gap-2">
