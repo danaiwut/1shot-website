@@ -4,7 +4,7 @@ import Link from "next/link";
 import { cx } from "@/components/ui";
 
 /*
- * About band: the founder (cut out) in front of his funded-trader proof on a dark stage,
+ * About band: the founder (cut out, no frame) in front of his funded-trader proof cards,
  * then the story, three product facts and one action.
  * Follows the selected theme (dark-red / light-red) like the rest of the page.
  */
@@ -27,26 +27,29 @@ export function AboutSection({ indicatorCount = 10, actionHref = "/signup", acti
   ];
 
   return (
-    <section id="about" aria-labelledby="about-title" className="scroll-mt-18 bg-panel">
+    <section id="about" aria-labelledby="about-title" className="scroll-mt-18 overflow-x-clip bg-panel">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
         {/* Portrait: founder cut out in front, his funded-trader proof as tilted cards behind */}
         <figure className="relative mx-auto w-full max-w-lg">
-          <div className="about-stage surface-dark relative aspect-[10/11] overflow-hidden rounded-3xl bg-ink">
-            <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(75%_65%_at_50%_100%,rgb(220_20_40/0.7),transparent_72%)]" />
+          <div className="relative aspect-[10/11]">
+            {/* No frame: a soft glow that fades out on every side */}
+            <div aria-hidden className="pointer-events-none absolute -inset-[10%] hidden bg-[radial-gradient(50%_45%_at_50%_62%,rgb(178_0_22/0.3),transparent_70%)] dark:block" />
             {PROOF.map((p) => (
               <div key={p.src} aria-hidden className={cx("absolute overflow-hidden rounded-xl border-4 border-white bg-white shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] animate-float", p.place)} style={{ animationDelay: p.delay }}>
                 <Image src={p.src} alt="" fill sizes="(min-width: 1024px) 16rem, 45vw" className="object-cover object-left-top" />
               </div>
             ))}
-            <Image
-              src={PHOTO.src}
-              alt={PHOTO.alt}
-              fill
-              loading="eager"
-              sizes="(min-width: 1024px) 32rem, 90vw"
-              className="z-10 object-contain object-bottom drop-shadow-[0_20px_40px_rgb(0_0_0/0.6)]"
-            />
-            <div aria-hidden className="absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-ink to-transparent" />
+            {/* The cut-out fades out at the bottom instead of ending on a hard edge */}
+            <div className="absolute inset-0 z-10 [mask-image:linear-gradient(to_bottom,black_80%,transparent_100%)]">
+              <Image
+                src={PHOTO.src}
+                alt={PHOTO.alt}
+                fill
+                loading="eager"
+                sizes="(min-width: 1024px) 32rem, 90vw"
+                className="object-contain object-bottom"
+              />
+            </div>
           </div>
           {/* Badge */}
           <div className="surface-dark absolute -top-4 -right-2 z-20 grid size-24 place-items-center rounded-full border-2 border-white/80 bg-[#0d0d10] text-center text-white shadow-lg sm:size-28">
@@ -97,20 +100,6 @@ export function AboutSection({ indicatorCount = 10, actionHref = "/signup", acti
         </div>
       </div>
 
-      {/* Target of the "เริ่มใช้งาน" nav link */}
-      <div id="how" className="scroll-mt-18 border-t border-line">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <h3 className="text-lg font-bold text-fg">เริ่มใช้งานได้ใน 3 ขั้นตอน</h3>
-          <ol className="mt-5 grid gap-4 sm:grid-cols-3">
-            {["สมัครสมาชิกและใส่ชื่อผู้ใช้ TradingView", "เลือกแพ็กเกจ หรือรับสิทธิ์ผ่าน Exness IB", "เชื่อม Telegram เพื่อรับสัญญาณ"].map((step, i) => (
-              <li key={step} className="flex items-center gap-3">
-                <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-fg text-sm font-bold text-ink">{i + 1}</span>
-                <span className="text-sm font-medium text-fg">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </div>
     </section>
   );
 }

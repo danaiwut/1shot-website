@@ -253,7 +253,18 @@ export function buildSeed(now = Date.now()) {
     cancel_at_period_end: false, created_at: iso(now - 48 * D), updated_at: iso(now - 18 * D),
   }];
 
+  // Blog cards (homepage): images point at files shipped in /public.
+  const blog_posts: Row[] = [
+    { body: "โพสต์นี้ขอรวมผลงานจากคนสมาชิกที่ใช้จริง 🔥 เป็นภาพที่สมาชิกส่งเข้ามาในกลุ่มเรื่อยๆ", images: ["/images/showcase/profit.jpg", "/images/showcase/closed.jpg", "/images/showcase/chart.jpg", "/images/proof/lucid.jpg", "/images/proof/fundingpips.jpg", "/images/proof/topstep.jpg"], days: 2 },
+    { body: "📢 ประกาศจาก JR 1SHOT : ราชาลอจิก เพจใหม่ของเราเปิดแล้ว ติดตามข่าวสารได้ที่นี่", images: ["/images/proof/topstep.jpg", "/images/proof/fundingpips.jpg"], days: 3 },
+    { body: "ICT-AMD Pro อินดี้ตัวใหม่ ดูวัฏจักรตลาด Accumulation / Manipulation / Distribution", images: ["/media/indicators/amd.jpg"], days: 6 },
+  ].map((b, i) => ({
+    id: uuid("50", i + 1), url: `https://www.facebook.com/1shot/posts/${i + 1}`, page_name: "Jr 1Shot : ราชาลอจิก", body: b.body,
+    image_paths: b.images, posted_at: iso(now - b.days * D), active: true, created_at: iso(now - b.days * D), updated_at: iso(now - b.days * D),
+  }));
+
   return {
+    blog_posts,
     profiles, indicators: INDICATORS, indicator_rights, signal_events, telegram_links,
     telegram_link_tokens: [] as Row[], telegram_invites: [] as Row[], daily_briefs, news_items, webhook_receipts,
     products, product_prices, orders, subscriptions, stripe_customers: [] as Row[], stripe_events: [] as Row[], email_log: [] as Row[],

@@ -65,6 +65,7 @@ const ADMIN: Entry[] = [
     { href: "/admin/support", label: "คำขอจากลูกค้า" },
     { href: "/admin/announcements", label: "ประกาศ" },
     { href: "/admin/content", label: "ข่าวและสรุปเช้า" },
+    { href: "/admin/blog", label: "บล็อกข่าวสาร" },
     { href: "/admin/lots", label: "Lot Exness" },
     { href: "/admin/team", label: "ทีมงาน" },
     { href: "/admin/access-history", label: "ประวัติการให้สิทธิ์" },

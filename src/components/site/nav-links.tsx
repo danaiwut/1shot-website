@@ -5,10 +5,10 @@ import { cx } from "@/components/ui";
 
 const item = "inline-flex h-11 items-center rounded-full px-4 text-sm font-medium transition-colors";
 
-/** Desktop links inside the black pill navbar. */
+/** Desktop links inside the pill navbar. */
 export function SiteNavLinks({ links }: { links: { href: string; label: string }[] }) {
   const path = usePathname();
-  const cls = (on: boolean) => cx(item, on ? "bg-white/12 text-white" : "text-white/75 hover:text-white");
+  const cls = (on: boolean) => cx(item, on ? "bg-panel-3 text-fg" : "text-muted hover:text-fg");
   return (
     <nav aria-label="เมนูหลัก" className="hidden items-center gap-0.5 lg:flex">
       <Link href="/" aria-current={path === "/" ? "page" : undefined} className={cls(path === "/")}>หน้าแรก</Link>

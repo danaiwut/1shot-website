@@ -5,15 +5,15 @@ import { IntroCurtain } from "@/components/motion/intro";
 import { LiveHero } from "@/components/motion/live-hero";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { AboutSection } from "@/components/site/about-section";
+import { BlogSection } from "@/components/site/blog-section";
 import { IndicatorShowcase } from "@/components/store/indicator-showcase";
 import { PricingTable } from "@/components/store/pricing-table";
 import { getViewer } from "@/lib/auth";
+import { loadBlogPosts, type PublicBlogPost } from "@/lib/blog";
 import { isSupabaseConfigured } from "@/lib/env";
 import { loadIndicators, type PublicIndicator } from "@/lib/indicators";
 import { loadCurrentPromotion } from "@/lib/promotions";
-import { loadRatings, type Rating } from "@/lib/reviews/data";
 import { loadCatalog, loadOwnership } from "@/lib/store/catalog";
-import { indicatorOffers } from "@/lib/store/offers";
 import { createClient } from "@/lib/supabase/server";
 
 // Product facts shown under the hero. The indicator count comes from the DB.
@@ -29,12 +29,11 @@ const words = (text: string) => [...new Intl.Segmenter("th", { granularity: "wor
 
 export default async function HomePage() {
   const supabase = isSupabaseConfigured() ? await createClient() : null;
-  const [indicators, products, viewer, ratings, promotion] = supabase
-    ? await Promise.all([loadIndicators(supabase), loadCatalog(supabase), getViewer(), loadRatings(supabase), loadCurrentPromotion(supabase)])
-    : [[] as PublicIndicator[], [], null, {} as Record<string, Rating>, null];
+  const [indicators, products, viewer, promotion, posts] = supabase
+    ? await Promise.all([loadIndicators(supabase), loadCatalog(supabase), getViewer(), loadCurrentPromotion(supabase), loadBlogPosts(supabase)])
+    : [[] as PublicIndicator[], [], null, null, [] as PublicBlogPost[]];
   const owned = viewer && supabase ? await loadOwnership(supabase, viewer.userId) : undefined;
   const bundles = products.filter((p) => p.kind !== "single");
-  const offers = indicatorOffers(indicators, products, ratings, owned?.access);
 
   return (
     <main id="main" tabIndex={-1} className="overflow-x-clip outline-none">
@@ -70,11 +69,7 @@ export default async function HomePage() {
       </LiveHero>
 
       {/* 3 · Shop: pick an indicator */}
-      <IndicatorShowcase
-        headline={[words("แม่นยำ ชัดเจน และ"), words("ตรวจสอบได้ ในทุกจังหวะ"), words("ของทองคำ")]}
-        indicators={indicators}
-        offers={offers}
-      />
+      <IndicatorShowcase headline={[words("Choose the Right Tools"), words("for Your Trading Style")]} />
 
       {/* 4 · Packages and this month's promotion */}
       {bundles.length > 0 && (
@@ -90,6 +85,9 @@ export default async function HomePage() {
 
       {/* 5 · About + onboarding call to action */}
       <AboutSection indicatorCount={indicators.length || undefined} actionHref={viewer ? "/dashboard" : "/signup"} actionLabel={viewer ? "ไปที่บัญชีของฉัน" : "สมัครสมาชิกฟรี"} />
+
+      {/* 6 · Blog: Facebook posts */}
+      <BlogSection posts={posts} />
     </main>
   );
 }

@@ -252,15 +252,22 @@ html[data-theme="light"] .surface-dark .logo-for-dark { display: inline-block; }
 .pricing-bg::before { top: 2.5rem; left: 4%; }
 .pricing-bg::after { bottom: 2.5rem; right: 4%; }
 
-/* About stage: a few soft "stars" behind the founder. */
-.about-stage {
-  background-image:
-    radial-gradient(1.5px 1.5px at 12% 18%, rgb(255 170 120 / 0.8), transparent),
-    radial-gradient(2px 2px at 82% 12%, rgb(255 170 120 / 0.7), transparent),
-    radial-gradient(1.5px 1.5px at 68% 44%, rgb(255 255 255 / 0.5), transparent),
-    radial-gradient(2px 2px at 24% 62%, rgb(255 170 120 / 0.6), transparent),
-    radial-gradient(1.5px 1.5px at 90% 70%, rgb(255 255 255 / 0.5), transparent),
-    radial-gradient(1.5px 1.5px at 40% 8%, rgb(255 255 255 / 0.45), transparent),
-    radial-gradient(2px 2px at 6% 86%, rgb(255 170 120 / 0.55), transparent),
-    linear-gradient(180deg, #0b0f1c 0%, #0d0d10 100%);
+
+/* Homepage blog: an endless right → left drift (two copies of the list, moved by half its width). */
+.blog-viewport { overflow: hidden; }
+.blog-track { display: flex; width: max-content; padding-inline: 1rem; }
+.blog-item { width: min(85vw, 30rem); flex: none; padding-right: 1.25rem; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="off"]) .blog-track { animation: blog-scroll var(--blog-duration, 40s) linear infinite; }
+  html:not([data-motion="off"]) .blog-viewport:hover .blog-track,
+  html:not([data-motion="off"]) .blog-viewport:focus-within .blog-track,
+  html:not([data-motion="off"]) .peer:checked ~ .blog-viewport .blog-track { animation-play-state: paused; }
 }
+@keyframes blog-scroll { to { transform: translateX(-50%); } }
+/* Without motion: a normal horizontal scroller with one copy. */
+@media (prefers-reduced-motion: reduce) {
+  .blog-viewport { overflow-x: auto; }
+  .blog-copy { display: none; }
+}
+html[data-motion="off"] .blog-viewport { overflow-x: auto; }
+html[data-motion="off"] .blog-copy { display: none; }

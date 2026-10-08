@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, FileText, LifeBuoy, Mail, Megaphone, ScrollText, SlidersHorizontal, UserCog, Webhook } from "lucide-react";
+import { BarChart3, FileText, Newspaper, LifeBuoy, Mail, Megaphone, ScrollText, SlidersHorizontal, UserCog, Webhook } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { requireStaff } from "@/lib/auth";
@@ -16,6 +16,7 @@ const MORE: { title: string; tiles: Tile[] }[] = [
       { href: "/admin/indicators", title: "อินดิเคเตอร์", line: "ชื่อ รูป คำอธิบาย และห้อง Telegram", icon: SlidersHorizontal },
       { href: "/admin/support", title: "คำขอจากลูกค้า", line: "เรื่องที่ลูกค้าส่งเข้ามา", icon: LifeBuoy },
       { href: "/admin/announcements", title: "ประกาศ", line: "แจ้งข่าวถึงสมาชิกทุกคน", icon: Megaphone },
+      { href: "/admin/blog", title: "บล็อกข่าวสาร", line: "โพสต์ Facebook ที่เลื่อนบนหน้าแรก", icon: Newspaper },
       { href: "/admin/content", title: "ข่าวและสรุปเช้า", line: "เขียนสรุปตลาดประจำวัน", icon: FileText },
       { href: "/admin/lots", title: "Lot Exness", line: "ยอด Lot ที่ลูกค้าเทรด", icon: BarChart3 },
       { href: "/admin/team", title: "ทีมงาน", line: "เพิ่มหรือถอดแอดมิน", icon: UserCog },

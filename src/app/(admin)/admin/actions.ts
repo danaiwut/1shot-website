@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
+import { IMAGE_TYPES, MAX_IMAGE } from "@/lib/images";
 import { INDICATOR_IMAGE_BUCKET, isStoredImage } from "@/lib/indicators";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Role } from "@/lib/types";
@@ -67,12 +68,6 @@ export async function unlinkTelegram(userId: string) {
   revalidatePath(`/admin/members/${userId}`);
 }
 
-const IMAGE_TYPES: Record<string, { ext: string; magic: (b: Uint8Array) => boolean }> = {
-  "image/png": { ext: "png", magic: (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
-  "image/jpeg": { ext: "jpg", magic: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
-  "image/webp": { ext: "webp", magic: (b) => String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP" },
-};
-const MAX_IMAGE = 5 * 1024 * 1024;
 
 const IndicatorSchema = z.object({
   code: z.string().regex(/^[A-Z]{2,4}$/),
