@@ -1,36 +1,95 @@
 "use client";
-import { useActionState, useEffect, useRef } from "react";
-import { Button, Field, Input, Notice } from "@/components/ui";
-import { changeTeamRole, type TeamState } from "./actions";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { Check, Search, UserPlus } from "lucide-react";
+import { Button, Notice } from "@/components/ui";
+import { searchMembers, setTeamRole, type MemberHit, type TeamState } from "./actions";
 
-export function AddAdminForm() {
-  const [state, action, pending] = useActionState<TeamState, FormData>(changeTeamRole, {});
-  const ref = useRef<HTMLFormElement>(null);
-  useEffect(() => { if (state.ok) ref.current?.reset(); }, [state]);
+/** Type to find a member, then one click to make them an admin (with a confirm step). */
+export function AddAdmin() {
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<MemberHit[] | null>(null);
+  const [loading, startSearch] = useTransition();
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const [result, setResult] = useState<TeamState>({});
+  const [saving, startSave] = useTransition();
+  const seq = useRef(0);
+  const listId = useId();
+
+  useEffect(() => {
+    const n = ++seq.current;
+    const t = setTimeout(() => startSearch(async () => {
+      const r = await searchMembers(q);
+      if (n === seq.current) setHits(r); // ignore answers to older keystrokes
+    }), q ? 250 : 0);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const make = (m: MemberHit) => startSave(async () => {
+    const r = await setTeamRole(m.id, "admin");
+    setResult(r);
+    setConfirm(null);
+    if (r.ok) setHits((h) => h?.filter((x) => x.id !== m.id) ?? null);
+  });
+
   return (
-    <form ref={ref} action={action} className="space-y-4">
-      <input type="hidden" name="role" value="admin" />
-      <Field label="อีเมลของบัญชีที่สมัครแล้ว" required><Input name="email" type="email" required autoComplete="off" /></Field>
-      <Field label="เหตุผล" hint="บันทึกไว้ในประวัติการจัดการสิทธิ์" required><Input name="reason" required minLength={3} maxLength={300} /></Field>
-      {state.error && <Notice tone="error">{state.error}</Notice>}
-      {state.ok && <Notice tone="success">{state.ok}</Notice>}
-      <Button type="submit" disabled={pending}>{pending ? "กำลังบันทึก…" : "เพิ่มเป็นแอดมิน"}</Button>
-    </form>
+    <div className="space-y-4">
+      <label htmlFor="team-q" className="block text-sm font-medium">ค้นหาคนที่จะเป็นแอดมิน</label>
+      <div className="relative">
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted" />
+        <input
+          id="team-q" type="search" value={q} onChange={(e) => { setQ(e.target.value); setResult({}); }}
+          placeholder="พิมพ์ชื่อ อีเมล หรือชื่อ TradingView" autoComplete="off" aria-controls={listId}
+          className="h-12 w-full rounded-lg border border-line-strong bg-panel pr-4 pl-12 text-base outline-none placeholder:text-faint focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        />
+      </div>
+      {result.error && <Notice tone="error">{result.error}</Notice>}
+      {result.ok && <Notice tone="success">{result.ok}</Notice>}
+
+      <div id={listId} aria-live="polite" aria-busy={loading}>
+        <p className="mb-2 text-sm text-muted">{loading && !hits ? "กำลังค้นหา…" : q ? `ผลการค้นหา “${q}”` : "สมาชิกล่าสุด"}</p>
+        {hits && hits.length === 0 ? (
+          <p className="rounded-lg border border-line bg-panel px-4 py-4 text-sm text-muted">ไม่พบสมาชิกนี้ ให้เขาสมัครสมาชิกที่หน้าเว็บก่อน แล้วค่อยกลับมาเพิ่ม</p>
+        ) : (
+          <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-panel">
+            {(hits ?? []).map((m) => (
+              <li key={m.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-panel-3 text-sm font-semibold">{m.name.slice(0, 1).toUpperCase()}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{m.name}</span>
+                  <span className="block truncate text-sm text-muted">{m.email}{m.tradingview && <> · TV <span className="num">{m.tradingview}</span></>}</span>
+                </span>
+                {confirm === m.id ? (
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm">ให้ {m.name} เข้าหลังบ้านได้?</span>
+                    <Button type="button" disabled={saving} onClick={() => make(m)}><Check aria-hidden className="size-4" />{saving ? "กำลังบันทึก…" : "ยืนยัน"}</Button>
+                    <Button type="button" variant="ghost" onClick={() => setConfirm(null)}>ยกเลิก</Button>
+                  </span>
+                ) : (
+                  <Button type="button" variant="outline" onClick={() => { setConfirm(m.id); setResult({}); }} aria-label={`ทำ ${m.name} เป็นแอดมิน`}>
+                    <UserPlus aria-hidden className="size-4" />ทำเป็นแอดมิน
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
 
-export function RemoveAdminForm({ email }: { email: string }) {
-  const [state, action, pending] = useActionState<TeamState, FormData>(changeTeamRole, {});
+/** Two-step remove: "ถอดออก" → "ยืนยันถอด". */
+export function RemoveAdmin({ userId, name }: { userId: string; name: string }) {
+  const [ask, setAsk] = useState(false);
+  const [state, setState] = useState<TeamState>({});
+  const [busy, start] = useTransition();
+  if (!ask) return <Button type="button" variant="ghost" className="text-sell hover:text-sell" onClick={() => setAsk(true)} aria-label={`ถอด ${name} ออกจากทีมงาน`}>ถอดออก</Button>;
   return (
-    <details className="mt-3">
-      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-sell underline-offset-4 hover:underline">ถอดออกจากทีมงาน</summary>
-      <form action={action} className="mt-2 space-y-3 rounded-lg border border-line bg-panel-2 p-4">
-        <input type="hidden" name="role" value="member" />
-        <input type="hidden" name="email" value={email} />
-        <Field label="เหตุผลที่ถอดสิทธิ์แอดมิน" required><Input name="reason" required minLength={3} maxLength={300} /></Field>
-        {state.error && <Notice tone="error">{state.error}</Notice>}
-        <Button type="submit" variant="danger" disabled={pending}>{pending ? "กำลังบันทึก…" : "ยืนยันถอดสิทธิ์"}</Button>
-      </form>
-    </details>
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="text-sm">ถอด {name} ออก?</span>
+      <Button type="button" variant="danger" disabled={busy} onClick={() => start(async () => setState(await setTeamRole(userId, "member")))}>{busy ? "กำลังถอด…" : "ยืนยันถอด"}</Button>
+      <Button type="button" variant="ghost" onClick={() => setAsk(false)}>ยกเลิก</Button>
+      {state.error && <span role="alert" className="text-sm text-sell">{state.error}</span>}
+    </span>
   );
 }

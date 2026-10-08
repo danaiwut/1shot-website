@@ -4,7 +4,7 @@ import { isStaff } from "@/lib/types";
 import { ArrowRight } from "lucide-react";
 import { SiteMobileMenu } from "@/components/site/mobile-menu";
 import { SiteNavLinks } from "@/components/site/nav-links";
-import { ButtonLink, Logo } from "@/components/ui";
+import { Logo } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -24,20 +24,25 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <a href="#main" className="sr-only z-[60] rounded-lg bg-brand px-4 py-3 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
         ข้ามไปยังเนื้อหาหลัก
       </a>
-      <header className="sticky top-0 z-40 border-b border-line bg-panel/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
-          <Link href="/" aria-label="หน้าแรก"><Logo tone="auto" /></Link>
+      {/* Floating black pill navbar (same in both themes); 72px tall in total so heroes can slide under it. */}
+      <header className="pointer-events-none sticky top-0 z-40 h-18 px-3 pt-3">
+        <div className="surface-dark pointer-events-auto relative mx-auto flex h-[3.75rem] max-w-6xl items-center justify-between gap-3 rounded-full border border-white/10 bg-[#0b0b0d]/95 pr-2 pl-5 text-white shadow-[0_16px_40px_-16px_rgb(0_0_0/0.6)] backdrop-blur-xl">
+          <Link href="/" aria-label="หน้าแรก" className="shrink-0"><Logo tone="dark" className="h-8 w-auto" /></Link>
           <SiteNavLinks links={NAV} />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {viewer ? (
-              <ButtonLink href={staff ? "/admin" : "/dashboard"}>{staff ? "ระบบหลังบ้าน" : "เข้าสู่แดชบอร์ด"} <ArrowRight className="size-4" /></ButtonLink>
+              <Link href={staff ? "/admin" : "/dashboard"} className="hidden h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#0b0b0d] transition-colors hover:bg-brand hover:text-white min-[400px]:inline-flex">
+                {staff ? "ระบบหลังบ้าน" : "แดชบอร์ด"} <ArrowRight aria-hidden className="size-4" />
+              </Link>
             ) : (
               <>
-                <span className="hidden sm:block"><ButtonLink href="/login" variant="ghost">เข้าสู่ระบบ</ButtonLink></span>
-                <span className="hidden min-[400px]:block"><ButtonLink href="/signup">สมัครสมาชิก <ArrowRight className="size-4" /></ButtonLink></span>
+                <Link href="/login" className="hidden h-11 items-center rounded-full px-4 text-sm font-medium text-white/80 transition-colors hover:text-white sm:inline-flex">เข้าสู่ระบบ</Link>
+                <Link href="/signup" className="hidden h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#0b0b0d] transition-colors hover:bg-brand hover:text-white min-[400px]:inline-flex">
+                  สมัครสมาชิก <ArrowRight aria-hidden className="size-4" />
+                </Link>
               </>
             )}
-            <ThemeToggle />
+            <ThemeToggle className="size-11 rounded-full border-white/15 px-0 text-white hover:border-white/50" />
             <SiteMobileMenu links={NAV} signedIn={Boolean(viewer)} staff={staff} />
           </div>
         </div>

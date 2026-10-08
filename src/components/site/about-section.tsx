@@ -1,14 +1,21 @@
 import Image from "next/image";
 import { ArrowRight, CandlestickChart, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { cx } from "@/components/ui";
 
 /*
- * About band: black-and-white portrait over a slanted
- * brand-red block with an oversized "ABOUT" watermark, then the story, three product facts and one action.
+ * About band: the founder (cut out) in front of his funded-trader proof on a dark stage,
+ * then the story, three product facts and one action.
  * Follows the selected theme (dark-red / light-red) like the rest of the page.
  */
 
-const PHOTO = { src: "/images/about.jpg", alt: "ผู้ก่อตั้ง 1SHOT" };
+const PHOTO = { src: "/images/founder-cut.png", alt: "ผู้ก่อตั้ง 1SHOT" };
+/** Proof cards behind the founder: where each sits (tilted, peeking out left / right / top). */
+const PROOF = [
+  { src: "/images/proof/lucid.jpg", alt: "บัญชี LucidFlex 50K แบบ Funded หลายบัญชี", place: "top-[6%] left-[22%] h-[30%] w-[56%] rotate-[4deg]", delay: "-1s" },
+  { src: "/images/proof/topstep.jpg", alt: "ใบรับรอง Certified Funded Trader จาก Topstep", place: "top-[30%] -left-[6%] h-[34%] w-[50%] -rotate-[9deg]", delay: "-3s" },
+  { src: "/images/proof/fundingpips.jpg", alt: "อันดับ 13 บนตารางผู้นำ Funding Pips บัญชี $100,000 กำไร 15.56%", place: "top-[26%] -right-[8%] h-[30%] w-[52%] rotate-[8deg]", delay: "-5s" },
+];
 
 export function AboutSection({ indicatorCount = 10, actionHref = "/signup", actionLabel = "สมัครสมาชิกฟรี" }: {
   indicatorCount?: number; actionHref?: string; actionLabel?: string;
@@ -22,30 +29,37 @@ export function AboutSection({ indicatorCount = 10, actionHref = "/signup", acti
   return (
     <section id="about" aria-labelledby="about-title" className="scroll-mt-18 bg-panel">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
-        {/* Portrait */}
-        <div className="relative mx-auto w-full max-w-md">
-          <p aria-hidden className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 text-[7.5rem] leading-none font-black tracking-tighter whitespace-nowrap text-fg/[0.06] select-none sm:text-[9.5rem]">
-            ABOUT
-          </p>
-          <div aria-hidden className="absolute inset-x-[2%] top-[14%] -bottom-[3%] -skew-x-[10deg] bg-brand" />
-          <div aria-hidden className="absolute -bottom-3 -left-3 h-1/3 w-1/2 -skew-x-[10deg] bg-black/85 dark:bg-white/15" />
-          <div className="relative mx-[16%] aspect-[3/4] overflow-hidden shadow-[0_30px_80px_-30px_rgb(0_0_0/0.55)]">
+        {/* Portrait: founder cut out in front, his funded-trader proof as tilted cards behind */}
+        <figure className="relative mx-auto w-full max-w-lg">
+          <div className="about-stage surface-dark relative aspect-[10/11] overflow-hidden rounded-3xl bg-ink">
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(75%_65%_at_50%_100%,rgb(220_20_40/0.7),transparent_72%)]" />
+            {PROOF.map((p) => (
+              <div key={p.src} aria-hidden className={cx("absolute overflow-hidden rounded-xl border-4 border-white bg-white shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] animate-float", p.place)} style={{ animationDelay: p.delay }}>
+                <Image src={p.src} alt="" fill sizes="(min-width: 1024px) 16rem, 45vw" className="object-cover object-left-top" />
+              </div>
+            ))}
             <Image
               src={PHOTO.src}
               alt={PHOTO.alt}
               fill
-              sizes="(min-width: 1024px) 24rem, 75vw"
-              className="object-cover object-[50%_18%] contrast-[1.08] grayscale"
+              loading="eager"
+              sizes="(min-width: 1024px) 32rem, 90vw"
+              className="z-10 object-contain object-bottom drop-shadow-[0_20px_40px_rgb(0_0_0/0.6)]"
             />
+            <div aria-hidden className="absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-ink to-transparent" />
           </div>
           {/* Badge */}
-          <div className="absolute top-[18%] -right-1 grid size-28 place-items-center rounded-full border-2 border-fg/80 bg-panel text-center shadow-lg sm:size-32">
+          <div className="surface-dark absolute -top-4 -right-2 z-20 grid size-24 place-items-center rounded-full border-2 border-white/80 bg-[#0d0d10] text-center text-white shadow-lg sm:size-28">
             <p>
-              <span className="num block text-3xl leading-none font-black text-fg sm:text-4xl">{indicatorCount}+</span>
-              <span className="mt-1 block text-xs leading-tight font-semibold text-fg">ระบบเทรด<br />สำหรับทองคำ</span>
+              <span className="num block text-2xl leading-none font-black sm:text-3xl">{indicatorCount}+</span>
+              <span className="mt-1 block text-xs leading-tight font-semibold">ระบบเทรด<br />สำหรับทองคำ</span>
             </p>
           </div>
-        </div>
+          <figcaption className="mt-4 text-center text-sm text-muted">
+            ผู้ก่อตั้ง 1SHOT · Funded Trader กับ Topstep, Funding Pips และ LucidFlex
+            <span className="sr-only">: {PROOF.map((p) => p.alt).join(" · ")}</span>
+          </figcaption>
+        </figure>
 
         {/* Story */}
         <div>

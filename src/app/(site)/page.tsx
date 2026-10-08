@@ -5,8 +5,8 @@ import { IntroCurtain } from "@/components/motion/intro";
 import { LiveHero } from "@/components/motion/live-hero";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { AboutSection } from "@/components/site/about-section";
-import { CatalogView } from "@/components/store/catalog-view";
 import { IndicatorShowcase } from "@/components/store/indicator-showcase";
+import { PricingTable } from "@/components/store/pricing-table";
 import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { loadIndicators, type PublicIndicator } from "@/lib/indicators";
@@ -74,24 +74,16 @@ export default async function HomePage() {
         headline={[words("แม่นยำ ชัดเจน และ"), words("ตรวจสอบได้ ในทุกจังหวะ"), words("ของทองคำ")]}
         indicators={indicators}
         offers={offers}
-        promotion={promotion}
       />
 
-      {/* 4 · Bundles */}
+      {/* 4 · Packages and this month's promotion */}
       {bundles.length > 0 && (
-        <section id="pricing" aria-labelledby="pricing-title" className="scroll-mt-18 bg-panel-2">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-            <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <div>
-                <p className="eyebrow">แพ็กเกจรวม</p>
-                <h2 id="pricing-title" className="mt-3 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">
-                  ได้ครบกว่า จ่ายน้อยกว่า<span className="text-accent">.</span>
-                </h2>
-                <p className="mt-3 max-w-md text-base text-muted">จ่ายรายเดือนหรือครั้งเดียว หรือเปิดบัญชีผ่าน Exness IB เพื่อใช้ฟรี</p>
-              </div>
-              <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด <ArrowRight aria-hidden className="size-4" /></ButtonLink>
-            </Reveal>
-            <Reveal delay={0.1}><CatalogView products={bundles} access={owned?.access} subscribed={owned?.subscribed} returning={owned?.returning} from="/pricing" bundlesOnly /></Reveal>
+        <section id="pricing" aria-labelledby="pricing-title" className="pricing-bg relative scroll-mt-18 overflow-hidden bg-panel-2">
+          <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+            <Reveal><PricingTable products={bundles} promotion={promotion} /></Reveal>
+            <p className="mt-14 text-center">
+              <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด รวมรายตัว <ArrowRight aria-hidden className="size-4" /></ButtonLink>
+            </p>
           </div>
         </section>
       )}

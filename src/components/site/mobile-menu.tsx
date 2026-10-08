@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
 
+/** Phone / tablet: the pill's menu button opens a black rounded panel with the links centered. */
 export function SiteMobileMenu({ links, signedIn, staff = false }: { links: { href: string; label: string }[]; signedIn: boolean; staff?: boolean }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -20,26 +21,31 @@ export function SiteMobileMenu({ links, signedIn, staff = false }: { links: { hr
         aria-expanded={open}
         aria-controls="site-menu"
         aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
-        className="grid size-10 place-items-center rounded-xl border border-line-strong text-fg"
+        className="grid size-11 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
       >
-        {open ? <X className="size-5" /> : <Menu className="size-5" />}
+        {open ? <X aria-hidden className="size-5" /> : <Menu aria-hidden className="size-5" />}
       </button>
       {open && (
-        <div id="site-menu" className="absolute inset-x-0 top-full animate-rise border-b border-line bg-ink px-4 pt-2 pb-5">
-          <nav className="flex flex-col">
+        <div id="site-menu" className="absolute inset-x-0 top-full mt-3 animate-rise rounded-[2rem] border border-white/10 bg-[#0b0b0d] px-6 py-8 text-white shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]">
+          <nav aria-label="เมนูหลัก" className="flex flex-col items-center gap-1">
+            <Link href="/" onClick={() => setOpen(false)} className="inline-flex min-h-12 items-center px-4 text-lg font-medium text-white/90 hover:text-white">หน้าแรก</Link>
             {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b border-line py-3.5 text-base text-fg">
+              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="inline-flex min-h-12 items-center px-4 text-lg font-medium text-white/90 hover:text-white">
                 {l.label}
               </a>
             ))}
           </nav>
-          <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="mx-auto mt-6 grid max-w-xs gap-2">
             {signedIn ? (
-              <ButtonLink href={staff ? "/admin" : "/dashboard"} className="col-span-2 h-11">{staff ? "ระบบหลังบ้าน" : "เข้าสู่แดชบอร์ด"} <ArrowRight className="size-4" /></ButtonLink>
+              <Link href={staff ? "/admin" : "/dashboard"} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold text-[#0b0b0d]">
+                {staff ? "ระบบหลังบ้าน" : "แดชบอร์ด"} <ArrowRight aria-hidden className="size-4" />
+              </Link>
             ) : (
               <>
-                <ButtonLink href="/login" variant="outline" className="h-11">เข้าสู่ระบบ</ButtonLink>
-                <ButtonLink href="/signup" className="h-11">สมัครสมาชิก</ButtonLink>
+                <Link href="/signup" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white text-sm font-semibold text-[#0b0b0d]">
+                  สมัครสมาชิก <ArrowRight aria-hidden className="size-4" />
+                </Link>
+                <Link href="/login" className="inline-flex h-12 items-center justify-center rounded-full border border-white/20 text-sm font-medium text-white">เข้าสู่ระบบ</Link>
               </>
             )}
           </div>

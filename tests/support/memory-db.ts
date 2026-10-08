@@ -127,7 +127,12 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
   ilike(c: string, p: string) { this.filters.push(opFilter(c, "ilike", p)); return this; }
   /** PostgREST `or` syntax: "col.op.value,col.op.value". */
   or(expr: string) {
-    const parts = expr.split(",").map((p) => { const [col, op, ...rest] = p.split("."); return opFilter(col, op, rest.join(".")); });
+    // Like PostgREST: a value may be double-quoted, and "*" is the wildcard for (i)like.
+    const parts = expr.split(",").map((p) => {
+      const [col, op, ...rest] = p.split(".");
+      const raw = rest.join(".").replace(/^"(.*)"$/, "$1");
+      return opFilter(col, op, op === "ilike" ? raw.replace(/\*/g, "%") : raw);
+    });
     this.filters.push((r) => parts.some((f) => f(r)));
     return this;
   }
