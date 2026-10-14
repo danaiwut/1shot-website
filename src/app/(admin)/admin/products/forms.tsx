@@ -4,6 +4,7 @@ import { Check, ImageUp, Layers, Package, Shuffle, type LucideIcon } from "lucid
 import { ChoiceTiles, Step, SubmitButton, Switch } from "@/components/app/form-kit";
 import { EmptyLine, Status } from "@/components/app/kit";
 import { Button, cx, Field, Input, Notice, Select } from "@/components/ui";
+import { shrinkImage } from "@/lib/client-image";
 import { splitInstallments } from "@/lib/store/installments";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtTHB, priceSuffix, termLabel } from "@/lib/store/pricing";
@@ -33,6 +34,7 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
   const [featured, setFeatured] = useState(product?.featured ?? false);
   const [file, setFile] = useState<string | null>(null); // object-URL preview of a newly chosen image
   const [removeImage, setRemoveImage] = useState(false);
+  const [shrinking, setShrinking] = useState(false);
   const [imageScope, setImageScope] = useState<"home" | "all">(product?.image_scope ?? "home");
   const image = file ?? (removeImage ? null : product?.image_url ?? null);
   const toggle = (c: string) => setCodes((cur) => (kind === "single" ? [c] : cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
@@ -137,10 +139,30 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
             <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-panel-2 px-4 py-5 text-center text-sm font-semibold transition-colors hover:border-brand has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">
               <ImageUp aria-hidden className="size-6 text-accent" />
               {file ? "เลือกรูปอื่น" : product?.image_url ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
-              <span className="text-xs font-normal text-muted">{file ? "รูปใหม่จะบันทึกเมื่อกดบันทึก" : "กดเพื่อเลือกไฟล์"}</span>
+              <span className="text-xs font-normal text-muted">{shrinking ? "กำลังเตรียมรูป…" : file ? "รูปใหม่จะบันทึกเมื่อกดบันทึก" : "กดเพื่อเลือกไฟล์"}</span>
               <input
                 type="file" name="image" accept="image/png,image/jpeg,image/webp" className="sr-only"
-                onChange={(e) => { const f = e.target.files?.[0]; setFile(f ? URL.createObjectURL(f) : null); if (f) setRemoveImage(false); }}
+                onChange={async (e) => {
+                  const input = e.currentTarget;
+                  const f = input.files?.[0];
+                  setFile(f ? URL.createObjectURL(f) : null);
+                  if (!f) return;
+                  setRemoveImage(false);
+                  setShrinking(true);
+                  try {
+                    // Keep the upload small: Vercel rejects request bodies over 4.5 MB before our code runs.
+                    const small = await shrinkImage(f);
+                    if (small !== f) {
+                      const dt = new DataTransfer();
+                      dt.items.add(small);
+                      input.files = dt.files;
+                    }
+                  } catch {
+                    // Unreadable in this browser: send the original and let the server validate it.
+                  } finally {
+                    setShrinking(false);
+                  }
+                }}
               />
             </label>
           </div>
@@ -203,7 +225,7 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
 
         {state.error && <Notice tone="error">{state.error}</Notice>}
         {state.ok && <Notice tone="success">{state.ok}</Notice>}
-        <Button type="submit" disabled={pending} className="h-12 w-full rounded-full text-base font-semibold">
+        <Button type="submit" disabled={pending || shrinking} className="h-12 w-full rounded-full text-base font-semibold">
           {pending ? "กำลังบันทึก…" : product ? "บันทึกการแก้ไข" : "สร้างสินค้า แล้วไปตั้งราคา"}
         </Button>
         {product && <div className="text-center"><DeleteProduct id={product.id} /></div>}

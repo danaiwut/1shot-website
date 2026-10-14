@@ -24,23 +24,35 @@ function storageKeyOf(url: string | null) {
  */
 async function nextCardImage(form: FormData, current: string | null): Promise<{ url: string | null; uploaded: boolean } | { error: string }> {
   const file = form.get("image");
-  if (file instanceof File && file.size > 0) {
-    const type = IMAGE_TYPES[file.type];
-    if (!type) return { error: "รองรับเฉพาะไฟล์ PNG, JPG หรือ WebP" };
-    if (file.size > MAX_IMAGE) return { error: "รูปต้องมีขนาดไม่เกิน 5 MB" };
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    if (!type.magic(bytes)) return { error: "ไฟล์ไม่ใช่รูปภาพที่ถูกต้อง" };
-    const path = `products/${crypto.randomUUID()}.${type.ext}`;
+  if (!(file instanceof File) || file.size === 0) return { url: form.get("remove_image") === "on" ? null : current, uploaded: false };
+  const type = IMAGE_TYPES[file.type];
+  if (!type) return { error: "รองรับเฉพาะไฟล์ PNG, JPG หรือ WebP" };
+  if (file.size > MAX_IMAGE) return { error: "รูปต้องมีขนาดไม่เกิน 5 MB" };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!type.magic(bytes)) return { error: "ไฟล์ไม่ใช่รูปภาพที่ถูกต้อง" };
+  const path = `products/${crypto.randomUUID()}.${type.ext}`;
+  try {
     const { error } = await cardImages().upload(path, bytes, { contentType: file.type, cacheControl: "31536000", upsert: false });
-    if (error) return { error: "อัปโหลดรูปไม่สำเร็จ" };
+    if (error) {
+      console.error("card image upload failed", error);
+      return { error: `อัปโหลดรูปไม่สำเร็จ: ${error.message}` };
+    }
     return { url: cardImages().getPublicUrl(path).data.publicUrl, uploaded: true };
+  } catch (err) {
+    console.error("card image upload failed", err);
+    return { error: "อัปโหลดรูปไม่สำเร็จ ระบบจัดเก็บรูปยังไม่พร้อม (ตรวจ SUPABASE_SECRET_KEY บน Vercel)" };
   }
-  return { url: form.get("remove_image") === "on" ? null : current, uploaded: false };
 }
 
+/** Best effort: a leftover file in Storage must never fail the save. */
 async function removeCardImage(url: string | null) {
   const key = storageKeyOf(url);
-  if (key) await cardImages().remove([key]);
+  if (!key) return;
+  try {
+    await cardImages().remove([key]);
+  } catch (err) {
+    console.error("card image cleanup failed", key, err);
+  }
 }
 
 const ProductSchema = z.object({
