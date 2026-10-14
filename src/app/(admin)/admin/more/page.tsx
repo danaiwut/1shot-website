@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, FileText, LifeBuoy, ScrollText, SlidersHorizontal, UserCog } from "lucide-react";
+import { ArrowRight, BarChart3, FileText, LifeBuoy, ScrollText, Settings2, SlidersHorizontal, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { requireStaff } from "@/lib/auth";
@@ -15,6 +15,7 @@ const MORE: { title: string; line: string; tiles: Tile[] }[] = [
     line: "ร้านค้า ลูกค้า และทีมงาน",
     tiles: [
       { href: "/admin/indicators", title: "อินดิเคเตอร์", line: "ชื่อ รูป คำอธิบาย และห้อง Telegram", icon: SlidersHorizontal },
+      { href: "/admin/settings", title: "ตั้งค่า TradingView", line: "Session เจ้าของสคริปต์ และ Script ID รายตัว", icon: Settings2 },
       { href: "/admin/support", title: "คำขอจากลูกค้า", line: "เรื่องที่ลูกค้าส่งเข้ามา", icon: LifeBuoy },
       { href: "/admin/content", title: "เนื้อหา", line: "สรุปเช้า ข่าวโลก ประกาศ และบล็อก Facebook", icon: FileText },
       { href: "/admin/lots", title: "Lot Exness", line: "ยอด Lot ที่ลูกค้าเทรด", icon: BarChart3 },

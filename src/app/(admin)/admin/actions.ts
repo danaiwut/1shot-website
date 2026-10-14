@@ -49,16 +49,20 @@ const IndicatorSchema = z.object({
   points: z.string().max(3000).transform((v) => v.split("\n").map((l) => l.trim()).filter(Boolean)).pipe(z.array(z.string().max(200)).max(8, "จุดเด่นได้ไม่เกิน 8 ข้อ")),
   telegram_room_id: z.string().trim().regex(/^(-?\d{5,20})?$/, "Chat ID ต้องเป็นตัวเลข เช่น -1001234567890").optional(),
   tv_script_id: z.string().trim().regex(/^(PUB;[A-Za-z0-9]{6,64})?$/, "TradingView script ID ต้องขึ้นต้นด้วย PUB;").optional(),
+  youtube_url: z.preprocess((value) => typeof value === "string" && !value.trim() ? undefined : value, z.string().trim().url("ลิงก์ YouTube ไม่ถูกต้อง").refine((value) => {
+    if (!value) return true;
+    try { const host = new URL(value).hostname.replace(/^www\./, ""); return host === "youtube.com" || host === "youtu.be" || host === "m.youtube.com"; } catch { return false; }
+  }, "ต้องเป็นลิงก์ YouTube เช่น https://youtu.be/...").optional()),
 });
 
 /** Edit an indicator's public content, Telegram room and preview image (stored in the public indicator-images bucket). */
 export async function saveIndicator(_: AdminState, form: FormData): Promise<AdminState> {
   const parsed = IndicatorSchema.safeParse({
     code: form.get("code"), name: form.get("name"), description: form.get("description") ?? "",
-    points: form.get("points") ?? "", telegram_room_id: form.get("telegram_room_id") ?? undefined, tv_script_id: form.get("tv_script_id") ?? undefined,
+    points: form.get("points") ?? "", telegram_room_id: form.get("telegram_room_id") ?? undefined, tv_script_id: form.get("tv_script_id") ?? undefined, youtube_url: form.get("youtube_url") ?? undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
-  const { code, telegram_room_id, tv_script_id, ...content } = parsed.data;
+  const { code, telegram_room_id, tv_script_id, youtube_url, ...content } = parsed.data;
   const { supabase } = await requireStaff();
   const { data: current } = await supabase.from("indicators").select("image_path").eq("code", code).maybeSingle<{ image_path: string | null }>();
   if (!current) return { error: "ไม่พบอินดิเคเตอร์" };
@@ -85,6 +89,7 @@ export async function saveIndicator(_: AdminState, form: FormData): Promise<Admi
     image_path,
     ...(telegram_room_id !== undefined && { telegram_room_id: telegram_room_id || null }),
     ...(tv_script_id !== undefined && { tv_script_id: tv_script_id || null }),
+    ...(youtube_url !== undefined && { youtube_url: youtube_url || null }),
   }).eq("code", code);
   if (error) {
     if (image_path && image_path !== current.image_path) await storage.remove([image_path]);

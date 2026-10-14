@@ -52,6 +52,9 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
           amount: price.amount_satang,
           codes: product.codes,
           until: product.available_until ? fmtDate(product.available_until) : null,
+          installments: price.max_installments && price.installment_first_amount_satang
+            ? { max: price.max_installments, first: price.installment_first_amount_satang }
+            : null,
         }}
         items={items}
         parts={price.parts}

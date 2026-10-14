@@ -24,7 +24,7 @@ export default async function IndicatorsAdminPage() {
     <>
       <PageHeader
         title="อินดิเคเตอร์และห้อง Telegram"
-        description="แก้ชื่อ คำอธิบาย จุดเด่น รูป และผูกห้อง Telegram ของแต่ละตัว ขึ้นบนหน้าเว็บทันที"
+        description="แก้ชื่อ คำอธิบาย จุดเด่น รูป วิดีโอวิธีใช้งาน และผูกห้อง Telegram ของแต่ละตัว ขึ้นบนหน้าเว็บทันที"
       />
       <div className="space-y-8">
         <StatRow items={[

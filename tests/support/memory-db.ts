@@ -22,9 +22,10 @@ const PRIMARY_KEYS: Record<string, string[]> = {
   profiles: ["id"], indicators: ["code"], indicator_rights: ["user_id", "code"], telegram_links: ["user_id"],
   telegram_link_tokens: ["user_id"], telegram_invites: ["invite_url"], daily_briefs: ["brief_date"],
   products: ["id"], product_prices: ["id"], orders: ["id"], subscriptions: ["id"], stripe_customers: ["user_id"], stripe_events: ["id"], email_log: ["id"],
+  installment_plans: ["id"],
 };
 const AUTO_ID = new Set(["signal_events", "news_items", "webhook_receipts", "email_log"]);
-const AUTO_UUID = new Set(["products", "product_prices", "orders"]);
+const AUTO_UUID = new Set(["products", "product_prices", "orders", "installment_plans"]);
 
 /** Mirrors the `public.setups` view: opening event + latest state per setup_key. */
 function setupsView(events: Row[]): Row[] {
@@ -169,7 +170,8 @@ class Query implements PromiseLike<{ data: unknown; error: null | { message: str
         if (AUTO_ID.has(this.table) && row.id == null) row.id = nextId();
         if (AUTO_UUID.has(this.table) && row.id == null) row.id = crypto.randomUUID();
         if (this.table === "webhook_receipts") row.received_at ??= now;
-        if (["orders", "products", "product_prices", "subscriptions", "stripe_customers", "email_log"].includes(this.table)) row.created_at ??= now;
+        if (["orders", "products", "product_prices", "subscriptions", "stripe_customers", "email_log", "installment_plans"].includes(this.table)) row.created_at ??= now;
+        if (this.table === "installment_plans") { row.updated_at ??= now; row.consent_accepted_at ??= now; }
         table.push(row);
         written.push(row);
       }
@@ -264,6 +266,27 @@ function revokeOrder(a: { p_order: string }) {
   return true;
 }
 
+/** Mirrors `revoke_installment_order`: forfeits (not refunds) the access an installment's first order granted. */
+function revokeInstallmentOrder(a: { p_order: string }) {
+  const d = db();
+  const o = d.orders.find((x) => x.id === a.p_order);
+  if (!o || o.status !== "paid") return false;
+  o.status = "revoked";
+  const drop = (code: string) => d.indicator_rights.splice(d.indicator_rights.findIndex((r) => r.user_id === o.user_id && r.code === code), 1);
+  for (const g of (o.grants as Grant[] | null) ?? []) {
+    if (g.after !== null) continue; // installments only ever grant lifetime
+    if (g.had && g.before === null) continue; // was lifetime before this order already
+    const cur = d.indicator_rights.find((r) => r.user_id === o.user_id && r.code === g.code);
+    if (!cur || cur.expires_at !== null) continue; // changed since, or not lifetime; leave to staff
+    const otherLifetime = d.orders.some((x) => x.user_id === o.user_id && x.id !== o.id && ["paid", "revoked"].includes(x.status as string)
+      && ((x.grants as Grant[] | null) ?? []).some((xg) => xg.code === g.code && xg.after === null && !(xg.had && xg.before === null)));
+    if (otherLifetime) continue;
+    const note = `ผ่อนไม่สำเร็จ: ${o.product_name}`;
+    if (g.had) Object.assign(cur, { expires_at: g.before, note }); else drop(g.code);
+  }
+  return true;
+}
+
 /** Mirrors `ingest_signal_events`: idempotent on (code, event_id). Returns the number of new events. */
 function ingest(events: Row[]) {
   const d = db();
@@ -286,6 +309,7 @@ export function createMemoryAdminClient() {
       if (name === "ingest_signal_events") return { data: ingest((args.p_events as Row[]) ?? []), error: null };
       if (name === "grant_order") return { data: grantOrder(args as Parameters<typeof grantOrder>[0]), error: null };
       if (name === "revoke_order") return { data: revokeOrder(args as Parameters<typeof revokeOrder>[0]), error: null };
+      if (name === "revoke_installment_order") return { data: revokeInstallmentOrder(args as Parameters<typeof revokeInstallmentOrder>[0]), error: null };
       return { data: null, error: null };
     },
   };

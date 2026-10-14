@@ -4,6 +4,8 @@ import type { Promotion } from "./types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
+export const PROMOTION_IMAGE_BUCKET = "promotion-images";
+
 export const bangkokToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date());
 
 /** The promotion running today (latest start first). Filters explicitly so staff don't see drafts on the site. */

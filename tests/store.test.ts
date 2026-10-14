@@ -17,7 +17,7 @@ vi.mock("../src/lib/store/stripe", async (orig) => {
   return { ...real, getStripe: () => fake };
 });
 
-const { createCheckout, fulfillOrder, refundOrder, revokeOrder } = await import("../src/lib/store/orders");
+const { createCheckout, createInstallmentCheckout, defaultInstallmentPlan, fulfillOrder, payNextInstallment, refundOrder, revokeOrder } = await import("../src/lib/store/orders");
 const { fmtTHB, termLabel } = await import("../src/lib/store/pricing");
 
 const admin = createMemoryAdminClient();
@@ -158,6 +158,82 @@ describe("refunds take back exactly what the order gave", () => {
   });
 });
 
+describe("installment plans", () => {
+  async function fulfillPendingInstallment(planId: string) {
+    const { data: rows } = await admin.from("orders").select("*").eq("installment_plan_id", planId).eq("status", "pending");
+    const order = (rows as { id: string }[]).at(-1)!;
+    await fulfillOrder(order.id, { paymentIntent: `pi_test_${order.id.slice(0, 8)}` });
+    return order.id;
+  }
+  async function latestPlan() {
+    const { data: plans } = await admin.from("installment_plans").select("*").eq("user_id", USER).order("created_at", { ascending: false });
+    return (plans as { id: string; status: string; anchor_order_id: string; installment_count: number }[])[0];
+  }
+
+  it("rejects starting a plan without consent", async () => {
+    const price = await priceFor("All Access", "one_time", null);
+    await expect(createInstallmentCheckout(USER, "x@example.com", price, [], 3, false)).rejects.toThrow(/ยอมรับเงื่อนไข/);
+  });
+
+  it("rejects an installment count outside the admin's configured range", async () => {
+    const price = await priceFor("All Access", "one_time", null);
+    await expect(createInstallmentCheckout(USER, "x@example.com", price, [], 4, true)).rejects.toThrow(/จำนวนงวด/);
+    await expect(createInstallmentCheckout(USER, "x@example.com", price, [], 1, true)).rejects.toThrow(/จำนวนงวด/);
+  });
+
+  it("rejects installments on a price the admin hasn't enabled them for", async () => {
+    await expect(createInstallmentCheckout(USER, "x@example.com", await priceFor("ICT Pack", "one_time", 90), [], 2, true)).rejects.toThrow(/ไม่เปิดให้ผ่อนชำระ/);
+  });
+
+  it("grants full lifetime access as soon as the first installment is paid", async () => {
+    const price = await priceFor("All Access", "one_time", null);
+    const url = await createInstallmentCheckout(USER, "x@example.com", price, [], 3, true);
+    expect(url).toContain("checkout.stripe.test");
+    const plan = await latestPlan();
+    expect(plan.installment_count).toBe(3);
+    expect(plan.status).toBe("active");
+    await fulfillPendingInstallment(plan.id);
+    for (const code of ["DT", "AMD", "SW"]) expect((await right(USER, code))?.expires_at).toBeNull();
+  });
+
+  it("lets the customer pay each remaining installment and completes the plan", async () => {
+    const price = await priceFor("All Access", "one_time", null);
+    await createInstallmentCheckout(USER, "x@example.com", price, [], 3, true);
+    const plan = await latestPlan();
+    await fulfillPendingInstallment(plan.id);
+
+    await payNextInstallment(USER, "x@example.com", plan.id);
+    await fulfillPendingInstallment(plan.id);
+    expect((await latestPlan()).status).toBe("active");
+
+    await payNextInstallment(USER, "x@example.com", plan.id);
+    await fulfillPendingInstallment(plan.id);
+    expect((await latestPlan()).status).toBe("completed");
+
+    await expect(payNextInstallment(USER, "x@example.com", plan.id)).rejects.toThrow(/ไม่ได้ใช้งานอยู่/);
+  });
+
+  it("revokes access without a refund when a later installment is never paid", async () => {
+    const price = await priceFor("All Access", "one_time", null);
+    await createInstallmentCheckout(USER, "x@example.com", price, [], 3, true);
+    const plan = await latestPlan();
+    await fulfillPendingInstallment(plan.id);
+    expect((await right(USER, "DT"))?.expires_at).toBeNull();
+
+    await payNextInstallment(USER, "x@example.com", plan.id); // installment #2 created but never paid
+
+    await defaultInstallmentPlan(plan.id);
+    expect(await right(USER, "DT")).toBeNull();
+    const { data: order } = await admin.from("orders").select("status").eq("id", plan.anchor_order_id).single();
+    expect((order as { status: string }).status).toBe("revoked");
+    expect((await latestPlan()).status).toBe("defaulted");
+    const { data: pendingLeft } = await admin.from("orders").select("status").eq("installment_plan_id", plan.id).eq("status", "pending");
+    expect(pendingLeft).toHaveLength(0);
+
+    await expect(defaultInstallmentPlan(plan.id)).rejects.toThrow(/ไม่ได้ใช้งานอยู่แล้ว/);
+  });
+});
+
 describe("pricing labels", () => {
   it("formats THB and terms", () => {
     expect(fmtTHB(299000)).toBe("฿2,990");
@@ -197,6 +273,7 @@ describe("customer emails", () => {
       id: "abcdef12-0000-4000-8000-000000000000", user_id: USER, product_id: null, price_id: null, product_name: "<script>x</script>", codes: ["OB"],
       billing: "one_time", interval: null, duration_days: 30, amount_satang: 99000, currency: "thb", status: "paid", kind: "checkout",
       stripe_checkout_session_id: null, stripe_payment_intent_id: null, stripe_subscription_id: null, receipt_url: null, access_until: null, created_at: "", paid_at: null,
+      installment_plan_id: null, installment_seq: null,
     }, "Ploy", "https://example.com");
     expect(mail.html).not.toContain("<script>");
     expect(mail.html).toContain("&lt;script&gt;");

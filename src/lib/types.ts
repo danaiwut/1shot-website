@@ -24,6 +24,8 @@ export interface Indicator {
   points: string[];
   /** Object path in the public `indicator-images` bucket. */
   image_path: string | null;
+  /** Optional YouTube tutorial URL. */
+  youtube_url: string | null;
 }
 
 export interface IndicatorRight {
@@ -91,6 +93,10 @@ export interface ProductPrice {
   duration_days: number | null;
   active: boolean;
   sort: number;
+  /** Max installments a customer can split this price into at checkout; null = no installment option. */
+  max_installments: number | null;
+  /** Fixed first-installment amount (satang); the rest splits evenly over the remaining installments. */
+  installment_first_amount_satang: number | null;
 }
 
 export interface Product {
@@ -113,7 +119,7 @@ export interface Product {
   product_prices?: ProductPrice[];
 }
 
-export type OrderStatus = "pending" | "paid" | "failed" | "canceled" | "refunded";
+export type OrderStatus = "pending" | "paid" | "failed" | "canceled" | "refunded" | "revoked";
 
 export interface Order {
   id: string;
@@ -128,7 +134,7 @@ export interface Order {
   amount_satang: number;
   currency: string;
   status: OrderStatus;
-  kind: "checkout" | "renewal";
+  kind: "checkout" | "renewal" | "installment";
   stripe_checkout_session_id: string | null;
   stripe_payment_intent_id: string | null;
   stripe_subscription_id: string | null;
@@ -136,6 +142,28 @@ export interface Order {
   access_until: string | null;
   created_at: string;
   paid_at: string | null;
+  /** Set when kind = "installment": the plan this payment belongs to and its position (1-based). */
+  installment_plan_id: string | null;
+  installment_seq: number | null;
+}
+
+export type InstallmentPlanStatus = "active" | "completed" | "defaulted" | "canceled";
+
+export interface InstallmentPlan {
+  id: string;
+  user_id: string;
+  product_id: string | null;
+  price_id: string | null;
+  product_name: string;
+  codes: string[];
+  total_amount_satang: number;
+  installment_count: number;
+  first_amount_satang: number;
+  status: InstallmentPlanStatus;
+  consent_accepted_at: string;
+  anchor_order_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Subscription {
@@ -206,6 +234,8 @@ export interface Promotion {
   cta_label: string | null;
   cta_href: string | null;
   image_url: string | null;
+  /** "home" = homepage only (default); "all" = also /pricing and /store. */
+  image_scope: "home" | "all";
   starts_on: string;
   ends_on: string;
   active: boolean;

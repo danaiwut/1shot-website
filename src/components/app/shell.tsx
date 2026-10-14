@@ -17,7 +17,7 @@ export async function AppShell({ area, profile, staff, children }: { area: Area;
       <AppSidebar area={area} viewer={{ name, email: profile.email, role: ROLE_LABEL[profile.role] ?? profile.role, staff }} />
       <SidebarInset className="min-w-0 bg-panel-2">
         <AppHeader area={area} staff={staff} />
-        <div id="main" tabIndex={-1} className="mx-auto w-full max-w-[1600px] px-4 pt-8 pb-20 outline-none sm:px-6 lg:px-10">{children}</div>
+        <div id="main" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1600px] px-3 pt-6 pb-16 outline-none min-[400px]:px-4 sm:px-6 sm:pt-8 sm:pb-20 lg:px-10">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

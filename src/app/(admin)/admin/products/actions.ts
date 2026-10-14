@@ -96,10 +96,23 @@ export async function addPrice(_: ProductState, form: FormData): Promise<Product
     if (!Number.isInteger(duration_days) || duration_days < 1 || duration_days > 3650) return { error: "จำนวนวันต้องเป็น 1 – 3650" };
   }
 
+  let max_installments: number | null = null;
+  let installment_first_amount_satang: number | null = null;
+  if (form.get("installments_on") === "on") {
+    if (terms.data.billing !== "one_time" || duration_days !== null) return { error: "ผ่อนชำระได้เฉพาะราคาแบบจ่ายครั้งเดียวและใช้งานตลอดชีพ" };
+    max_installments = Number(form.get("max_installments") || 0);
+    if (!Number.isInteger(max_installments) || max_installments < 2 || max_installments > 12) return { error: "จำนวนงวดสูงสุดต้องอยู่ระหว่าง 2 – 12 งวด" };
+    const firstBaht = Number(String(form.get("installment_first_amount") ?? "").replace(/,/g, ""));
+    if (!Number.isFinite(firstBaht) || firstBaht < 10) return { error: "ยอดงวดแรกต้องอย่างน้อย 10 บาท" };
+    installment_first_amount_satang = Math.round(firstBaht * 100);
+    if (installment_first_amount_satang >= Math.round(baht * 100)) return { error: "ยอดงวดแรกต้องน้อยกว่าราคาเต็ม" };
+  }
+
   const { supabase } = await requireStaff();
   const { error } = await supabase.from("product_prices").insert({
     product_id: productId.data, billing: terms.data.billing, amount_satang: Math.round(baht * 100), currency: "thb",
     interval, duration_days, active: true, sort: Number(form.get("sort") || 100),
+    max_installments, installment_first_amount_satang,
   });
   if (error) return { error: "เพิ่มราคาไม่สำเร็จ" };
   revalidatePath(`/admin/products/${productId.data}`);

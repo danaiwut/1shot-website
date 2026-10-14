@@ -24,9 +24,11 @@ type Ownership = {
 /**
  * "แพ็กเกจและโปรโมชั่น" (homepage, /pricing, /store): the running promotion as the heading, then a classic
  * pricing table (featured deal in the middle, raised and in brand red). `max` caps the cards (homepage: 3).
+ * `showImage`: pass true only from the homepage call site. The poster still renders there regardless of the
+ * promotion's own `image_scope`; /pricing and /store only show it when staff set that promotion's scope to "all".
  */
-export function PricingTable({ products, promotion, from = "/", max = 3, heading = true, ...own }: {
-  products: CatalogProduct[]; promotion: Promotion | null; from?: string; max?: number; heading?: boolean;
+export function PricingTable({ products, promotion, from = "/", max = 3, heading = true, showImage = false, ...own }: {
+  products: CatalogProduct[]; promotion: Promotion | null; from?: string; max?: number; heading?: boolean; showImage?: boolean;
 } & Ownership) {
   // Featured deal in the middle.
   const ranked = [...products].sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort - b.sort).slice(0, max);
@@ -36,7 +38,7 @@ export function PricingTable({ products, promotion, from = "/", max = 3, heading
 
   return (
     <div className="relative">
-      {heading && <Heading promotion={promotion} />}
+      {heading && <Heading promotion={promotion} showImage={showImage} />}
       <ul className={cx("mx-auto grid items-stretch gap-5", heading && "mt-12 sm:mt-14", cards.length >= 3 ? "max-w-5xl lg:grid-cols-3 lg:gap-x-0 lg:gap-y-12" : cards.length === 2 ? "max-w-3xl md:grid-cols-2" : "max-w-sm")}>
         {cards.map((p) => <DealCard key={p.id} product={p} featured={p.id === hero.id && cards.length > 1} from={from} {...own} />)}
       </ul>
@@ -44,10 +46,16 @@ export function PricingTable({ products, promotion, from = "/", max = 3, heading
   );
 }
 
-function Heading({ promotion: promo }: { promotion: Promotion | null }) {
+function Heading({ promotion: promo, showImage }: { promotion: Promotion | null; showImage: boolean }) {
   const [copied, setCopied] = useState(false);
+  // showImage = this call site is the homepage; a promotion with scope "all" also shows its poster elsewhere (/pricing, /store).
+  const displayImage = showImage || promo?.image_scope === "all";
   return (
     <div className="mx-auto max-w-2xl text-center">
+      {displayImage && promo?.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded poster
+        <img src={promo.image_url} alt="" className="mx-auto mb-8 w-full max-w-xl rounded-2xl object-cover shadow-[0_20px_60px_-30px_rgb(0_0_0/0.45)]" />
+      )}
       {promo?.badge && <p className="inline-flex rounded-full bg-brand-dim px-3 py-1 text-sm font-semibold text-accent">{promo.badge}</p>}
       <h2 id="pricing-title" className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">
         {promo?.title ?? "แพ็กเกจและโปรโมชั่น"}

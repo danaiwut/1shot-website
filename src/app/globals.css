@@ -128,7 +128,15 @@
 
 @layer base {
   html[data-theme="light"] { color-scheme: light; }
+  html {
+    min-width: 320px;
+    overflow-x: clip;
+    text-size-adjust: 100%;
+  }
   body {
+    min-width: 320px;
+    min-height: 100dvh;
+    overflow-x: clip;
     background: var(--color-ink);
     color: var(--color-fg);
     font-feature-settings: "ss01";
@@ -143,6 +151,19 @@
   /* Visually hidden native inputs (custom radios/checkbox chips) still show focus on their label. */
   label:has(> input.sr-only:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   [id] { scroll-margin-top: 5rem; }
+  /* Media and long user supplied values must never widen the viewport. */
+  img, video, svg, canvas { max-width: 100%; }
+  p, li, dd, td, th, label { overflow-wrap: anywhere; }
+  input, textarea, select, button { max-width: 100%; }
+  textarea { resize: vertical; }
+}
+
+/* A reliable escape hatch for dense data on phones without making the page itself scroll sideways. */
+@utility responsive-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @utility num {
@@ -239,6 +260,10 @@ html[data-theme="light"] .surface-dark .logo-for-dark { display: inline-block; }
 .blog-viewport { overflow: hidden; }
 .blog-track { display: flex; width: max-content; padding-inline: 1rem; }
 .blog-item { width: min(85vw, 30rem); flex: none; padding-right: 1.25rem; }
+@media (max-width: 479px) {
+  .blog-track { padding-inline: 0.75rem; }
+  .blog-item { width: 90vw; padding-right: 0.75rem; }
+}
 @media (prefers-reduced-motion: no-preference) {
   html:not([data-motion="off"]) .blog-track { animation: blog-scroll var(--blog-duration, 40s) linear infinite; }
   html:not([data-motion="off"]) .blog-viewport:hover .blog-track,

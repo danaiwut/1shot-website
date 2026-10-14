@@ -51,9 +51,9 @@ export default async function HomePage() {
         description="ระบบวิเคราะห์จาก 1SHOT ที่ออกแบบทุก Setup ให้มีแผนชัดเจน ตั้งแต่ Entry, Stop Loss, Take Profit ไปจนถึง Risk Management พร้อมข้อมูลสำหรับติดตามและทบทวนการเทรดอย่างเป็นระบบ"
       >
         <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
-          <Stagger as="ul" className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line backdrop-blur lg:grid-cols-4">
+          <Stagger as="ul" className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line backdrop-blur min-[480px]:grid-cols-2 lg:grid-cols-4">
             {stats(indicators.length).map((s) => (
-              <StaggerItem as="li" key={s.k} className="flex items-start gap-3.5 bg-panel/90 px-4 py-5 sm:px-5">
+              <StaggerItem as="li" key={s.k} className="flex min-w-0 items-start gap-3 bg-panel/90 px-4 py-4 sm:gap-3.5 sm:px-5 sm:py-5">
                 <span aria-hidden className="mt-1 grid size-11 shrink-0 place-items-center rounded-xl bg-brand text-white"><s.icon className="size-5" strokeWidth={1.8} /></span>
                 <p className="min-w-0">
                   <span className="sr-only">{s.text} {s.k} {s.d}</span>
@@ -76,7 +76,7 @@ export default async function HomePage() {
       {bundles.length > 0 && (
         <section id="pricing" aria-labelledby="pricing-title" className="pricing-bg relative scroll-mt-18 overflow-hidden bg-panel-2">
           <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-            <Reveal><PricingTable products={bundles} promotion={promotion} /></Reveal>
+            <Reveal><PricingTable products={bundles} promotion={promotion} showImage /></Reveal>
             <p className="mt-14 text-center">
               <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด รวมรายตัว <ArrowRight aria-hidden className="size-4" /></ButtonLink>
             </p>

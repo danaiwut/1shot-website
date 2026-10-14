@@ -4,6 +4,7 @@ import { Check, Layers, Package, Shuffle, type LucideIcon } from "lucide-react";
 import { ChoiceTiles, Step, SubmitButton, Switch } from "@/components/app/form-kit";
 import { EmptyLine, Status } from "@/components/app/kit";
 import { Button, cx, Field, Input, Notice, Select } from "@/components/ui";
+import { splitInstallments } from "@/lib/store/installments";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtTHB, priceSuffix, termLabel } from "@/lib/store/pricing";
 import type { Product, ProductPrice } from "@/lib/types";
@@ -188,6 +189,9 @@ export function PriceList({ productId, prices }: { productId: string; prices: Pr
             <Status tone={p.active ? "good" : "neutral"}>{p.active ? "เปิดขาย" : "ปิดขาย"}</Status>
           </div>
           <p className="mt-4 text-3xl font-black tracking-tight tabular-nums">{fmtTHB(p.amount_satang)} <span className="text-sm font-normal text-muted">{priceSuffix(p)}</span></p>
+          {p.max_installments && p.installment_first_amount_satang && (
+            <p className="mt-1 text-xs text-muted">ผ่อนได้สูงสุด {p.max_installments} งวด · งวดแรก {fmtTHB(p.installment_first_amount_satang)}</p>
+          )}
           <div className="mt-4 flex items-center gap-2 border-t border-line pt-4">
             <Button variant="outline" className="h-10 flex-1 rounded-full" aria-label={`${p.active ? "ปิดขาย" : "เปิดขาย"} ${termLabel(p)} ${fmtTHB(p.amount_satang)}`} disabled={busy} onClick={() => start(() => setPriceActive(p.id, productId, !p.active))}>
               {p.active ? "ปิดขาย" : "เปิดขายอีกครั้ง"}
@@ -209,6 +213,16 @@ export function AddPriceForm({ productId, kind = "single" }: { productId: string
   const [billing, setBilling] = useState<"subscription" | "one_time">("one_time");
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [duration, setDuration] = useState<string>("lifetime");
+  const [installmentsOn, setInstallmentsOn] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [maxInstallments, setMaxInstallments] = useState(3);
+  const [firstAmount, setFirstAmount] = useState("");
+  const canInstall = kind !== "pick" && billing === "one_time" && duration === "lifetime";
+  const totalBaht = Number(amount.replace(/,/g, "")) || 0;
+  const firstBaht = Number(firstAmount.replace(/,/g, "")) || 0;
+  const preview = installmentsOn && totalBaht > 0 && firstBaht > 0 && firstBaht < totalBaht
+    ? splitInstallments(Math.round(totalBaht * 100), Math.round(firstBaht * 100), maxInstallments)
+    : null;
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="product_id" value={productId} />
@@ -247,9 +261,34 @@ export function AddPriceForm({ productId, kind = "single" }: { productId: string
       <Field label="ราคา (บาท)" required>
         <span className="relative block">
           <span aria-hidden className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-lg font-bold text-muted">฿</span>
-          <Input name="amount" inputMode="decimal" required placeholder="14,000" className="h-14 pl-10 text-2xl font-extrabold tabular-nums" />
+          <Input name="amount" inputMode="decimal" required placeholder="14,000" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-14 pl-10 text-2xl font-extrabold tabular-nums" />
         </span>
       </Field>
+
+      {canInstall && (
+        <div className="rounded-xl bg-panel-2 px-4 py-4">
+          <Switch name="installments_on" label="เปิดให้ผ่อนชำระ" hint="ลูกค้าเลือกจ่ายเป็นงวดได้เองตอนชำระเงิน" checked={installmentsOn} onChange={setInstallmentsOn} />
+          {installmentsOn && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="ผ่อนได้สูงสุด (งวด)" required>
+                <Input name="max_installments" type="number" min={2} max={12} value={maxInstallments} onChange={(e) => setMaxInstallments(Number(e.target.value))} className="w-24" />
+              </Field>
+              <Field label="ยอดงวดแรก (บาท)" required hint="งวดที่เหลือระบบหารเท่ากันจากส่วนต่างให้เอง">
+                <span className="relative block">
+                  <span aria-hidden className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-bold text-muted">฿</span>
+                  <Input name="installment_first_amount" inputMode="decimal" value={firstAmount} onChange={(e) => setFirstAmount(e.target.value)} placeholder="3,000" className="pl-8" />
+                </span>
+              </Field>
+              {preview && (
+                <p className="text-xs text-muted sm:col-span-2">
+                  ตัวอย่าง {maxInstallments} งวด: {preview.map((a) => fmtTHB(a)).join(" + ")}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {state.error && <Notice tone="error">{state.error}</Notice>}
       {state.ok && <Notice tone="success">{state.ok}</Notice>}
       <SubmitButton pending={pending} pendingText="กำลังเพิ่ม…">เพิ่มราคา</SubmitButton>

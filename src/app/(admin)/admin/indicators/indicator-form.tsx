@@ -98,8 +98,11 @@ export function IndicatorForm({ indicator: i, room, script }: { indicator: Publi
         </Step>
 
         {!i.is_reference && (
-          <Step n={4} title="ห้อง Telegram / TradingView">
+          <Step n={4} title="วิดีโอ / ห้อง Telegram / TradingView">
             <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="ลิงก์ YouTube วิธีใช้งาน" hint="ใช้ลิงก์วิดีโอจาก youtube.com หรือ youtu.be">
+                <Input name="youtube_url" defaultValue={i.youtube_url ?? ""} placeholder="https://youtu.be/..." type="url" />
+              </Field>
               <Field label="Chat ID ห้อง Telegram" hint="บอทต้องเป็นแอดมินในห้องและเชิญสมาชิกได้">
                 <Input name="telegram_room_id" defaultValue={room ?? ""} placeholder="-1001234567890" className="num" />
               </Field>

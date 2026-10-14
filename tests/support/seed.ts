@@ -180,6 +180,10 @@ export function buildSeed(now = Date.now()) {
     description: "ปลดล็อกอินดิเคเตอร์ 1SHOT ครบทุกตัว พร้อมห้องสัญญาณ Telegram ทุกห้อง",
     features: ["อินดิเคเตอร์ครบ 9 ตัว", "ห้องสัญญาณ Telegram ทุกห้อง", "สัญญาณใหม่แบบเรียลไทม์", "ได้อินดิเคเตอร์ตัวใหม่อัตโนมัติ"],
   }, [["subscription", 2990, "month", null], ["subscription", 29900, "year", null], ["one_time", 59000, null, null]]);
+  // One lifetime price with installments enabled, for the installment-plan tests.
+  Object.assign(product_prices.find((p) => p.product_id === ALL && p.billing === "one_time" && p.duration_days === null)!, {
+    max_installments: 3, installment_first_amount_satang: 2_000_000, // ฿20,000 first, rest of ฿39,000 split over 2 more
+  });
   const ICT = addProduct({
     name: "ICT Pack", kind: "bundle", codes: ["AMD", "AR", "OB", "SW"], sort: 20,
     description: "ชุดอินดิเคเตอร์สาย ICT สำหรับเทรดตามสภาพคล่องและ Orderblock",
@@ -268,5 +272,6 @@ export function buildSeed(now = Date.now()) {
     profiles, indicators: INDICATORS, indicator_rights, signal_events, telegram_links,
     telegram_link_tokens: [] as Row[], telegram_invites: [] as Row[], daily_briefs, news_items, webhook_receipts,
     products, product_prices, orders, subscriptions, stripe_customers: [] as Row[], stripe_events: [] as Row[], email_log: [] as Row[],
+    installment_plans: [] as Row[],
   };
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Section, StatRow, Status } from "@/components/app/kit";
+import { Section, StatRow, Status, TextLink } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
-import { Notice, TextLink } from "@/components/ui";
+import { Notice } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { getTvSession, maskSecret } from "@/lib/tv-session";
@@ -42,7 +42,7 @@ export default async function TvSettingsPage() {
               label: "ให้สิทธิ์อัตโนมัติ",
               value: auto ? "เปิดอยู่" : "ปิดอยู่",
               hint: auto
-                ? <Status tone="good">ใช้ค่าจาก{session.source === "db" ? "จากหลังบ้าน" : "จาก env เซิร์ฟเวอร์"}{session.updatedAt ? ` · บันทึก ${fmtDateTime(session.updatedAt)}` : ""}</Status>
+                ? <Status tone="good">ใช้ค่า{session.source === "db" ? "จากหลังบ้าน" : "จาก env เซิร์ฟเวอร์"}{session.updatedAt ? ` · บันทึก ${fmtDateTime(session.updatedAt)}` : ""}</Status>
                 : <Status tone="warn">ต้องเปิดมือที่หน้าให้สิทธิ์</Status>,
             },
             {

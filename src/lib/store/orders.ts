@@ -3,7 +3,8 @@ import type Stripe from "stripe";
 import { sendPurchaseEmail, sendRefundEmail } from "../email/send";
 import { publicEnv } from "../env";
 import { createAdminClient } from "../supabase/admin";
-import type { Order, Product, ProductPrice } from "../types";
+import type { InstallmentPlan, Order, Product, ProductPrice } from "../types";
+import { splitInstallments } from "./installments";
 import { orderCodes, orderName, PickError } from "./pick";
 import { termLabel } from "./pricing";
 import { getStripe, idOf, invoiceSubscriptionId, periodEnd, StoreError } from "./stripe";
@@ -127,6 +128,147 @@ export async function createCheckout(userId: string, email: string, priceId: str
 }
 
 /**
+ * Starts a self-serve installment plan: a `product_prices` row with `max_installments` set lets the
+ * customer split it into 2–max_installments payments, each its own Stripe Checkout Session (never
+ * Stripe's native installments/subscriptions). The first payment is fixed by the admin
+ * (`installment_first_amount_satang`); the rest splits the remainder evenly. Full access is granted
+ * as soon as installment #1 is paid (grant_order already grants lifetime for a lifetime price
+ * regardless of amount) — the customer must tick `consent` agreeing that a missed later
+ * installment revokes access immediately (see `defaultInstallmentPlan`).
+ */
+export async function createInstallmentCheckout(
+  userId: string, email: string, priceId: string, chosen: string[], installmentCount: number, consent: boolean,
+) {
+  if (!consent) throw new StoreError("กรุณายอมรับเงื่อนไขการผ่อนชำระก่อนดำเนินการต่อ");
+  const admin = createAdminClient();
+  const { price, product } = await loadPrice(admin, priceId);
+  if (price.billing !== "one_time" || price.duration_days !== null || !price.max_installments || !price.installment_first_amount_satang) {
+    throw new StoreError("ราคานี้ไม่เปิดให้ผ่อนชำระ");
+  }
+  if (!Number.isInteger(installmentCount) || installmentCount < 2 || installmentCount > price.max_installments) {
+    throw new StoreError("จำนวนงวดไม่ถูกต้อง");
+  }
+  if (product.available_until && new Date(product.available_until).getTime() <= Date.now()) {
+    throw new StoreError("โปรโมชั่นนี้หมดเวลาแล้ว");
+  }
+  if (product.audience === "returning" && !(await isReturningCustomer(admin, userId))) {
+    throw new StoreError("ราคานี้สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น");
+  }
+  let codes: string[];
+  try {
+    const { data: lifetime } = await admin.from("indicator_rights").select("code").eq("user_id", userId).is("expires_at", null);
+    codes = orderCodes(product, chosen, ((lifetime ?? []) as { code: string }[]).map((r) => r.code));
+  } catch (err) {
+    if (err instanceof PickError) throw new StoreError(err.message);
+    throw err;
+  }
+  const name = orderName(product, codes);
+  const first = price.installment_first_amount_satang;
+  if (first >= price.amount_satang) throw new StoreError("ตั้งค่าราคาผ่อนไม่ถูกต้อง ติดต่อผู้ดูแลระบบ");
+  const amounts = splitInstallments(price.amount_satang, first, installmentCount);
+  if (amounts.some((a) => a < 1000)) throw new StoreError("จำนวนงวดมากเกินไปสำหรับราคานี้ ลองเลือกงวดที่น้อยลง");
+
+  const { data: plan, error: planErr } = await admin.from("installment_plans").insert({
+    user_id: userId, product_id: product.id, price_id: price.id, product_name: name, codes,
+    total_amount_satang: price.amount_satang, installment_count: installmentCount, first_amount_satang: first,
+    status: "active", consent_accepted_at: new Date().toISOString(),
+  }).select("id").single<{ id: string }>();
+  if (planErr || !plan) throw new StoreError("สร้างแผนผ่อนชำระไม่สำเร็จ");
+
+  const result = await createInstallmentOrderSession(admin, {
+    userId, email, productId: product.id, priceId: price.id, productName: name, codes,
+    durationDays: price.duration_days, planId: plan.id, seq: 1, count: installmentCount, amount: amounts[0],
+  });
+  await admin.from("installment_plans").update({ anchor_order_id: result.orderId }).eq("id", plan.id);
+  return result.sessionUrl;
+}
+
+/** Customer clicks "pay next installment" on their own order history. */
+export async function payNextInstallment(userId: string, email: string, planId: string) {
+  const admin = createAdminClient();
+  const { data: plan } = await admin.from("installment_plans").select("*").eq("id", planId).maybeSingle<InstallmentPlan>();
+  if (!plan || plan.user_id !== userId) throw new StoreError("ไม่พบแผนผ่อนชำระนี้");
+  if (plan.status !== "active") throw new StoreError("แผนผ่อนชำระนี้ไม่ได้ใช้งานอยู่แล้ว");
+  const { count: paidCount } = await admin.from("orders").select("id", { count: "exact", head: true })
+    .eq("installment_plan_id", planId).eq("status", "paid");
+  const nextSeq = (paidCount ?? 0) + 1;
+  if (nextSeq > plan.installment_count) throw new StoreError("ผ่อนครบทุกงวดแล้ว");
+  const amounts = splitInstallments(plan.total_amount_satang, plan.first_amount_satang, plan.installment_count);
+
+  const { sessionUrl } = await createInstallmentOrderSession(admin, {
+    userId, email, productId: plan.product_id, priceId: plan.price_id, productName: plan.product_name, codes: plan.codes,
+    durationDays: null, planId: plan.id, seq: nextSeq, count: plan.installment_count, amount: amounts[nextSeq - 1],
+  });
+  return sessionUrl;
+}
+
+/** Creates the `orders` row + Stripe Checkout Session for one installment (any seq). */
+async function createInstallmentOrderSession(admin: Admin, p: {
+  userId: string; email: string; productId: string | null; priceId: string | null; productName: string; codes: string[];
+  durationDays: number | null; planId: string; seq: number; count: number; amount: number;
+}) {
+  const label = `งวดที่ ${p.seq}/${p.count}`;
+  const { data: order, error } = await admin.from("orders").insert({
+    user_id: p.userId, product_id: p.productId, price_id: p.priceId, product_name: `${p.productName} (${label})`, codes: p.codes,
+    billing: "one_time", interval: null, duration_days: p.durationDays, amount_satang: p.amount,
+    currency: "thb", status: "pending", kind: "installment", installment_plan_id: p.planId, installment_seq: p.seq,
+  }).select("id").single<{ id: string }>();
+  if (error || !order) throw new StoreError("สร้างคำสั่งซื้อไม่สำเร็จ");
+
+  const stripe = getStripe();
+  const meta = { order_id: order.id, user_id: p.userId, installment_plan_id: p.planId, installment_seq: String(p.seq) };
+  const site = publicEnv.siteUrl();
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    customer: await ensureCustomer(admin, p.userId, p.email),
+    client_reference_id: p.userId,
+    line_items: [{
+      quantity: 1,
+      price_data: { currency: "thb", unit_amount: p.amount, product_data: { name: `${p.productName} · ${label}` } },
+    }],
+    metadata: meta,
+    payment_intent_data: { metadata: meta },
+    allow_promotion_codes: false,
+    locale: "th",
+    success_url: `${site}/billing/success?order=${order.id}`,
+    cancel_url: `${site}/store?canceled=1`,
+  }, { idempotencyKey: `checkout-${order.id}` });
+
+  await admin.from("orders").update({ stripe_checkout_session_id: session.id }).eq("id", order.id);
+  if (!session.url) throw new StoreError("Stripe ไม่ส่งลิงก์ชำระเงินกลับมา");
+  return { orderId: order.id, sessionUrl: session.url };
+}
+
+/**
+ * Staff: a later installment went unpaid. Revokes the access the first installment granted
+ * (forfeited, not refunded — no Stripe refund happens) and cancels any other pending installment
+ * of the same plan. Reverses nothing if the customer already finished paying (plan not "active").
+ */
+export async function defaultInstallmentPlan(planId: string) {
+  const admin = createAdminClient();
+  const { data: plan } = await admin.from("installment_plans").select("*").eq("id", planId).maybeSingle<InstallmentPlan>();
+  if (!plan) throw new StoreError("ไม่พบแผนผ่อนชำระนี้");
+  if (plan.status !== "active") throw new StoreError("แผนผ่อนชำระนี้ไม่ได้ใช้งานอยู่แล้ว");
+  if (!plan.anchor_order_id) throw new StoreError("ไม่พบคำสั่งซื้องวดแรกของแผนนี้");
+
+  const { error } = await admin.rpc("revoke_installment_order", { p_order: plan.anchor_order_id });
+  if (error) throw new Error(`revoke_installment_order failed: ${error.message}`);
+  await admin.from("installment_plans").update({ status: "defaulted" }).eq("id", planId);
+  await admin.from("orders").update({ status: "canceled" }).eq("installment_plan_id", planId).eq("status", "pending");
+
+  const { data: order } = await admin.from("orders").select("*").eq("id", plan.anchor_order_id).maybeSingle<Order>();
+  if (order) later(() => syncTradingViewRights(order.user_id, order.codes));
+}
+
+/** After an installment order is paid: marks the plan "completed" once every installment is in. */
+async function progressInstallmentPlan(admin: Admin, planId: string) {
+  const { data: plan } = await admin.from("installment_plans").select("installment_count, status").eq("id", planId).maybeSingle<Pick<InstallmentPlan, "installment_count" | "status">>();
+  if (!plan || plan.status !== "active") return;
+  const { count } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("installment_plan_id", planId).eq("status", "paid");
+  if ((count ?? 0) >= plan.installment_count) await admin.from("installment_plans").update({ status: "completed" }).eq("id", planId);
+}
+
+/**
  * Marks an order paid and grants its rights. Safe to call more than once: only the call that
  * flips the status does the granting.
  */
@@ -140,6 +282,7 @@ export async function fulfillOrder(orderId: string, opts: { until?: Date | null;
   }).eq("id", orderId).in("status", ["pending", "failed", "canceled"]).select("*").maybeSingle<Order>();
   if (!order) return false;
   await grantForOrder(admin, order, opts.until ?? null);
+  if (order.kind === "installment" && order.installment_plan_id) await progressInstallmentPlan(admin, order.installment_plan_id);
   const { data: granted } = await admin.from("orders").select("*").eq("id", orderId).single<Order>();
   await sendPurchaseEmail(granted ?? order);
   return true;

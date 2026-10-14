@@ -1,7 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, Loader2 } from "lucide-react";
 import { buy, type BuyState } from "@/lib/store/actions";
 import type { CatalogProduct } from "@/lib/store/catalog";
 import { fmtTHB, termLabel } from "@/lib/store/pricing";
@@ -53,7 +53,7 @@ export function SingleCard({ product, indicator: ind, owned, pairSaving, base = 
           </p>
           {pairSaving ? (
             <Link href={`${href}#purchase`} className="mt-1.5 inline-flex min-h-8 items-center gap-1.5 text-sm font-medium text-buy hover:underline">
-              <Sparkles aria-hidden className="size-4" /> ซื้อคู่ลดทันที {pairSaving}%
+              ซื้อคู่ลดทันที {pairSaving}%
             </Link>
           ) : <span className="mt-1.5 block min-h-8" />}
 

@@ -32,6 +32,14 @@ export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: "neutral" 
   failed: { label: "ไม่สำเร็จ", tone: "sell" },
   canceled: { label: "ยกเลิก", tone: "neutral" },
   refunded: { label: "คืนเงินแล้ว", tone: "info" },
+  revoked: { label: "ถอนสิทธิ์ (ผ่อนไม่สำเร็จ)", tone: "sell" },
+};
+
+export const INSTALLMENT_STATUS: Record<"active" | "completed" | "defaulted" | "canceled", { label: string; tone: "neutral" | "brand" | "buy" | "sell" | "info" }> = {
+  active: { label: "กำลังผ่อน", tone: "brand" },
+  completed: { label: "ผ่อนครบแล้ว", tone: "buy" },
+  defaulted: { label: "ผ่อนไม่สำเร็จ · ถอนสิทธิ์แล้ว", tone: "sell" },
+  canceled: { label: "ยกเลิก", tone: "neutral" },
 };
 
 export const SUB_STATUS: Record<string, { label: string; tone: "neutral" | "brand" | "buy" | "sell" | "info" }> = {

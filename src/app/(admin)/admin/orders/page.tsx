@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { ExternalLink, Receipt, Repeat } from "lucide-react";
+import { ExternalLink, Receipt, Repeat, Wallet } from "lucide-react";
 import { Section, Segmented, StatRow, TableBox, Td, TextLink, Th } from "@/components/app/kit";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge, ButtonLink, cx, FilterLink } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { fmtDate, fmtDateTime } from "@/lib/format";
-import { fmtTHB, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
-import type { Order, OrderStatus, Subscription } from "@/lib/types";
+import { splitInstallments } from "@/lib/store/installments";
+import { fmtTHB, INSTALLMENT_STATUS, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
+import type { InstallmentPlan, Order, OrderStatus, Subscription } from "@/lib/types";
 import { ToneStatus } from "../_components/tone-status";
 import { EmptyState, matches, one, qs, ROW_ACTION, Toolbar } from "@/components/app/toolbar";
+import { ForfeitButton } from "./forfeit-button";
 import { RefundButton } from "./refund-button";
 
 export const metadata = { title: "ยอดขาย" };
@@ -29,13 +31,17 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
   let list = supabase.from("orders").select("*, profiles(email, display_name)").order("created_at", { ascending: false }).limit(200);
   if (status !== "all") list = list.eq("status", status);
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
-  const [{ data: orders }, { data: paid }, { data: subs }] = await Promise.all([
+  const [{ data: orders }, { data: paid }, { data: subs }, { data: plans }, { data: installmentOrders }] = await Promise.all([
     list,
     supabase.from("orders").select("amount_satang, paid_at").eq("status", "paid"),
     supabase.from("subscriptions").select("*, profiles(email, display_name)").order("created_at", { ascending: false }).limit(100),
+    supabase.from("installment_plans").select("*, profiles(email, display_name)").order("created_at", { ascending: false }).limit(100),
+    supabase.from("orders").select("installment_plan_id, installment_seq, status").eq("kind", "installment"),
   ]);
   const paidRows = (paid ?? []) as { amount_satang: number; paid_at: string | null }[];
   const subscriptions = (subs ?? []) as WithUser<Subscription>[];
+  const installmentPlans = (plans ?? []) as WithUser<InstallmentPlan>[];
+  const installmentOrderRows = (installmentOrders ?? []) as { installment_plan_id: string; installment_seq: number; status: string }[];
   const activeSubs = subscriptions.filter((s) => s.status === "active" || s.status === "trialing");
   const mrr = activeSubs.reduce((sum, s) => sum + (s.interval === "year" ? s.amount_satang / 12 : s.amount_satang), 0);
   const sum = (rows: { amount_satang: number }[]) => rows.reduce((s, o) => s + o.amount_satang, 0);
@@ -186,6 +192,60 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
           ) : (
             <EmptyState icon={<Repeat />} title="ยังไม่มีการสมัครแบบรายงวด">
               เพิ่มราคาแบบ “รายงวด” ให้สินค้า แล้วลูกค้าจะสมัครแบบตัดบัตรอัตโนมัติได้
+            </EmptyState>
+          )}
+        </Section>
+
+        <Section
+          title={<>แผนผ่อนชำระ <span className="num ml-1 text-sm font-normal text-muted tabular-nums">{installmentPlans.filter((p) => p.status === "active").length} กำลังผ่อน</span></>}
+          description="ลูกค้าผ่อนกับร้านโดยตรง (ไม่ผ่าน Stripe) · ถ้าลูกค้าหยุดจ่าย กดถอนสิทธิ์ได้ที่นี่ · 100 รายการล่าสุด"
+        >
+          {installmentPlans.length ? (
+            <TableBox caption="แผนผ่อนชำระ" minWidth={680}>
+              <thead>
+                <tr>
+                  <Th>ลูกค้า</Th>
+                  <Th>สินค้า</Th>
+                  <Th className="text-right">ความคืบหน้า</Th>
+                  <Th className="hidden md:table-cell">งวดถัดไป</Th>
+                  <Th>สถานะ</Th>
+                  <Th className="text-right"><span className="sr-only">การจัดการ</span></Th>
+                </tr>
+              </thead>
+              <tbody>
+                {installmentPlans.map((p) => {
+                  const st = INSTALLMENT_STATUS[p.status];
+                  const paidCount = installmentOrderRows.filter((r) => r.installment_plan_id === p.id && r.status === "paid").length;
+                  const amounts = splitInstallments(p.total_amount_satang, p.first_amount_satang, p.installment_count);
+                  const nextAmount = p.status === "active" && paidCount < p.installment_count ? amounts[paidCount] : null;
+                  return (
+                    <tr key={p.id} className="border-t border-line">
+                      <Td>
+                        <Link href={`/admin/members/${p.user_id}`} className="group flex min-h-11 flex-col justify-center">
+                          <span className="font-bold group-hover:text-accent group-hover:underline">{p.profiles?.display_name || p.profiles?.email?.split("@")[0] || "—"}</span>
+                          <span className="text-xs text-muted">{p.profiles?.email}</span>
+                        </Link>
+                      </Td>
+                      <Td>
+                        <span className="font-medium">{p.product_name}</span>
+                        <span className="block text-xs text-muted">{fmtTHB(p.total_amount_satang)} รวม</span>
+                      </Td>
+                      <Td className="num text-right whitespace-nowrap tabular-nums">
+                        <span className="font-bold">{paidCount}/{p.installment_count}</span> งวด
+                      </Td>
+                      <Td className="hidden text-muted md:table-cell">{nextAmount !== null ? fmtTHB(nextAmount) : <span className="text-faint">—</span>}</Td>
+                      <Td><ToneStatus tone={st.tone}>{st.label}</ToneStatus></Td>
+                      <Td className="text-right">
+                        {p.status === "active" && <ForfeitButton planId={p.id} label={`${p.product_name} · ${p.profiles?.email ?? ""}`} />}
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </TableBox>
+          ) : (
+            <EmptyState icon={<Wallet />} title="ยังไม่มีแผนผ่อนชำระ">
+              เปิดให้ผ่อนชำระได้ที่ราคาสินค้าแต่ละตัว ตั้งจำนวนงวดสูงสุดและยอดงวดแรก
             </EmptyState>
           )}
         </Section>

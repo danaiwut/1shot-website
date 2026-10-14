@@ -18,9 +18,9 @@ export function LiveHero({ lines, redLine, description, children }: { lines: str
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/3 h-[480px] w-[900px] rounded-full bg-brand/25 blur-[140px]" />
       <div aria-hidden className="pointer-events-none absolute right-0 bottom-10 h-[420px] w-[700px] rounded-full bg-brand/20 blur-[160px]" />
 
-      <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-10 px-4 pt-12 pb-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-8 lg:py-16">
-        <div className="max-w-[37rem]">
-          <h1 className="text-[2.35rem] leading-[1.12] font-black tracking-tight sm:text-5xl lg:text-[3.15rem] xl:text-[3.45rem]">
+      <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-8 px-4 pt-10 pb-8 sm:gap-10 sm:px-6 sm:pt-12 sm:pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-8 lg:py-16">
+        <div className="min-w-0 max-w-[37rem]">
+          <h1 className="text-[clamp(2rem,10vw,2.35rem)] leading-[1.12] font-black tracking-tight sm:text-5xl lg:text-[3.15rem] xl:text-[3.45rem]">
             {/* Screen readers get one stable sentence; the animated copy below is visual only. */}
             <span className="sr-only">{lines.join(" ")} {redLine}</span>
             {lines.map((line, index) => (
@@ -45,13 +45,13 @@ export function LiveHero({ lines, redLine, description, children }: { lines: str
           >
             {description}
           </motion.p>
-          <motion.div className="mt-9 flex flex-wrap gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8 }}>
-            <Link href="#indicators" className="group relative inline-flex h-14 items-center gap-2 overflow-hidden rounded-2xl bg-brand px-7 text-base font-semibold text-white shadow-[0_20px_60px_-15px_rgb(178_0_22/0.9)]">
+          <motion.div className="mt-8 grid gap-3 min-[430px]:flex min-[430px]:flex-wrap sm:mt-9" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8 }}>
+            <Link href="#indicators" className="group relative inline-flex h-14 items-center justify-center gap-2 overflow-hidden rounded-2xl bg-brand px-5 text-center text-base font-semibold text-white shadow-[0_20px_60px_-15px_rgb(178_0_22/0.9)] sm:px-7">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
               <span className="relative">เลือกอินดิเคเตอร์</span>
               <ArrowRight className="relative size-5 transition-transform group-hover:translate-x-1" />
             </Link>
-            <a href="/pricing" className="inline-flex h-14 items-center gap-2 rounded-2xl border border-line-strong bg-panel/60 px-7 text-base font-medium text-fg backdrop-blur transition-colors hover:bg-panel-3">
+            <a href="/pricing" className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-line-strong bg-panel/60 px-5 text-center text-base font-medium text-fg backdrop-blur transition-colors hover:bg-panel-3 sm:px-7">
               ดูแพ็กเกจและราคา
             </a>
           </motion.div>

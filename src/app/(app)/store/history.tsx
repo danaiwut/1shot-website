@@ -1,13 +1,15 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CalendarClock, ExternalLink, Receipt, Repeat, Star } from "lucide-react";
+import { CalendarClock, CreditCard, ExternalLink, Receipt, Repeat, Star } from "lucide-react";
 import { CARD, StatRow, Status, TextLink } from "@/components/app/kit";
 import { SectionHeading } from "@/components/brand";
 import { cx, Notice } from "@/components/ui";
 import { fmtDate, fmtDateTime } from "@/lib/format";
-import { fmtTHB, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
+import { loadInstallmentPlans } from "@/lib/store/installments";
+import { fmtTHB, INSTALLMENT_STATUS, ORDER_STATUS, orderTerm, SUB_STATUS } from "@/lib/store/pricing";
 import type { createClient } from "@/lib/supabase/server";
 import type { Order, Subscription } from "@/lib/types";
+import { PayInstallmentButton } from "./pay-installment-button";
 import { PortalButton, SubscriptionToggle } from "./subscription-actions";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
@@ -16,12 +18,14 @@ const DOT = { buy: "good", sell: "bad", brand: "warn", info: "neutral", neutral:
 
 /** /store "ประวัติ": subscriptions as cards, purchases as receipt rows. */
 export async function PurchaseHistory({ supabase, userId }: { supabase: Client; userId: string }) {
-  const [{ data: subs }, { data: orders }] = await Promise.all([
+  const [{ data: subs }, { data: orders }, plans] = await Promise.all([
     supabase.from("subscriptions").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     supabase.from("orders").select("*").eq("user_id", userId).neq("status", "pending").order("created_at", { ascending: false }).limit(100),
+    loadInstallmentPlans(supabase, userId),
   ]);
   const subscriptions = (subs ?? []) as Subscription[];
   const history = (orders ?? []) as Order[];
+  const activePlans = plans.filter((p) => p.status === "active");
   const live = subscriptions.filter((s) => ["active", "trialing", "past_due", "unpaid", "incomplete"].includes(s.status));
   const ended = subscriptions.filter((s) => !live.includes(s));
   const paidCount = history.filter((o) => o.status === "paid").length;
@@ -29,7 +33,7 @@ export async function PurchaseHistory({ supabase, userId }: { supabase: Client; 
     .filter((s) => s.current_period_end && !s.cancel_at_period_end)
     .sort((a, b) => a.current_period_end!.localeCompare(b.current_period_end!))[0];
   const pastDue = live.some((s) => s.status === "past_due" || s.status === "unpaid");
-  const hasAnything = subscriptions.length > 0 || history.length > 0;
+  const hasAnything = subscriptions.length > 0 || history.length > 0 || plans.length > 0;
 
   return (
     <section id="history" aria-labelledby="history-title" className="scroll-mt-24">
@@ -47,6 +51,7 @@ export async function PurchaseHistory({ supabase, userId }: { supabase: Client; 
               { label: "การสมัครที่ใช้งานอยู่", value: live.length, hint: ended.length ? `สิ้นสุดแล้ว ${ended.length} รายการ` : undefined },
               { label: "ต่ออายุครั้งถัดไป", value: nextRenewal ? fmtDate(nextRenewal.current_period_end!) : "—", hint: nextRenewal?.product_name ?? "ไม่มีรายการต่ออายุอัตโนมัติ" },
               { label: "รายการที่ชำระแล้ว", value: paidCount, hint: history.length ? `จากทั้งหมด ${history.length} รายการ` : undefined },
+              { label: "แผนผ่อนที่กำลังผ่อน", value: activePlans.length, hint: plans.length ? `จากทั้งหมด ${plans.length} แผน` : undefined },
             ]}
           />
         )}
@@ -94,6 +99,40 @@ export async function PurchaseHistory({ supabase, userId }: { supabase: Client; 
           )}
           {ended.length > 0 && <p className="mt-3 text-sm text-muted">สิ้นสุดแล้ว: {ended.map((s) => s.product_name).join(", ")}</p>}
         </div>
+
+        {plans.length > 0 && (
+          <div>
+            <Heading title="แผนผ่อนชำระ" line="สิทธิ์ใช้งานเปิดแล้วตั้งแต่งวดแรก หากไม่จ่ายงวดถัดไปตามกำหนด สิทธิ์จะถูกถอนทันที" />
+            <ul className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+              {plans.map((p) => {
+                const st = INSTALLMENT_STATUS[p.status];
+                return (
+                  <li key={p.id} className={cx(CARD, "flex flex-col p-5 sm:p-6")}>
+                    <div className="flex items-start gap-3">
+                      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-dim text-accent"><CreditCard aria-hidden className="size-5" /></span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold">{p.product_name}</p>
+                        <p className="mt-1"><Status tone={DOT[st.tone]}>{st.label}</Status></p>
+                      </div>
+                    </div>
+                    <p className="mt-5 flex items-baseline gap-1">
+                      <span className="num text-3xl font-black tracking-tight tabular-nums">{p.paidCount}/{p.installment_count}</span>
+                      <span className="text-sm text-muted">งวดที่จ่ายแล้ว · รวม {fmtTHB(p.total_amount_satang)}</span>
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {p.codes.map((c) => <span key={c} className="num rounded-full bg-panel-3 px-2.5 py-0.5 text-xs font-bold">{c}</span>)}
+                    </div>
+                    {p.nextAmountSatang !== null && (
+                      <div className="mt-auto border-t border-line pt-4">
+                        <PayInstallmentButton planId={p.id} amountSatang={p.nextAmountSatang} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         <div>
           <Heading title="ประวัติการซื้อ" line={history.length ? `${history.length} รายการล่าสุด` : undefined} />

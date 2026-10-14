@@ -24,6 +24,16 @@ const FAQ = [
   ["ต้องมีประสบการณ์เทรดมากไหม?", "ไม่จำเป็นต้องเป็นมืออาชีพ แต่ควรเข้าใจความเสี่ยงและทดลองอ่านสัญญาณบนกราฟก่อนใช้งานจริง อินดิเคเตอร์เป็นเครื่องมือช่วยวิเคราะห์ ไม่ใช่การรับประกันผลกำไร"],
 ] as const;
 
+function youtubeEmbedUrl(value: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    let id = url.hostname.replace(/^www\./, "") === "youtu.be" ? url.pathname.slice(1) : url.searchParams.get("v");
+    if (!id && url.pathname.startsWith("/embed/")) id = url.pathname.split("/")[2];
+    return id && /^[A-Za-z0-9_-]{6,20}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+  } catch { return null; }
+}
+
 /** Everything the indicator page needs; `userId` undefined = signed out. */
 export async function loadIndicatorDetail(supabase: Client, code: string, userId?: string) {
   const [ind, indicators, products, reviews] = await Promise.all([
@@ -52,6 +62,7 @@ export function IndicatorDetail({ data, shell, base }: { data: IndicatorDetailDa
   const avg = reviews.length ? reviews.reduce((t, r) => t + r.rating, 0) / reviews.length : undefined;
   const mine = userId ? reviews.find((r) => r.user_id === userId) : undefined;
   const { bundles } = offerFor(products, code);
+  const tutorialUrl = youtubeEmbedUrl(ind.youtube_url);
   const { singles, pairs, perks } = free ? { singles: [], pairs: [], perks: [] } : buyOptions(products, code, owned?.returning);
 
   // Related: same family first, only ones sold singly so they render as store cards.
@@ -144,6 +155,28 @@ export function IndicatorDetail({ data, shell, base }: { data: IndicatorDetailDa
               </StaggerItem>
             ))}
           </Stagger>
+        </Band>
+      )}
+
+      {tutorialUrl && (
+        <Band tone="panel" narrow>
+          <SectionHeading eyebrow="วิธีใช้งาน" title={`เริ่มใช้ ${ind.name}`} description="ดูวิดีโอแนะนำการตั้งค่าและการอ่านสัญญาณก่อนเริ่มใช้งานจริง" size="sm" />
+          <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-ink shadow-[0_20px_60px_-30px_rgb(0_0_0/0.45)]">
+            <div className="aspect-video w-full">
+              <iframe
+                className="size-full"
+                src={tutorialUrl}
+                title={`วิดีโอวิธีใช้งาน ${ind.name}`}
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-white/80 sm:px-5">
+              <span>วิดีโอแนะนำการใช้งาน</span>
+              <a href={ind.youtube_url!} target="_blank" rel="noreferrer" className="font-semibold text-white underline underline-offset-4">เปิดใน YouTube</a>
+            </div>
+          </div>
         </Band>
       )}
 

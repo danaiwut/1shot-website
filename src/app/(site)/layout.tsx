@@ -9,10 +9,7 @@ import { getViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
 const NAV = [
-  { href: "/#indicators", label: "อินดิเคเตอร์" },
   { href: "/pricing", label: "แพ็กเกจและราคา" },
-  { href: "/#blog", label: "ข่าวสาร" },
-  { href: "/#about", label: "เกี่ยวกับเรา" },
 ];
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -25,11 +22,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         ข้ามไปยังเนื้อหาหลัก
       </a>
       {/* Floating pill navbar — black in the dark theme, white in the light one; 72px tall so heroes can slide under it. */}
-      <header className="pointer-events-none sticky top-0 z-40 h-18 px-3 pt-3">
-        <div className="pointer-events-auto relative mx-auto flex h-[3.75rem] max-w-6xl items-center justify-between gap-3 rounded-full border border-line bg-panel/90 pr-2 pl-5 text-fg shadow-[0_16px_40px_-18px_rgb(0_0_0/0.45)] backdrop-blur-xl">
-          <Link href="/" aria-label="หน้าแรก" className="shrink-0"><Logo tone="auto" className="h-8 w-auto" /></Link>
+      <header className="pointer-events-none sticky top-0 z-40 h-18 px-2 pt-2 sm:px-3 sm:pt-3">
+        <div className="pointer-events-auto relative mx-auto flex h-[3.75rem] max-w-6xl items-center justify-between gap-1.5 rounded-full border border-line bg-panel/90 pr-1.5 pl-3 text-fg shadow-[0_16px_40px_-18px_rgb(0_0_0/0.45)] backdrop-blur-xl sm:gap-3 sm:pr-2 sm:pl-5">
+          <Link href="/" aria-label="หน้าแรก" className="min-w-0 shrink"><Logo tone="auto" className="h-7 w-auto max-w-[7.5rem] sm:h-8 sm:max-w-none" /></Link>
           <SiteNavLinks links={NAV} />
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             {viewer ? (
               <Link href={staff ? "/admin" : "/dashboard"} className="hidden h-11 items-center gap-2 rounded-full bg-fg px-5 text-sm font-semibold text-ink transition-colors hover:bg-brand hover:text-white min-[400px]:inline-flex">
                 {staff ? "ระบบหลังบ้าน" : "แดชบอร์ด"} <ArrowRight aria-hidden className="size-4" />
@@ -49,8 +46,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       </header>
       {children}
       <footer className="border-t border-line bg-ink">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 text-sm sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
-          <div className="col-span-2 space-y-4 md:col-span-1">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-x-6 gap-y-10 px-4 py-12 text-sm min-[440px]:grid-cols-2 sm:px-6 sm:py-14 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="space-y-4 min-[440px]:col-span-2 md:col-span-1">
             <Logo tone="auto" />
             <p className="max-w-xs text-xs leading-relaxed text-muted">
               สัญญาณ XAUUSD จากอินดิเคเตอร์ 1SHOT ส่งตรงจาก TradingView ถึงเว็บและ Telegram พร้อม Entry / SL / TP ที่ย้อนตรวจได้ทุกจุด

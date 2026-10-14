@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { getViewer, requireViewer } from "../auth";
 import { isSupabaseConfigured } from "../env";
-import { billingPortalUrl, createCheckout, setCancelAtPeriodEnd } from "./orders";
+import { billingPortalUrl, createCheckout, createInstallmentCheckout, payNextInstallment, setCancelAtPeriodEnd } from "./orders";
 import { StoreError } from "./stripe";
 import { autoVerifyIb } from "../exness-ib";
 import { checkTradingViewUser } from "../tradingview";
@@ -27,14 +27,18 @@ export async function buy(_: BuyState, form: FormData): Promise<BuyState> {
   redirect(next);
 }
 
-export type CheckoutState = { error?: string; field?: "tradingview" | "account" | "email" | "codes" };
+export type CheckoutState = { error?: string; field?: "tradingview" | "account" | "email" | "codes" | "installments" | "consent" };
 
 const CheckoutSchema = z.object({
   price_id: z.uuid(),
   tradingview: z.string().trim().min(1, "กรุณาใส่ชื่อผู้ใช้ TradingView").max(64).regex(/^[A-Za-z0-9_.-]+$/, "ชื่อผู้ใช้ TradingView ใช้ได้เฉพาะ A–Z, 0–9, _ . -"),
   account: z.string().trim().regex(/^[0-9]{4,20}$/, "เลขบัญชีเทรดต้องเป็นตัวเลข 4–20 หลัก"),
   email: z.email("อีเมลไม่ถูกต้อง").transform((v) => v.trim().toLowerCase()),
-});
+  pay_mode: z.enum(["full", "installment"]).default("full"),
+  installments: z.coerce.number().int().min(2).max(12).optional(),
+  consent: z.literal("on").optional(),
+}).refine((v) => v.pay_mode !== "installment" || v.installments !== undefined, { message: "กรุณาเลือกจำนวนงวด", path: ["installments"] })
+  .refine((v) => v.pay_mode !== "installment" || v.consent === "on", { message: "กรุณายอมรับเงื่อนไขการผ่อนชำระ", path: ["consent"] });
 
 /** Live check from the checkout form. */
 export async function checkTradingViewName(name: string): Promise<{ ok: boolean; username?: string; message: string }> {
@@ -72,10 +76,28 @@ export async function startCheckout(_: CheckoutState, form: FormData): Promise<C
 
   let url: string;
   try {
-    url = await createCheckout(userId, v.email, v.price_id, chosen);
+    url = v.pay_mode === "installment"
+      ? await createInstallmentCheckout(userId, v.email, v.price_id, chosen, v.installments!, v.consent === "on")
+      : await createCheckout(userId, v.email, v.price_id, chosen);
   } catch (err) {
     if (err instanceof StoreError) return { error: err.message };
     console.error("checkout failed", err);
+    return { error: "เริ่มการชำระเงินไม่สำเร็จ กรุณาลองใหม่" };
+  }
+  redirect(url);
+}
+
+/** "จ่ายงวดถัดไป" on /store#history. */
+export async function payInstallment(planId: string): Promise<{ error?: string }> {
+  const parsed = z.uuid().safeParse(planId);
+  if (!parsed.success) return { error: "ข้อมูลไม่ถูกต้อง" };
+  const { userId, profile } = await requireViewer();
+  let url: string;
+  try {
+    url = await payNextInstallment(userId, profile.email, parsed.data);
+  } catch (err) {
+    if (err instanceof StoreError) return { error: err.message };
+    console.error("pay installment failed", err);
     return { error: "เริ่มการชำระเงินไม่สำเร็จ กรุณาลองใหม่" };
   }
   redirect(url);

@@ -1,14 +1,19 @@
 "use client";
 import { useActionState, useState, useTransition, type ReactNode } from "react";
-import { CandlestickChart, CheckCircle2, CreditCard, Hash, Loader2, Lock, Mail, QrCode, ShieldCheck, XCircle, Zap } from "lucide-react";
+import { CalendarClock, CandlestickChart, CheckCircle2, CreditCard, Hash, Loader2, Lock, Mail, QrCode, ShieldCheck, XCircle, Zap } from "lucide-react";
 import { PickTile, SHADOW, Step } from "@/components/app/form-kit";
 import { pickCompare } from "@/lib/store/pick";
 import { cx } from "@/components/ui";
 import { checkTradingViewName, startCheckout, type CheckoutState } from "@/lib/store/actions";
+import { splitInstallments } from "@/lib/store/installments";
 import { savingPercent } from "@/lib/store/offers";
 import { fmtTHB } from "@/lib/store/pricing";
 
-type Order = { name: string; term: string; subscription: boolean; amount: number; codes: string[]; until: string | null };
+type Order = {
+  name: string; term: string; subscription: boolean; amount: number; codes: string[]; until: string | null;
+  /** Set when this price can be split into installments. */
+  installments: { max: number; first: number } | null;
+};
 type Item = { name: string; image: string | null; family: string };
 type Pick = { count: number; chosen: string[]; owned: string[] };
 
@@ -21,6 +26,11 @@ export function CheckoutForm({ priceId, tradingview, account, email, order, item
   const [chosen, setChosen] = useState<string[]>(pick?.chosen ?? []);
   const [tv, setTv] = useState<{ ok: boolean; message: string } | null>(null);
   const [checking, start] = useTransition();
+  const [payMode, setPayMode] = useState<"full" | "installment">("full");
+  const [installmentCount, setInstallmentCount] = useState(order.installments?.max ?? 2);
+  const [consent, setConsent] = useState(false);
+  const installmentAmounts = order.installments ? splitInstallments(order.amount, order.installments.first, installmentCount) : [];
+  const dueNow = payMode === "installment" && order.installments ? installmentAmounts[0] : order.amount;
   const check = (value: string) => {
     if (!value.trim()) return setTv(null);
     start(async () => setTv(await checkTradingViewName(value)));
@@ -89,6 +99,64 @@ export function CheckoutForm({ priceId, tradingview, account, email, order, item
           </div>
         </Step>
 
+        {order.installments && (
+          <Step n={++n} title="เต็มจำนวนหรือผ่อนชำระ" hint="ผ่อนกับร้านโดยตรง ไม่ผ่าน Stripe แต่ละงวดกดจ่ายเองได้ที่หน้าประวัติการซื้อ">
+            <input type="hidden" name="pay_mode" value={payMode} />
+            <div role="radiogroup" aria-label="เต็มจำนวนหรือผ่อนชำระ" className="grid gap-3 sm:grid-cols-2">
+              <label className={cx(
+                "flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                payMode === "full" ? "border-brand bg-brand-dim" : "border-line hover:border-line-strong",
+              )}>
+                <input type="radio" checked={payMode === "full"} onChange={() => setPayMode("full")} className="sr-only" />
+                <span className="min-w-0"><span className="block font-bold">จ่ายเต็มจำนวน</span><span className="block text-xs text-muted">{fmtTHB(order.amount)}</span></span>
+              </label>
+              <label className={cx(
+                "flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                payMode === "installment" ? "border-brand bg-brand-dim" : "border-line hover:border-line-strong",
+              )}>
+                <input type="radio" checked={payMode === "installment"} onChange={() => setPayMode("installment")} className="sr-only" />
+                <span className="min-w-0"><span className="block font-bold">ผ่อนชำระ</span><span className="block text-xs text-muted">เริ่มต้น {fmtTHB(order.installments.first)}</span></span>
+              </label>
+            </div>
+
+            {payMode === "installment" && (
+              <div className="mt-4 space-y-4 rounded-xl bg-panel-2 px-4 py-4">
+                <div>
+                  <label htmlFor="installments" className="mb-2 block text-sm font-semibold">จำนวนงวด</label>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from({ length: order.installments.max - 1 }, (_, i) => i + 2).map((n) => (
+                      <label key={n} className={cx(
+                        "inline-flex h-10 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                        installmentCount === n ? "border-brand bg-brand text-white" : "border-line hover:border-line-strong",
+                      )}>
+                        <input type="radio" name="installments" value={n} checked={installmentCount === n} onChange={() => setInstallmentCount(n)} className="sr-only" />
+                        {n} งวด
+                      </label>
+                    ))}
+                  </div>
+                  {err("installments") && <p role="alert" className="mt-2 text-sm text-sell">{err("installments")}</p>}
+                </div>
+                <ul className="space-y-1.5 text-sm">
+                  {installmentAmounts.map((amount, i) => (
+                    <li key={i} className="flex items-center justify-between gap-4">
+                      <span className="flex items-center gap-1.5 text-muted"><CalendarClock aria-hidden className="size-3.5" />งวดที่ {i + 1}{i === 0 && " (จ่ายวันนี้)"}</span>
+                      <span className="num font-semibold tabular-nums">{fmtTHB(amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <label className="flex cursor-pointer items-start gap-2.5 border-t border-line pt-4 text-sm">
+                  <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    ฉันเข้าใจว่าสิทธิ์ใช้งานจะเปิดทันทีหลังจ่ายงวดแรก และหากไม่ชำระงวดถัดไปตามกำหนด
+                    <strong> ร้านจะถอนสิทธิ์ใช้งานทันทีโดยไม่คืนเงินงวดที่จ่ายไปแล้ว</strong>
+                  </span>
+                </label>
+                {err("consent") && <p role="alert" className="text-sm text-sell">{err("consent")}</p>}
+              </div>
+            )}
+          </Step>
+        )}
+
         <Step n={++n} title="วิธีชำระเงิน" hint="เลือกวิธีได้ในหน้าถัดไปของ Stripe ข้อมูลบัตรไม่ผ่านเว็บเรา">
           <ul className="grid gap-3 sm:grid-cols-2">
             <PayTile icon={CreditCard} title="บัตรเครดิต / เดบิต" line="Visa · Mastercard · JCB" />
@@ -137,18 +205,19 @@ export function CheckoutForm({ priceId, tradingview, account, email, order, item
           </dl>
 
           <div className="mt-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-t border-line pt-5">
-            <span className="text-base font-bold">ยอดชำระ</span>
-            <span className="num text-4xl font-black tracking-tight tabular-nums">{fmtTHB(order.amount)}</span>
+            <span className="text-base font-bold">{payMode === "installment" ? "ยอดชำระวันนี้ (งวดที่ 1)" : "ยอดชำระ"}</span>
+            <span className="num text-4xl font-black tracking-tight tabular-nums">{fmtTHB(dueNow)}</span>
           </div>
+          {payMode === "installment" && <p className="mt-1 text-right text-sm text-muted">จากยอดรวม {fmtTHB(order.amount)} ผ่อน {installmentCount} งวด</p>}
 
           {state.error && !state.field && <p role="alert" className="mt-4 rounded-xl bg-sell-dim px-3 py-2 text-sm text-sell">{state.error}</p>}
           {state.error && state.field && <p className="mt-4 rounded-xl bg-sell-dim px-3 py-2 text-sm text-sell xl:hidden">{state.error}</p>}
           <button
-            type="submit" disabled={pending || !ready}
+            type="submit" disabled={pending || !ready || (payMode === "installment" && !consent)}
             className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-brand px-6 text-base font-bold text-white shadow-[0_16px_40px_-16px_rgb(178_0_22/0.8)] transition-colors hover:bg-brand-strong disabled:opacity-60"
           >
             {pending ? <Loader2 aria-hidden className="size-5 animate-spin" /> : <Lock aria-hidden className="size-4" />}
-            {pending ? "กำลังไปหน้าชำระเงิน…" : !ready ? `เลือกอีก ${pick!.count - chosen.length} ตัว` : `ชำระ ${fmtTHB(order.amount)}`}
+            {pending ? "กำลังไปหน้าชำระเงิน…" : !ready ? `เลือกอีก ${pick!.count - chosen.length} ตัว` : `ชำระ ${fmtTHB(dueNow)}`}
           </button>
           <ul className="mt-4 grid gap-2 text-xs text-muted">
             <li className="flex items-center gap-2"><ShieldCheck aria-hidden className="size-4 shrink-0 text-accent" />ชำระอย่างปลอดภัยผ่าน Stripe ข้อมูลบัตรไม่ผ่านเว็บเรา</li>

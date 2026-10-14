@@ -61,6 +61,7 @@ const ADMIN: Entry[] = [
   { href: "/admin/orders", label: "ยอดขาย", icon: Receipt },
   { href: "/admin/more", label: "อื่นๆ", icon: LayoutGrid, also: [
     { href: "/admin/indicators", label: "อินดิเคเตอร์" },
+    { href: "/admin/settings", label: "ตั้งค่า TradingView" },
     { href: "/admin/support", label: "คำขอจากลูกค้า" },
     { href: "/admin/content", label: "เนื้อหา" },
     { href: "/admin/lots", label: "Lot Exness" },
