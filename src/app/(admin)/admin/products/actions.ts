@@ -3,8 +3,45 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
+import { IMAGE_TYPES, MAX_IMAGE } from "@/lib/images";
+import { CARD_IMAGE_BUCKET } from "@/lib/promotions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ProductState = { error?: string; ok?: string };
+
+const cardImages = () => createAdminClient().storage.from(CARD_IMAGE_BUCKET);
+
+/** Object key of a card image we uploaded, or null for anything else (never delete what isn't ours). */
+function storageKeyOf(url: string | null) {
+  const marker = `/${CARD_IMAGE_BUCKET}/`;
+  const i = url?.indexOf(marker) ?? -1;
+  return i === -1 ? null : url!.slice(i + marker.length);
+}
+
+/**
+ * The card image after this save: a newly uploaded file, null when "ลบรูปนี้" is ticked, else unchanged.
+ * Returns an error message for a bad file.
+ */
+async function nextCardImage(form: FormData, current: string | null): Promise<{ url: string | null; uploaded: boolean } | { error: string }> {
+  const file = form.get("image");
+  if (file instanceof File && file.size > 0) {
+    const type = IMAGE_TYPES[file.type];
+    if (!type) return { error: "รองรับเฉพาะไฟล์ PNG, JPG หรือ WebP" };
+    if (file.size > MAX_IMAGE) return { error: "รูปต้องมีขนาดไม่เกิน 5 MB" };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!type.magic(bytes)) return { error: "ไฟล์ไม่ใช่รูปภาพที่ถูกต้อง" };
+    const path = `products/${crypto.randomUUID()}.${type.ext}`;
+    const { error } = await cardImages().upload(path, bytes, { contentType: file.type, cacheControl: "31536000", upsert: false });
+    if (error) return { error: "อัปโหลดรูปไม่สำเร็จ" };
+    return { url: cardImages().getPublicUrl(path).data.publicUrl, uploaded: true };
+  }
+  return { url: form.get("remove_image") === "on" ? null : current, uploaded: false };
+}
+
+async function removeCardImage(url: string | null) {
+  const key = storageKeyOf(url);
+  if (key) await cardImages().remove([key]);
+}
 
 const ProductSchema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อสินค้า").max(120),
@@ -20,6 +57,7 @@ const ProductSchema = z.object({
   active: z.boolean(),
   featured: z.boolean(),
   sort: z.coerce.number().int().min(0).max(10_000),
+  image_scope: z.enum(["home", "all"]),
 });
 
 function parseProduct(form: FormData) {
@@ -40,6 +78,7 @@ function parseProduct(form: FormData) {
     active: form.get("active") === "on",
     featured: form.get("featured") === "on",
     sort: form.get("sort") || 100,
+    image_scope: form.get("image_scope") === "all" ? "all" : "home",
   });
 }
 
@@ -47,9 +86,15 @@ export async function createProduct(_: ProductState, form: FormData): Promise<Pr
   const parsed = parseProduct(form);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase.from("products").insert(parsed.data).select("id").single<{ id: string }>();
-  if (error || !data) return { error: "บันทึกไม่สำเร็จ" };
+  const image = await nextCardImage(form, null);
+  if ("error" in image) return { error: image.error };
+  const { data, error } = await supabase.from("products").insert({ ...parsed.data, image_url: image.url }).select("id").single<{ id: string }>();
+  if (error || !data) {
+    if (image.uploaded) await removeCardImage(image.url);
+    return { error: "บันทึกไม่สำเร็จ" };
+  }
   revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
   redirect(`/admin/products/${data.id}`);
 }
 
@@ -58,8 +103,16 @@ export async function updateProduct(_: ProductState, form: FormData): Promise<Pr
   const parsed = parseProduct(form);
   if (!id.success || !parsed.success) return { error: parsed.error?.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   const { supabase } = await requireStaff();
-  const { error } = await supabase.from("products").update(parsed.data).eq("id", id.data);
-  if (error) return { error: "บันทึกไม่สำเร็จ" };
+  const { data: current } = await supabase.from("products").select("image_url").eq("id", id.data).maybeSingle<{ image_url: string | null }>();
+  if (!current) return { error: "ไม่พบสินค้า" };
+  const image = await nextCardImage(form, current.image_url);
+  if ("error" in image) return { error: image.error };
+  const { error } = await supabase.from("products").update({ ...parsed.data, image_url: image.url }).eq("id", id.data);
+  if (error) {
+    if (image.uploaded) await removeCardImage(image.url);
+    return { error: "บันทึกไม่สำเร็จ" };
+  }
+  if (current.image_url !== image.url) await removeCardImage(current.image_url);
   revalidatePath("/admin/products", "layout");
   revalidatePath("/", "layout");
   return { ok: "บันทึกแล้ว" };
@@ -67,10 +120,14 @@ export async function updateProduct(_: ProductState, form: FormData): Promise<Pr
 
 export async function deleteProduct(id: string) {
   const { supabase } = await requireStaff();
+  const productId = z.uuid().parse(id);
+  const { data: current } = await supabase.from("products").select("image_url").eq("id", productId).maybeSingle<{ image_url: string | null }>();
   // Orders and subscriptions keep their snapshot (product_id is set null), so deleting is safe.
-  const { error } = await supabase.from("products").delete().eq("id", z.uuid().parse(id));
+  const { error } = await supabase.from("products").delete().eq("id", productId);
   if (error) throw new Error("ลบไม่สำเร็จ");
+  await removeCardImage(current?.image_url ?? null);
   revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
   redirect("/admin/products");
 }
 

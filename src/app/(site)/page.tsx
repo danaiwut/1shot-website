@@ -76,7 +76,7 @@ export default async function HomePage() {
       {bundles.length > 0 && (
         <section id="pricing" aria-labelledby="pricing-title" className="pricing-bg relative scroll-mt-18 overflow-hidden bg-panel-2">
           <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-            <Reveal><PricingTable products={bundles} promotion={promotion} showImage /></Reveal>
+            <Reveal><PricingTable products={bundles} promotion={promotion} home /></Reveal>
             <p className="mt-14 text-center">
               <ButtonLink href="/pricing" variant="outline">ดูราคาทั้งหมด รวมรายตัว <ArrowRight aria-hidden className="size-4" /></ButtonLink>
             </p>

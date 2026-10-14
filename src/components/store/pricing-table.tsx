@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Check, Copy, Loader2 } from "lucide-react";
 import { cx } from "@/components/ui";
@@ -24,11 +24,11 @@ type Ownership = {
 /**
  * "แพ็กเกจและโปรโมชั่น" (homepage, /pricing, /store): the running promotion as the heading, then a classic
  * pricing table (featured deal in the middle, raised and in brand red). `max` caps the cards (homepage: 3).
- * `showImage`: pass true only from the homepage call site. The poster still renders there regardless of the
- * promotion's own `image_scope`; /pricing and /store only show it when staff set that promotion's scope to "all".
+ * `home`: true only from the homepage. Cards show their product image there; elsewhere only products whose
+ * image_scope is "all".
  */
-export function PricingTable({ products, promotion, from = "/", max = 3, heading = true, showImage = false, ...own }: {
-  products: CatalogProduct[]; promotion: Promotion | null; from?: string; max?: number; heading?: boolean; showImage?: boolean;
+export function PricingTable({ products, promotion, from = "/", max = 3, heading = true, home = false, ...own }: {
+  products: CatalogProduct[]; promotion: Promotion | null; from?: string; max?: number; heading?: boolean; home?: boolean;
 } & Ownership) {
   // Featured deal in the middle.
   const ranked = [...products].sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort - b.sort).slice(0, max);
@@ -38,24 +38,18 @@ export function PricingTable({ products, promotion, from = "/", max = 3, heading
 
   return (
     <div className="relative">
-      {heading && <Heading promotion={promotion} showImage={showImage} />}
+      {heading && <Heading promotion={promotion} />}
       <ul className={cx("mx-auto grid items-stretch gap-5", heading && "mt-12 sm:mt-14", cards.length >= 3 ? "max-w-5xl lg:grid-cols-3 lg:gap-x-0 lg:gap-y-12" : cards.length === 2 ? "max-w-3xl md:grid-cols-2" : "max-w-sm")}>
-        {cards.map((p) => <DealCard key={p.id} product={p} featured={p.id === hero.id && cards.length > 1} from={from} {...own} />)}
+        {cards.map((p) => <DealCard key={p.id} product={p} featured={p.id === hero.id && cards.length > 1} from={from} home={home} {...own} />)}
       </ul>
     </div>
   );
 }
 
-function Heading({ promotion: promo, showImage }: { promotion: Promotion | null; showImage: boolean }) {
+function Heading({ promotion: promo }: { promotion: Promotion | null }) {
   const [copied, setCopied] = useState(false);
-  // showImage = this call site is the homepage; a promotion with scope "all" also shows its poster elsewhere (/pricing, /store).
-  const displayImage = showImage || promo?.image_scope === "all";
   return (
     <div className="mx-auto max-w-2xl text-center">
-      {displayImage && promo?.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded poster
-        <img src={promo.image_url} alt="" className="mx-auto mb-8 w-full max-w-xl rounded-2xl object-cover shadow-[0_20px_60px_-30px_rgb(0_0_0/0.45)]" />
-      )}
       {promo?.badge && <p className="inline-flex rounded-full bg-brand-dim px-3 py-1 text-sm font-semibold text-accent">{promo.badge}</p>}
       <h2 id="pricing-title" className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">
         {promo?.title ?? "แพ็กเกจและโปรโมชั่น"}
@@ -85,7 +79,7 @@ function Heading({ promotion: promo, showImage }: { promotion: Promotion | null;
 }
 
 /** One deal / bundle, landing style. Picks choose their indicators at checkout. */
-export function DealCard({ product: p, featured, from, access = {}, subscribed = [], returning }: { product: CatalogProduct; featured: boolean; from: string } & Ownership) {
+export function DealCard({ product: p, featured, from, home = false, access = {}, subscribed = [], returning }: { product: CatalogProduct; featured: boolean; from: string; home?: boolean } & Ownership) {
   const [state, action, pending] = useActionState<BuyState, FormData>(buy, {});
   const [priceId, setPriceId] = useState(p.prices[0]?.id);
   const price = p.prices.find((x) => x.id === priceId) ?? p.prices[0];
@@ -106,84 +100,113 @@ export function DealCard({ product: p, featured, from, access = {}, subscribed =
     // Don't repeat "ตลอดชีพ" when a feature already says it.
     { key: "terms", main: p.features.some((f) => f.includes(term)) ? pay : `${term} · ${pay}` },
   ];
-  const note = cx("mt-6 flex h-12 w-full items-center justify-center rounded-lg px-3 text-sm font-semibold", featured ? "bg-white/15 text-white" : "bg-panel-3 text-muted");
+  const showImage = Boolean(p.image_url) && (home || p.image_scope === "all");
+  // Image cards float their footer over the image, so it uses the light (featured) styling.
+  const light = featured || showImage;
+  const note = cx("mt-6 flex h-12 w-full items-center justify-center rounded-lg px-3 text-sm font-semibold", light ? "bg-white/15 text-white" : "bg-panel-3 text-muted");
 
   return (
     <li
       className={cx(
-        "relative flex flex-col rounded-2xl px-6 py-8 text-center sm:px-8",
+        "relative flex flex-col rounded-2xl text-center",
+        // Below lg the cards stack full width; cap image cards so a 1:2 poster doesn't get absurdly tall.
+        showImage ? "overflow-hidden bg-ink text-white max-lg:mx-auto max-lg:w-full max-lg:max-w-sm" : "px-6 py-8 sm:px-8",
         featured
-          ? "z-10 max-lg:order-first bg-gradient-to-b from-brand to-brand-strong text-white shadow-[0_30px_80px_-24px_rgb(178_0_22/0.55)] lg:-my-6 lg:py-12"
-          : "border border-line bg-panel shadow-[0_20px_60px_-30px_rgb(0_0_0/0.35)]",
+          ? cx("z-10 max-lg:order-first shadow-[0_30px_80px_-24px_rgb(178_0_22/0.55)] lg:-my-6", !showImage && "bg-gradient-to-b from-brand to-brand-strong text-white lg:py-12")
+          : cx("shadow-[0_20px_60px_-30px_rgb(0_0_0/0.35)]", !showImage && "border border-line bg-panel"),
       )}
     >
       {p.badge && (
-        <span className={cx("absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap", featured ? "bg-white text-brand" : "bg-brand text-white")}>
+        <span className={cx(
+          "absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap",
+          showImage ? "top-3" : "-top-3",
+          featured ? "bg-white text-brand" : "bg-brand text-white",
+        )}>
           {p.badge}
         </span>
       )}
-      <h3 className={cx("text-base font-semibold", featured ? "text-white" : "text-fg")}>{p.name}</h3>
-      {p.audience === "returning" && <p className={cx("mt-1 text-xs", featured ? "text-white/85" : "text-muted")}>สำหรับลูกค้าที่เคยซื้อแล้ว</p>}
 
-      <p className="mt-5 flex items-start justify-center gap-1">
-        <span className="mt-2 text-2xl font-bold">฿</span>
-        <span className="text-5xl leading-none font-extrabold tracking-tight tabular-nums sm:text-6xl">{num.format(price.amount_satang / 100)}</span>
-      </p>
-      <p className={cx("mt-2 min-h-5 text-sm", featured ? "text-white/85" : "text-muted")}>
-        {price.compareSatang
-          ? <>ปกติ <span className="line-through tabular-nums">{fmtTHB(price.compareSatang)}</span>{off && <span className={cx("ml-1.5 font-semibold", featured ? "text-white" : "text-buy")}>ประหยัด {off}%</span>}</>
-          : " "}
-      </p>
-
-      {p.prices.length > 1 && (
-        <fieldset className={cx("mx-auto mt-4 inline-flex rounded-full border p-1", featured ? "border-white/30" : "border-line")}>
-          <legend className="sr-only">เลือกระยะเวลา</legend>
-          {p.prices.map((x) => (
-            <label key={x.id} className={cx(
-              "cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
-              x.id === price.id ? (featured ? "bg-white text-brand" : "bg-brand text-white") : featured ? "text-white/85 hover:text-white" : "text-muted hover:text-fg",
-            )}>
-              <input type="radio" name={`term-${p.id}`} checked={x.id === price.id} onChange={() => setPriceId(x.id)} className="sr-only" />
-              {termLabel(x)}
-            </label>
-          ))}
-        </fieldset>
-      )}
-
-      <ul className={cx("mt-6 flex-1 divide-y border-y text-sm", featured ? "divide-white/25 border-white/25" : "divide-line border-line")}>
-        {rows.map((r) => (
-          <li key={r.key} className="px-1 py-3.5 font-medium">
-            {r.main}
-            {r.sub && <span className={cx("mt-1 block text-xs font-normal", featured ? "text-white/85" : "text-muted")}>{r.sub}</span>}
-          </li>
-        ))}
-      </ul>
-      {p.available_until && <p className={cx("mt-4 text-xs", featured ? "text-white/85" : "text-muted")}>ถึง {thaiDate(p.available_until)}</p>}
-
-      {locked ? (
-        <p className={note}>สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น</p>
-      ) : ownedAll ? (
-        <p className={note}>คุณมีสิทธิ์ตลอดชีพแล้ว</p>
-      ) : isSub ? (
-        <Link href="/store#history" className={cx(note, "hover:underline")}>สมัครอยู่แล้ว · ดูประวัติ</Link>
+      {showImage ? (
+        <>
+          {/* Sizer: the card is at least 1:2 (posters are made 1080×2160); the image covers the whole card. */}
+          <div aria-hidden className="aspect-[1/2] w-full" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded card image (already contains its own text/price) */}
+          <img src={p.image_url!} alt={p.name} loading="lazy" className="absolute inset-0 size-full object-cover" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
+        </>
       ) : (
-        <form action={action} className="mt-6">
-          <input type="hidden" name="price_id" value={price.id} />
-          <input type="hidden" name="from" value={from} />
-          <button
-            type="submit"
-            disabled={pending}
-            className={cx(
-              "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 text-sm font-bold tracking-wide transition-colors disabled:opacity-60",
-              featured ? "border-white bg-white text-brand hover:bg-white/90" : "border-brand text-accent hover:bg-brand hover:text-white",
-            )}
-          >
-            {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
-            {pending ? "กำลังไปหน้าชำระเงิน…" : pick ? "เลือกอินดิเคเตอร์" : price.billing === "subscription" ? `สมัคร${term}` : "เลือกแพ็กเกจนี้"}
-          </button>
-        </form>
+        <>
+          <h3 className={cx("text-base font-semibold", featured ? "text-white" : "text-fg")}>{p.name}</h3>
+          {p.audience === "returning" && <p className={cx("mt-1 text-xs", featured ? "text-white/85" : "text-muted")}>สำหรับลูกค้าที่เคยซื้อแล้ว</p>}
+
+          <p className="mt-5 flex items-start justify-center gap-1">
+            <span className="mt-2 text-2xl font-bold">฿</span>
+            <span className="text-5xl leading-none font-extrabold tracking-tight tabular-nums sm:text-6xl">{num.format(price.amount_satang / 100)}</span>
+          </p>
+          <p className={cx("mt-2 min-h-5 text-sm", featured ? "text-white/85" : "text-muted")}>
+            {price.compareSatang
+              ? <>ปกติ <span className="line-through tabular-nums">{fmtTHB(price.compareSatang)}</span>{off && <span className={cx("ml-1.5 font-semibold", featured ? "text-white" : "text-buy")}>ประหยัด {off}%</span>}</>
+              : " "}
+          </p>
+
+          <ul className={cx("mt-6 flex-1 divide-y border-y text-sm", featured ? "divide-white/25 border-white/25" : "divide-line border-line")}>
+            {rows.map((r) => (
+              <li key={r.key} className="px-1 py-3.5 font-medium">
+                {r.main}
+                {r.sub && <span className={cx("mt-1 block text-xs font-normal", featured ? "text-white/85" : "text-muted")}>{r.sub}</span>}
+              </li>
+            ))}
+          </ul>
+          {p.available_until && <p className={cx("mt-4 text-xs", featured ? "text-white/85" : "text-muted")}>ถึง {thaiDate(p.available_until)}</p>}
+        </>
       )}
-      {state.error && <p role="alert" className={cx("mt-2 text-sm", featured ? "text-white" : "text-sell")}>{state.error}</p>}
+
+      <Wrap wrap={showImage} className="absolute inset-x-0 bottom-0 px-6 pb-6 sm:px-8">
+        {p.prices.length > 1 && (
+          <fieldset className={cx("mx-auto inline-flex rounded-full border p-1", showImage ? "mt-6" : "mt-4", light ? "border-white/30" : "border-line")}>
+            <legend className="sr-only">เลือกระยะเวลา</legend>
+            {p.prices.map((x) => (
+              <label key={x.id} className={cx(
+                "cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                x.id === price.id ? (light ? "bg-white text-brand" : "bg-brand text-white") : light ? "text-white/85 hover:text-white" : "text-muted hover:text-fg",
+              )}>
+                <input type="radio" name={`term-${p.id}`} checked={x.id === price.id} onChange={() => setPriceId(x.id)} className="sr-only" />
+                {termLabel(x)}
+              </label>
+            ))}
+          </fieldset>
+        )}
+
+        {locked ? (
+          <p className={note}>สำหรับลูกค้าที่เคยซื้อแล้วเท่านั้น</p>
+        ) : ownedAll ? (
+          <p className={note}>คุณมีสิทธิ์ตลอดชีพแล้ว</p>
+        ) : isSub ? (
+          <Link href="/store#history" className={cx(note, "hover:underline")}>สมัครอยู่แล้ว · ดูประวัติ</Link>
+        ) : (
+          <form action={action} className="mt-6">
+            <input type="hidden" name="price_id" value={price.id} />
+            <input type="hidden" name="from" value={from} />
+            <button
+              type="submit"
+              disabled={pending}
+              className={cx(
+                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 text-sm font-bold tracking-wide transition-colors disabled:opacity-60",
+                light ? "border-white bg-white text-brand hover:bg-white/90" : "border-brand text-accent hover:bg-brand hover:text-white",
+              )}
+            >
+              {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+              {pending ? "กำลังไปหน้าชำระเงิน…" : pick ? "เลือกอินดิเคเตอร์" : price.billing === "subscription" ? `สมัคร${term}` : "เลือกแพ็กเกจนี้"}
+            </button>
+          </form>
+        )}
+        {state.error && <p role="alert" className={cx("mt-2 text-sm", light ? "text-white" : "text-sell")}>{state.error}</p>}
+      </Wrap>
     </li>
   );
+}
+
+/** Wraps children in a div with `className` only when `wrap` is true (image cards need the padding the plain-text card already has from its `<li>`). */
+function Wrap({ wrap, className, children }: { wrap: boolean; className: string; children: ReactNode }) {
+  return wrap ? <div className={className}>{children}</div> : children;
 }

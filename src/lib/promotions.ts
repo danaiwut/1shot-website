@@ -4,7 +4,8 @@ import type { Promotion } from "./types";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
-export const PROMOTION_IMAGE_BUCKET = "promotion-images";
+/** Public Storage bucket for deal-card images (products on ราคาและโปร). */
+export const CARD_IMAGE_BUCKET = "promotion-images";
 
 export const bangkokToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date());
 

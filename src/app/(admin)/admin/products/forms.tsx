@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState, useTransition } from "react";
-import { Check, Layers, Package, Shuffle, type LucideIcon } from "lucide-react";
+import { Check, ImageUp, Layers, Package, Shuffle, type LucideIcon } from "lucide-react";
 import { ChoiceTiles, Step, SubmitButton, Switch } from "@/components/app/form-kit";
 import { EmptyLine, Status } from "@/components/app/kit";
 import { Button, cx, Field, Input, Notice, Select } from "@/components/ui";
@@ -31,6 +31,10 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
   const [pick, setPick] = useState(product?.pick_count ?? 2);
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
+  const [file, setFile] = useState<string | null>(null); // object-URL preview of a newly chosen image
+  const [removeImage, setRemoveImage] = useState(false);
+  const [imageScope, setImageScope] = useState<"home" | "all">(product?.image_scope ?? "home");
+  const image = file ?? (removeImage ? null : product?.image_url ?? null);
   const toggle = (c: string) => setCodes((cur) => (kind === "single" ? [c] : cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
   const until = product?.available_until
     ? new Date(new Date(product.available_until).getTime() + 7 * 3600_000).toISOString().slice(0, 10) // Bangkok date
@@ -121,6 +125,36 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
             <Field label="ลำดับ" hint="น้อย = แสดงก่อน"><Input name="sort" type="number" defaultValue={product?.sort ?? 100} /></Field>
           </div>
         </Step>
+
+        <Step n={5} title="รูปบนการ์ด" hint="ขนาดแนะนำ 1080 × 2160 px (แนวตั้ง 1:2) จะเต็มการ์ดพอดี · เว้นด้านล่างประมาณ 300 px ไว้ให้ปุ่ม · PNG, JPG หรือ WebP ไม่เกิน 5 MB" aside={<span className="rounded-full bg-panel-3 px-2.5 py-0.5 text-xs font-semibold text-muted">ไม่บังคับ</span>}>
+          <div className="grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center">
+            <div className="surface-dark grid aspect-[1/2] w-40 place-items-center overflow-hidden rounded-xl border border-line bg-ink max-sm:mx-auto">
+              {image
+                // eslint-disable-next-line @next/next/no-img-element -- local preview or Supabase Storage URL
+                ? <img src={image} alt="" className="size-full object-cover" />
+                : <span className="text-sm text-white/50">ยังไม่มีรูป</span>}
+            </div>
+            <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-panel-2 px-4 py-5 text-center text-sm font-semibold transition-colors hover:border-brand has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">
+              <ImageUp aria-hidden className="size-6 text-accent" />
+              {file ? "เลือกรูปอื่น" : product?.image_url ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
+              <span className="text-xs font-normal text-muted">{file ? "รูปใหม่จะบันทึกเมื่อกดบันทึก" : "กดเพื่อเลือกไฟล์"}</span>
+              <input
+                type="file" name="image" accept="image/png,image/jpeg,image/webp" className="sr-only"
+                onChange={(e) => { const f = e.target.files?.[0]; setFile(f ? URL.createObjectURL(f) : null); if (f) setRemoveImage(false); }}
+              />
+            </label>
+          </div>
+          {product?.image_url && !file && (
+            <div className="mt-3 rounded-xl border border-line bg-panel p-2">
+              <Switch name="remove_image" label="ลบรูปนี้" hint="การ์ดจะแสดงแบบไม่มีรูป" checked={removeImage} onChange={setRemoveImage} />
+            </div>
+          )}
+          <p className="mt-5 mb-2 text-sm font-medium">แสดงรูปที่หน้าไหน</p>
+          <ChoiceTiles name="image_scope" label="แสดงรูปที่หน้าไหน" value={imageScope} onChange={setImageScope} columns="grid-cols-2" options={[
+            { value: "home", title: "เฉพาะหน้าแรก", line: "หน้าอื่นแสดงการ์ดแบบไม่มีรูป" },
+            { value: "all", title: "ทุกหน้า", line: "หน้าแรก, หน้าราคา, ร้านค้า" },
+          ]} />
+        </Step>
       </div>
 
       {/* Preview + publish */}
@@ -128,24 +162,37 @@ export function ProductForm({ product, indicators, price }: { product?: Product;
         <div className="rounded-2xl border border-line bg-panel p-5 shadow-[0_20px_60px_-40px_rgb(0_0_0/0.35)]">
           <p className="mb-3 text-xs font-bold text-muted">ตัวอย่างการ์ด</p>
           <div className={cx(
-            "relative rounded-2xl px-5 pt-7 pb-5 text-center",
-            featured ? "bg-gradient-to-b from-brand to-brand-strong text-white" : "border border-line bg-panel-2",
+            "relative overflow-hidden rounded-2xl text-center",
+            image ? "aspect-[1/2] bg-ink" : "px-5 pt-7 pb-5",
+            !image && (featured ? "bg-gradient-to-b from-brand to-brand-strong text-white" : "border border-line bg-panel-2"),
           )}>
-            {badge && <span className={cx("absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap", featured ? "bg-white text-brand" : "bg-brand text-white")}>{badge}</span>}
-            <p className="font-bold">{name || <span className="opacity-50">ชื่อสินค้า</span>}</p>
-            <p className={cx("mt-1 text-xs", featured ? "text-white/85" : "text-muted")}>
-              {codes.length
-                ? kind === "pick" ? `เลือกเอง ${pick} จาก ${codes.length} ตัว` : codes.map(nameOf).join(" + ")
-                : "ยังไม่ได้เลือกอินดิเคเตอร์"}
-            </p>
-            {featureList.length > 0 && (
-              <ul className={cx("mt-4 divide-y border-y text-sm", featured ? "divide-white/25 border-white/25" : "divide-line border-line")}>
-                {featureList.slice(0, 5).map((f) => <li key={f} className="py-2">{f}</li>)}
-              </ul>
+            {badge && <span className={cx("absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap", image ? "top-3" : "-top-3", featured ? "bg-white text-brand" : "bg-brand text-white")}>{badge}</span>}
+            {image ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- local preview or Supabase Storage URL */}
+                <img src={image} alt="" className="absolute inset-0 size-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pt-10 pb-4">
+                  <span className="flex h-10 items-center justify-center rounded-lg bg-white text-xs font-bold text-brand">ปุ่มซื้อจะอยู่ตรงนี้</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="font-bold">{name || <span className="opacity-50">ชื่อสินค้า</span>}</p>
+                <p className={cx("mt-1 text-xs", featured ? "text-white/85" : "text-muted")}>
+                  {codes.length
+                    ? kind === "pick" ? `เลือกเอง ${pick} จาก ${codes.length} ตัว` : codes.map(nameOf).join(" + ")
+                    : "ยังไม่ได้เลือกอินดิเคเตอร์"}
+                </p>
+                {featureList.length > 0 && (
+                  <ul className={cx("mt-4 divide-y border-y text-sm", featured ? "divide-white/25 border-white/25" : "divide-line border-line")}>
+                    {featureList.slice(0, 5).map((f) => <li key={f} className="py-2">{f}</li>)}
+                  </ul>
+                )}
+                {price
+                  ? <p className="mt-4 text-2xl font-extrabold tracking-tight tabular-nums">{price}</p>
+                  : <p className={cx("mt-4 text-xs", featured ? "text-white/85" : "text-muted")}>{product ? "ยังไม่มีราคาที่เปิดขาย" : "ราคาเพิ่มหลังสร้างสินค้า"}</p>}
+              </>
             )}
-            {price
-              ? <p className="mt-4 text-2xl font-extrabold tracking-tight tabular-nums">{price}</p>
-              : <p className={cx("mt-4 text-xs", featured ? "text-white/85" : "text-muted")}>{product ? "ยังไม่มีราคาที่เปิดขาย" : "ราคาเพิ่มหลังสร้างสินค้า"}</p>}
           </div>
         </div>
 

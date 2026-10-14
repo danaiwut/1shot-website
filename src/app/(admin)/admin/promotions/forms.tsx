@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState, useTransition } from "react";
-import { Copy, ImageUp } from "lucide-react";
-import { ChoiceTiles, FormLayout, Panel, Step, SubmitButton, Switch } from "@/components/app/form-kit";
+import { Copy } from "lucide-react";
+import { FormLayout, Panel, Step, SubmitButton, Switch } from "@/components/app/form-kit";
 import { Button, cx, Field, Input, Notice } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 import type { Promotion } from "@/lib/types";
@@ -18,17 +18,13 @@ export function PromotionForm({ item, today }: { item?: Promotion; today: string
   const init = {
     title: item?.title ?? "", body: item?.body ?? "", badge: item?.badge ?? "", code: item?.code ?? "",
     cta_label: item?.cta_label ?? "", cta_href: item?.cta_href ?? "", image_url: item?.image_url ?? "",
-    image_scope: item?.image_scope ?? "home" as "home" | "all",
     starts_on: item?.starts_on ?? today, ends_on: item?.ends_on ?? monthEnd, active: item?.active ?? true,
   };
   const [v, setV] = useState(init);
   const set = <K extends keyof typeof init>(k: K) => (x: (typeof init)[K]) => setV((cur) => ({ ...cur, [k]: x }));
-  const on = (k: Exclude<keyof typeof init, "active" | "image_scope">) => ({ value: v[k], onChange: (e: { target: { value: string } }) => set(k)(e.target.value) });
+  const on = (k: Exclude<keyof typeof init, "active">) => ({ value: v[k], onChange: (e: { target: { value: string } }) => set(k)(e.target.value) });
   const [seen, setSeen] = useState(state); // clear the form after a successful create
   if (seen !== state) { setSeen(state); if (state.ok && !item) setV(init); }
-  const [file, setFile] = useState<string | null>(null); // object-URL preview of a newly chosen file
-  const [removeImage, setRemoveImage] = useState(false);
-  const shownImage = file ?? (removeImage ? null : v.image_url);
 
   const live = !v.active ? { tone: "bg-panel-3 text-muted", label: "ปิดอยู่ ไม่แสดงบนเว็บ" }
     : v.ends_on && v.ends_on < today ? { tone: "bg-panel-3 text-muted", label: "หมดเวลาแล้ว" }
@@ -42,10 +38,6 @@ export function PromotionForm({ item, today }: { item?: Promotion; today: string
       <FormLayout aside={<>
         <Panel title="ตัวอย่างบนหน้าแรก">
           <div className="rounded-xl border border-line bg-panel-2 px-4 py-6 text-center">
-            {shownImage && (
-              // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded poster
-              <img src={shownImage} alt="" className="mx-auto mb-4 w-full max-w-xs rounded-xl object-cover" />
-            )}
             {v.badge && <p className="inline-flex rounded-full bg-brand-dim px-3 py-1 text-xs font-semibold text-accent">{v.badge}</p>}
             <p className={cx("text-2xl leading-tight font-bold tracking-tight text-balance", v.badge && "mt-3")}>{v.title || <span className="opacity-40">หัวข้อโปรโมชัน</span>}</p>
             <p className="mt-3 text-sm leading-relaxed text-muted">{v.body || "ซื้อเป็นคู่หรือเป็นแพ็กเกจ คุ้มกว่าซื้อแยกรายตัว"}</p>
@@ -102,39 +94,7 @@ export function PromotionForm({ item, today }: { item?: Promotion; today: string
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="ข้อความปุ่ม" hint="ว่าง = ดูแพ็กเกจ"><Input name="cta_label" maxLength={40} {...on("cta_label")} placeholder="ดูโปรเลย" /></Field>
             <Field label="ลิงก์ปุ่ม" hint="/pricing หรือ https://…"><Input name="cta_href" maxLength={300} {...on("cta_href")} placeholder="/pricing" /></Field>
-          </div>
-
-          <div className="mt-4">
-            <span className="mb-2 block text-sm font-medium">รูปโปสเตอร์</span>
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_14rem] sm:items-center">
-              <div className="surface-dark grid aspect-video place-items-center overflow-hidden rounded-xl border border-line bg-ink">
-                {shownImage
-                  // eslint-disable-next-line @next/next/no-img-element -- local preview or Supabase Storage URL
-                  ? <img src={shownImage} alt="" className="size-full object-cover" />
-                  : <span className="text-sm text-white/50">ยังไม่มีรูป</span>}
-              </div>
-              <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-panel-2 px-4 py-5 text-center text-sm font-semibold transition-colors hover:border-brand has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">
-                <ImageUp aria-hidden className="size-6 text-accent" />
-                {file ? "เลือกรูปอื่น" : v.image_url ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
-                <span className="text-xs font-normal text-muted">PNG, JPG หรือ WebP ไม่เกิน 5 MB</span>
-                <input
-                  type="file" name="image" accept="image/png,image/jpeg,image/webp" className="sr-only"
-                  onChange={(e) => { const f = e.target.files?.[0]; setFile(f ? URL.createObjectURL(f) : null); if (f) setRemoveImage(false); }}
-                />
-              </label>
-            </div>
-            {v.image_url && !file && (
-              <div className="mt-3 rounded-xl border border-line bg-panel p-2">
-                <Switch name="remove_image" label="ลบรูปนี้" hint="หน้าแรกจะแสดงแค่ข้อความ ไม่มีรูป" checked={removeImage} onChange={setRemoveImage} />
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4">
-            <ChoiceTiles name="image_scope" label="แสดงรูปที่หน้าไหน" value={v.image_scope} onChange={set("image_scope")} columns="grid-cols-2" options={[
-              { value: "home", title: "เฉพาะหน้าแรก", line: "หน้าอื่นเห็นแค่หัวข้อ" },
-              { value: "all", title: "ทุกหน้า", line: "หน้าแรก, /pricing, /store" },
-            ]} />
+            <Field label="รูปโปสเตอร์" hint="/media/… หรือ https://…"><Input name="image_url" maxLength={300} {...on("image_url")} placeholder="/media/indicators/promo-oct.jpg" /></Field>
           </div>
         </Step>
       </FormLayout>

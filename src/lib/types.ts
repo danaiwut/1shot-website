@@ -116,6 +116,10 @@ export interface Product {
   audience: "all" | "returning";
   available_until: string | null;
   badge: string | null;
+  /** Card image (public Storage URL), uploaded on the product detail page. */
+  image_url: string | null;
+  /** "home" = the card shows the image on the homepage only; "all" = also /pricing, /store and indicator pages. */
+  image_scope: "home" | "all";
   product_prices?: ProductPrice[];
 }
 
@@ -234,8 +238,6 @@ export interface Promotion {
   cta_label: string | null;
   cta_href: string | null;
   image_url: string | null;
-  /** "home" = homepage only (default); "all" = also /pricing and /store. */
-  image_scope: "home" | "all";
   starts_on: string;
   ends_on: string;
   active: boolean;

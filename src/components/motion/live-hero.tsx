@@ -6,8 +6,8 @@ import { motion } from "motion/react";
 import { useReduce } from "./use-reduce";
 
 /*
- * Hero = copy on the left, a MacBook on the right playing a looped TradingView replay of the indicators
- * (public/media/hero-macbook.mp4, already encoded at 2× speed). The site-wide pause switch (footer) stops the video too.
+ * Hero = copy on the left, a phone on the right playing a looped TradingView replay of the indicators
+ * (public/media/hero-phone-sweep.mp4). The site-wide pause switch (footer) stops the video too.
  */
 
 export function LiveHero({ lines, redLine, description, children }: { lines: string[]; redLine: string; description: string; children?: React.ReactNode }) {
@@ -65,7 +65,6 @@ export function LiveHero({ lines, redLine, description, children }: { lines: str
   );
 }
 
-const KEY_ROWS = [14, 14, 14, 13, 12, 9];
 const EASE = [0.16, 1, 0.3, 1] as const;
 const preserve = { transformStyle: "preserve-3d" } as const;
 
@@ -81,106 +80,23 @@ function usePlayback(paused: boolean) {
   return ref;
 }
 
-/*
- * MacBook Pro built from CSS 3D planes, seen from the front-left like a product shot:
- * a flat keyboard deck and a lid hinged at its back edge with the replay video on the screen.
- * Everything is sized in em; the figure sets font-size from its own width (cqw), so it scales with the column.
- */
-/** MacBook with an iPhone standing beside it, sharing one perspective. */
+/** A single large iPhone, centered, playing the replay video. */
 function Devices({ paused }: { paused: boolean }) {
   return (
-    <figure className="@container relative mx-auto w-full max-w-[640px] lg:max-w-none">
-      <div className="relative aspect-[10/8] text-[2.2cqw] [perspective:150em]">
-        <MacBook paused={paused} />
+    <figure className="@container relative mx-auto w-full max-w-[420px] lg:max-w-[480px]">
+      <div className="relative aspect-[3/4] text-[6.4cqw] [perspective:150em]">
         <IPhone paused={paused} />
         {/* Ground shadow + brand glow */}
-        <div aria-hidden className="pointer-events-none absolute top-[66%] left-[12%] -z-10 h-[22%] w-[78%] rotate-[16deg] rounded-[50%] bg-black/35 blur-2xl dark:bg-black/90" />
-        <div aria-hidden className="pointer-events-none absolute top-[20%] left-[20%] -z-20 h-[60%] w-[60%] rounded-full bg-brand/35 blur-[90px]" />
+        <div aria-hidden className="pointer-events-none absolute top-[82%] left-1/2 -z-10 h-[16%] w-[70%] -translate-x-1/2 rounded-[50%] bg-black/35 blur-2xl dark:bg-black/90" />
+        <div aria-hidden className="pointer-events-none absolute top-[18%] left-1/2 -z-20 h-[65%] w-[65%] -translate-x-1/2 rounded-full bg-brand/35 blur-[90px]" />
       </div>
     </figure>
   );
 }
 
-function MacBook({ paused }: { paused: boolean }) {
-  const video = usePlayback(paused);
-  const ease = EASE;
-  const W = 30, D = 20.6, H = 19.4, T = 0.75; // width, deck depth, lid height, deck thickness (em)
-  const flat = preserve;
-
-  return (
-        <motion.div
-          className="absolute top-[55%] left-[55%] size-0 lg:left-[50%]"
-          style={flat}
-          initial={{ rotateX: -26, rotateY: -62, opacity: 0, y: "3em" }}
-          animate={{ rotateX: -26, rotateY: -38, opacity: 1, y: 0 }}
-          transition={{ duration: 1.6, delay: 0.3, ease }}
-        >
-          {/* Deck: top surface lies flat (rotateX 90°) and runs from the hinge toward the viewer */}
-          <div className="absolute" style={{ ...flat, left: `${-W / 2}em`, top: 0, width: `${W}em`, height: `${D}em`, transformOrigin: "top center", transform: "rotateX(90deg)" }}>
-            <div className="absolute inset-0 rounded-[1.1em] bg-[linear-gradient(160deg,#4a4d54,#2c2e33_55%,#25272b)] shadow-[inset_0_0_0_0.06em_rgb(255_255_255/0.18)]">
-              {/* Speaker grilles */}
-              <div className="absolute top-[1.4em] bottom-[9.6em] left-[0.9em] w-[2.2em] rounded-[0.3em] bg-[radial-gradient(circle,#15161a_28%,transparent_32%)] bg-[length:0.42em_0.42em] opacity-80" />
-              <div className="absolute top-[1.4em] right-[0.9em] bottom-[9.6em] w-[2.2em] rounded-[0.3em] bg-[radial-gradient(circle,#15161a_28%,transparent_32%)] bg-[length:0.42em_0.42em] opacity-80" />
-              {/* Keyboard */}
-              <div className="absolute top-[1.4em] right-[3.6em] left-[3.6em] flex flex-col gap-[0.22em] rounded-[0.4em] bg-[#121315] p-[0.3em]">
-                {KEY_ROWS.map((n, r) => (
-                  <div key={r} className={`flex gap-[0.22em] ${r === 0 ? "h-[0.7em]" : "h-[1.42em]"}`}>
-                    {Array.from({ length: n }, (_, k) => (
-                      <span
-                        key={k}
-                        className="flex-1 rounded-[0.18em] bg-[linear-gradient(#26272b,#1a1b1e)] shadow-[inset_0_-0.05em_0_rgb(255_255_255/0.06)]"
-                        style={{ flexGrow: r === 5 && k === 3 ? 6 : (r === 3 || r === 4) && (k === 0 || k === n - 1) ? 1.8 : 1 }}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-              {/* Trackpad */}
-              <div className="absolute bottom-[1em] left-1/2 h-[7.6em] w-[12.6em] -translate-x-1/2 rounded-[0.6em] bg-[linear-gradient(160deg,#41444b,#30333a)] shadow-[inset_0_0_0_0.06em_rgb(255_255_255/0.14)]" />
-              {/* Front notch */}
-              <div className="absolute bottom-0 left-1/2 h-[0.35em] w-[4em] -translate-x-1/2 rounded-t-[0.35em] bg-[#1b1c20]" />
-            </div>
-          </div>
-          {/* Deck edges (front and the visible right side with its ports) */}
-          <div className="absolute rounded-b-[0.5em] bg-[linear-gradient(#5d6067,#2b2d31)]" style={{ left: `${-W / 2}em`, top: 0, width: `${W}em`, height: `${T}em`, transform: `translateZ(${D}em)` }} />
-          <div className="absolute bg-[linear-gradient(#4b4e55,#222327)]" style={{ left: `${W / 2}em`, top: 0, width: `${D}em`, height: `${T}em`, transformOrigin: "left top", transform: "rotateY(-90deg)" }}>
-            <span className="absolute top-[0.25em] left-[6em] h-[0.22em] w-[1.4em] rounded-full bg-black/70" />
-            <span className="absolute top-[0.25em] left-[8em] h-[0.22em] w-[0.9em] rounded-full bg-black/70" />
-          </div>
-
-          {/* Lid: hinged at the back edge, opened ~105° */}
-          <motion.div
-            className="absolute"
-            style={{ ...flat, left: `${-W / 2}em`, top: `${-H}em`, width: `${W}em`, height: `${H}em`, transformOrigin: "bottom center" }}
-            initial={{ rotateX: -88 }}
-            animate={{ rotateX: 14 }}
-            transition={{ duration: 1.5, delay: 0.7, ease }}
-          >
-            {/* Lid back (aluminium), seen only while it swings open */}
-            <div className="absolute inset-0 rounded-[1em] bg-[linear-gradient(160deg,#55585f,#2a2c30)] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(0.05em)]" />
-            <div className="absolute inset-0 rounded-[1em] bg-[#0a0a0c] p-[0.55em] pb-[0.9em] shadow-[inset_0_0_0_0.07em_#5b5e65] [backface-visibility:hidden]">
-              <div className="relative size-full overflow-hidden rounded-[0.35em] bg-black">
-                <video
-                  ref={video}
-                  className="absolute inset-0 size-full object-cover"
-                  src="/media/hero-macbook.mp4"
-                  poster="/media/hero-macbook.jpg"
-                  autoPlay muted loop playsInline preload="auto"
-                  aria-label="วิดีโอตัวอย่าง อินดิเคเตอร์ 1SHOT ทำงานบนกราฟทองคำใน TradingView"
-                />
-                <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgb(255_255_255/0.12)_0%,transparent_40%)]" />
-                {/* Camera notch */}
-                <div aria-hidden className="absolute top-0 left-1/2 h-[0.75em] w-[3.6em] -translate-x-1/2 rounded-b-[0.3em] bg-[#0a0a0c]" />
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-  );
-}
-
 /*
  * iPhone Pro Max: titanium frame, thin bezel, Dynamic Island, side buttons on the visible right edge.
- * Stands in front of the MacBook's right corner, facing the viewer, floating gently.
+ * Centered in the frame, facing the viewer, floating gently.
  */
 function IPhone({ paused }: { paused: boolean }) {
   const video = usePlayback(paused);
@@ -188,18 +104,13 @@ function IPhone({ paused }: { paused: boolean }) {
 
   return (
     <motion.div
-      className="absolute right-[1%] bottom-[1%]"
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       style={{ ...preserve, width: `${PW}em`, height: `${PH}em` }}
       initial={{ opacity: 0, y: "5em" }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1.5, delay: 1.1, ease: EASE }}
+      transition={{ duration: 1.5, delay: 0.4, ease: EASE }}
     >
-      <motion.div
-        className="size-full"
-        style={preserve}
-        animate={paused ? { y: 0 } : { y: ["0em", "-0.45em", "0em"] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2.6 }}
-      >
+      <div className="size-full" style={preserve}>
         {/* Front: titanium rim → black bezel → screen */}
         <div className="absolute inset-0 rounded-[1.35em] bg-[linear-gradient(140deg,#8d9097,#3a3c41_40%,#6f727a)] p-[0.14em] shadow-[0_2.5em_4em_-1.5em_rgb(0_0_0/0.9),0_0_3em_-1em_rgb(178_0_22/0.6)]">
           <div className="size-full rounded-[1.24em] bg-black p-[0.26em]">
@@ -218,7 +129,7 @@ function IPhone({ paused }: { paused: boolean }) {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
